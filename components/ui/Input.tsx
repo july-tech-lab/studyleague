@@ -1,17 +1,17 @@
+import { Text } from "@/components/Themed";
 import { LucideIcon } from "lucide-react-native";
 import React, { forwardRef, useState } from "react";
-import { Text } from "@/components/Themed";
 import {
-  Pressable,
-  StyleSheet,
-  TextInput,
-  TextInputProps,
-  View,
-  ViewStyle,
+    Pressable,
+    StyleSheet,
+    TextInput,
+    TextInputProps,
+    View,
+    ViewStyle,
 } from "react-native";
 
-import { useTheme } from "@/utils/themeContext";
 import typography from "@/constants/typography";
+import { useTheme } from "@/utils/themeContext";
 
 type InputProps = TextInputProps & {
   label?: string;

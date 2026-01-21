@@ -161,6 +161,32 @@ export const fetchUserSubjects = async (userId: string) => {
   })) as Subject[];
 };
 
+// Fetch ALL user_subjects (including hidden ones) to get custom colors for all subjects
+// This is needed for subjects that have study time but are hidden
+export const fetchAllUserSubjects = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("user_subjects")
+    .select(
+      `
+      subject_id,
+      display_order,
+      custom_color,
+      subjects (*)
+    `
+    )
+    .eq("user_id", userId)
+    .is("subjects.deleted_at", null) // Filter out soft-deleted subjects
+    .order("display_order", { ascending: true, nullsFirst: false })
+    .order("subjects(name)", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((row: any) => ({
+    ...(row.subjects as Subject),
+    display_order: row.display_order,
+    custom_color: row.custom_color,
+  })) as Subject[];
+};
+
 export const upsertUserSubject = async (userId: string, subjectId: string) => {
   const { error } = await supabase
     .from("user_subjects")
@@ -219,13 +245,31 @@ export const updateUserSubjectCustomization = async (
   subjectId: string,
   updates: { custom_color?: string | null; display_order?: number | null }
 ) => {
-  const { error } = await supabase
+  // Use upsert to ensure the row exists (create if it doesn't, update if it does)
+  // This handles cases where the subject is visible but the user_subjects row doesn't exist yet
+  const { data, error } = await supabase
     .from("user_subjects")
-    .update(updates)
-    .eq("user_id", userId)
-    .eq("subject_id", subjectId);
+    .upsert(
+      {
+        user_id: userId,
+        subject_id: subjectId,
+        is_hidden: false, // Ensure it's visible
+        ...updates,
+      },
+      {
+        onConflict: "user_id,subject_id",
+      }
+    )
+    .select()
+    .single();
 
   if (error) throw error;
+  
+  if (!data) {
+    throw new Error("Failed to update subject customization.");
+  }
+  
+  return data;
 };
 
 export const buildSubjectTree = (subjects: Subject[]): SubjectNode[] => {
@@ -244,6 +288,36 @@ export const buildSubjectTree = (subjects: Subject[]): SubjectNode[] => {
       roots.push(node);
     }
   });
+
+  // Sort roots by display_order (respecting user's custom order), then by name
+  roots.sort((a, b) => {
+    const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
+    const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    // If display_order is the same (or both null), sort alphabetically
+    return a.name.localeCompare(b.name);
+  });
+
+  // Sort children by display_order as well
+  const sortChildren = (nodes: SubjectNode[]) => {
+    nodes.sort((a, b) => {
+      const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    nodes.forEach((node) => {
+      if (node.children.length > 0) {
+        sortChildren(node.children);
+      }
+    });
+  };
+
+  sortChildren(roots);
 
   return roots;
 };
@@ -604,6 +678,7 @@ export const fetchProfileOverview = async (
     userProfile,
     allAvailable,
     userVisible,
+    allUserSubjects,
     leaderboard,
     overviewResponse,
     subjectTotalsResponse,
@@ -611,6 +686,7 @@ export const fetchProfileOverview = async (
     fetchUserProfile(userId),
     fetchSubjects(userId),
     fetchUserSubjects(userId),
+    fetchAllUserSubjects(userId), // Fetch ALL user_subjects (including hidden) for custom colors
     fetchLeaderboard(),
     supabase
       .from("session_overview")
@@ -628,6 +704,37 @@ export const fetchProfileOverview = async (
 
   const allList = allAvailable ?? [];
   const visibleList = userVisible ?? [];
+
+  // Create maps of custom_color and display_order by subject_id from ALL user_subjects (including hidden)
+  // This ensures subjects in subjectTotals (which may be hidden) get their custom colors and display_order
+  const customColorMap = new Map<string, string | null>();
+  const displayOrderMap = new Map<string, number | null>();
+  allUserSubjects.forEach((subject) => {
+    if (subject.custom_color !== undefined) {
+      customColorMap.set(subject.id, subject.custom_color);
+    }
+    if (subject.display_order !== undefined) {
+      displayOrderMap.set(subject.id, subject.display_order);
+    }
+  });
+
+  // Enrich allList with custom_color and display_order from user_subjects
+  const enrichedAllList = allList.map((subject) => ({
+    ...subject,
+    custom_color: customColorMap.get(subject.id) ?? null,
+    display_order: displayOrderMap.get(subject.id) ?? null,
+  }));
+
+  // Sort enrichedAllList by display_order (respecting user's custom order), then by name
+  enrichedAllList.sort((a, b) => {
+    const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
+    const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    // If display_order is the same (or both null), sort alphabetically
+    return a.name.localeCompare(b.name);
+  });
 
   const sessionStats =
     overviewResponse.data ?? ({
@@ -662,7 +769,7 @@ export const fetchProfileOverview = async (
   return {
     profile: userProfile ?? null,
     subjects: visibleList,
-    allSubjects: allList,
+    allSubjects: enrichedAllList,
     subjectTotals,
     sessionTotals,
     leaderboardRank,

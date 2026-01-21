@@ -6,20 +6,21 @@ import { ListCard, ListItem } from "@/components/ui/ListCard";
 import { Modal } from "@/components/ui/Modal";
 import { SubjectPicker } from "@/components/ui/SubjectPicker";
 import { Tabs } from "@/components/ui/Tabs";
-import { TaskCard } from "@/components/ui/TaskCard";
 import Colors from "@/constants/Colors";
+import { useProfile } from '@/hooks/useProfile';
 import { useSubjects } from "@/hooks/useSubjects";
 import { useTasks } from "@/hooks/useTasks";
 import { useTimer } from "@/hooks/useTimer";
 import { useAuth } from '@/utils/authContext';
 import { createSubjectColorMap, getReadableTextColor, hexToRgba } from '@/utils/color';
-import { SubjectNode } from '@/utils/queries';
+import { buildSubjectTree, SubjectNode } from '@/utils/queries';
 import { useTheme, useThemePreference } from '@/utils/themeContext';
+import { formatDateLabel, getTodayIso } from '@/utils/time';
 import { useFocusEffect } from "expo-router";
 import { Bell, Check, Circle, Lock, Plus, Square } from 'lucide-react-native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function TimerScreen() {
   const { user } = useAuth();
@@ -40,9 +41,6 @@ export default function TimerScreen() {
     return createStyles(safeTheme);
   }, [safeTheme]);
   const { t } = useTranslation();
-
-  // Refs for FlatLists
-  const tasksListRef = useRef<FlatList>(null);
 
   // ============================================================================
   // DATA HOOKS (Supabase-related)
@@ -69,6 +67,20 @@ export default function TimerScreen() {
     autoLoad: true,
     autoSelectFirst: true,
   });
+
+  // Use profile hook to get allSubjects with custom_color (same source as profile page)
+  const {
+    allSubjects: allSubjectsFlat,
+  } = useProfile({
+    userId: user?.id ?? null,
+    autoLoad: true,
+  });
+
+  // Build tree from allSubjects for consistent color mapping
+  const allSubjects = React.useMemo(
+    () => buildSubjectTree(allSubjectsFlat),
+    [allSubjectsFlat]
+  );
 
   // ============================================================================
   // UI STATE (Component-only state)
@@ -98,15 +110,9 @@ export default function TimerScreen() {
     []
   );
 
-  // Use timer hook
-  const {
-    isRunning,
-    start: timerStart,
-    stop: timerStop,
-    formattedTime,
-  } = useTimer({
-    userId: user?.id ?? null,
-    onSessionComplete: async (sessionId, sessionSeconds) => {
+  // Memoize timer callbacks to prevent unnecessary re-renders
+  const handleSessionComplete = useCallback(
+    async (sessionId: string, sessionSeconds: number) => {
       const selection = findSubjectWithParent(subjectTree, selectedSubjectId);
       const subjectForLog = selection?.node;
       
@@ -121,15 +127,37 @@ export default function TimerScreen() {
       }
       await refetchTasks();
     },
-    onError: (error) => {
+    [findSubjectWithParent, subjectTree, selectedSubjectId, t, refetchTasks]
+  );
+
+  const handleTimerError = useCallback(
+    (error: Error) => {
       Alert.alert(t("timer.errorTitle"), error.message || t("timer.errorSave"));
     },
+    [t]
+  );
+
+  // Use timer hook
+  const {
+    isRunning,
+    start: timerStart,
+    stop: timerStop,
+    formattedTime,
+  } = useTimer({
+    userId: user?.id ?? null,
+    onSessionComplete: handleSessionComplete,
+    onError: handleTimerError,
   });
 
   // Use utility function for color mapping (moved before subjectListData)
+  // Use allSubjects for consistent colors across profile and index pages
   const subjectColorById = React.useMemo(
-    () => createSubjectColorMap(subjectTree, subjectPalette, safeTheme.primary),
-    [subjectTree, subjectPalette, safeTheme.primary]
+    () => {
+      // Use allSubjects if available, otherwise fall back to subjectTree
+      const treeForColors = allSubjects.length > 0 ? allSubjects : subjectTree;
+      return createSubjectColorMap(treeForColors, subjectPalette, safeTheme.primary);
+    },
+    [allSubjects, subjectTree, subjectPalette, safeTheme.primary]
   );
 
   // Create subjectListData for FlatList (moved before useEffect that uses it)
@@ -145,27 +173,6 @@ export default function TimerScreen() {
     });
   }, [subjectTree, subjectColorById, safeTheme.primary]);
 
-
-  // Group tasks by subject for timer display
-  const tasksBySubject = React.useMemo(() => {
-    const grouped: Record<string, { id: string; title: string; plannedMinutes: number | null; loggedSeconds: number }[]> = {};
-    
-    tasks
-      .filter((t) => t.status !== "done" && t.subjectId) // Safety filter
-      .forEach((task) => {
-        const subjectId = task.subjectId!;
-        const list = grouped[subjectId] ?? [];
-        list.push({
-          id: task.id,
-          title: task.title,
-          plannedMinutes: task.plannedMinutes ?? null,
-          loggedSeconds: task.loggedSeconds ?? 0,
-        });
-        grouped[subjectId] = list;
-      });
-    
-    return grouped;
-  }, [tasks]);
 
   // Check if we have a valid subject selected (must exist in tree AND in subjects list)
   // IMPORTANT: This must be defined BEFORE useFocusEffect, useEffect, and handleStart
@@ -195,7 +202,7 @@ export default function TimerScreen() {
     }, [refetchTasks])
   );
 
-  // Debug effect to log state changes
+  // Debug effect to log state changes (only in dev, excludes timer seconds updates)
   React.useEffect(() => {
     if (__DEV__) {
       console.log("=== INDEX PAGE STATE DEBUG ===");
@@ -210,6 +217,8 @@ export default function TimerScreen() {
       console.log("tasks.length:", tasks.length);
       console.log("subjectsLoading:", subjectsLoading);
     }
+    // Note: This effect intentionally excludes timer seconds to avoid spam
+    // Timer updates happen every second and are handled separately
   }, [
     user?.id,
     selectedSubjectId,
@@ -415,6 +424,7 @@ export default function TimerScreen() {
                         <React.Fragment key={sub.id}>
                           <ListItem
                             pointerEvents="box-none"
+                            isLast={sub.children.length > 0}
                             style={[
                               {
                                 backgroundColor: isRowActive
@@ -487,11 +497,6 @@ export default function TimerScreen() {
                                 >
                                   {sub.name}
                                 </Text>
-                                {sub.children.length > 0 && (
-                                  <Text variant="micro" colorName="textMuted">
-                                    {t("timer.subtagHint", "Choisis un sous-tag pour être précis")}
-                                  </Text>
-                                )}
                               </View>
                             </TouchableOpacity>
                           </ListItem>
@@ -541,48 +546,6 @@ export default function TimerScreen() {
                                   </TouchableOpacity>
                                 );
                               })}
-                              {tasksBySubject[sub.id]?.length ? (
-                                <View style={styles.taskChips}>
-                                  {tasksBySubject[sub.id].map((task) => {
-                                    const taskSelected = selectedTaskId === task.id;
-                                    return (
-                                      <TouchableOpacity
-                                        key={task.id}
-                                        style={[
-                                          styles.taskChip,
-                                          {
-                                            borderColor: subjectColor,
-                                            backgroundColor: taskSelected
-                                              ? hexToRgba(subjectColor, 0.24)
-                                              : safeTheme.surface,
-                                          },
-                                          disableRowInteraction && !taskSelected && { opacity: 0.6 },
-                                        ]}
-                                        onPress={() => {
-                                          console.log("Task chip selected", {
-                                            taskId: task.id,
-                                            taskTitle: task.title,
-                                            subjectId: sub.id,
-                                          });
-                                          setSelectedSubjectId(sub.id);
-                                          setSelectedTaskId(task.id);
-                                        }}
-                                      >
-                                        <Text
-                                          variant="micro"
-                                          style={
-                                            taskSelected
-                                              ? { color: textOnColor, fontWeight: "700" }
-                                              : undefined
-                                          }
-                                        >
-                                          {task.title}
-                                        </Text>
-                                      </TouchableOpacity>
-                                    );
-                                  })}
-                                </View>
-                              ) : null}
                             </View>
                           )}
                         </React.Fragment>
@@ -599,53 +562,112 @@ export default function TimerScreen() {
                   </Text>
                 </View>
               ) : (
-                <FlatList
-                  ref={tasksListRef}
-                  data={tasks.filter((t) => t.status !== "done" && t.subjectId)}
-                  keyExtractor={(item) => item.id}
-                  contentContainerStyle={styles.taskList}
-                  style={styles.list}
-                  ListEmptyComponent={
-                    <View style={styles.loaderContainer}>
-                      <Text colorName="textMuted">
-                        {t("timer.tasksEmpty", "Aucune tâche active")}
-                      </Text>
-                    </View>
-                  }
-                  renderItem={({ item: task }) => {
-                    const isSelected = selectedTaskId === task.id;
-                    return (
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => {
-                          console.log("Task selected", {
-                            taskId: task.id,
-                            taskTitle: task.title,
-                            subjectId: task.subjectId,
-                          });
-                          if (task.subjectId) {
-                            setSelectedSubjectId(task.subjectId);
-                          }
-                          setSelectedTaskId(task.id);
-                        }}
-                        style={[
-                          isSelected && {
-                            backgroundColor: hexToRgba(safeTheme.primary, 0.08),
-                            borderRadius: 12,
-                            marginBottom: 8,
-                            padding: 4,
-                          },
-                        ]}
-                      >
-                        <TaskCard
-                          task={task}
-                          subjects={subjects}
-                          showActions={false}
-                        />
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
+                <ListCard style={{ marginBottom: 0 }}>
+                  {tasks
+                    .filter((t) => t.status !== "done" && t.subjectId)
+                    .map((task, index, array) => {
+                      const isSelected = selectedTaskId === task.id;
+                      const isLast = index === array.length - 1;
+                      
+                      // Get subject info
+                      const subjectName = task.subjectName || 
+                        subjects.find((s) => s.id === task.subjectId)?.name || 
+                        t("tasks.form.subject");
+                      const taskSubjectId = task.subjectId!;
+                      const taskSubjectColor = subjectColorById[taskSubjectId] ?? safeTheme.primary;
+                      const textOnColor = getReadableTextColor(taskSubjectColor);
+                      
+                      // Calculate time info
+                      const planned = task.plannedMinutes ?? 0;
+                      const loggedMinutes = Math.round(task.loggedSeconds / 60);
+                      
+                      // Format date
+                      const todayIso = getTodayIso();
+                      const formattedDate = task.scheduledFor 
+                        ? (formatDateLabel(task.scheduledFor, todayIso) === "Today" 
+                            ? t("tasks.today") 
+                            : formatDateLabel(task.scheduledFor, todayIso))
+                        : null;
+                      
+                      return (
+                        <ListItem
+                          key={task.id}
+                          isLast={isLast}
+                          pointerEvents="box-none"
+                          style={[
+                            {
+                              backgroundColor: isSelected
+                                ? hexToRgba(taskSubjectColor, 0.16)
+                                : "transparent",
+                            },
+                            isSelected && { shadowOpacity: 0.08, shadowRadius: 6 },
+                          ]}
+                        >
+                          <TouchableOpacity
+                            activeOpacity={0.9}
+                            style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
+                            onPress={() => {
+                              console.log("Task selected", {
+                                taskId: task.id,
+                                taskTitle: task.title,
+                                subjectId: task.subjectId,
+                              });
+                              if (task.subjectId) {
+                                setSelectedSubjectId(task.subjectId);
+                              }
+                              setSelectedTaskId(task.id);
+                            }}
+                          >
+                            {/* SELECTION BUTTON */}
+                            <TouchableOpacity
+                              style={[
+                                styles.subjectPlayButton,
+                                { backgroundColor: taskSubjectColor },
+                              ]}
+                              onPress={() => {
+                                console.log("Task selected (play button)", {
+                                  taskId: task.id,
+                                  taskTitle: task.title,
+                                  subjectId: task.subjectId,
+                                });
+                                if (task.subjectId) {
+                                  setSelectedSubjectId(task.subjectId);
+                                }
+                                setSelectedTaskId(task.id);
+                              }}
+                            >
+                              {isSelected ? (
+                                <Check size={20} color={textOnColor} strokeWidth={2.5} />
+                              ) : (
+                                <Circle size={20} color={textOnColor} strokeWidth={2} fill="none" />
+                              )}
+                            </TouchableOpacity>
+
+                            {/* TASK CONTENT */}
+                            <View style={styles.taskContent}>
+                              <View style={styles.taskHeader}>
+                                <Text
+                                  variant="subtitle"
+                                  style={[isSelected ? { fontWeight: "600" } : undefined, { flex: 1 }]}
+                                >
+                                  {task.title}
+                                </Text>
+                                <Text variant="micro" colorName="textMuted" style={styles.timeLabel}>
+                                  {planned > 0
+                                    ? `${loggedMinutes}/${planned} min`
+                                    : `${loggedMinutes} min`}
+                                </Text>
+                              </View>
+                              <Text variant="micro" colorName="textMuted" style={styles.taskMeta}>
+                                {subjectName}
+                                {formattedDate && ` • ${formattedDate}`}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        </ListItem>
+                      );
+                    })}
+                </ListCard>
               )
             )}
             </View>
@@ -868,6 +890,21 @@ function createStyles(theme: typeof Colors.light) {
       backgroundColor: theme.secondaryTint,
     },
     subjectInfo: { flex: 1 },
+    taskContent: {
+      flex: 1,
+      gap: 6,
+    },
+    taskHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    timeLabel: {
+      marginRight: 8,
+    },
+    taskMeta: {
+      marginTop: 2,
+    },
     subtagRow: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -881,19 +918,6 @@ function createStyles(theme: typeof Colors.light) {
       paddingVertical: 6,
       borderRadius: 12,
     },
-    taskChips: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 6,
-      paddingHorizontal: 6,
-      paddingVertical: 4,
-    },
-    taskChip: {
-      borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-    },
     // Note: Typography handled by Themed Text component with variant prop
     list: {
       flex: 1,
@@ -902,7 +926,6 @@ function createStyles(theme: typeof Colors.light) {
       alignItems: "center",
       paddingVertical: 40,
     },
-    taskList: { paddingBottom: 180, gap: 6 },
     toggleSubjectsButton: {
       marginTop: 10,
       paddingVertical: 10,

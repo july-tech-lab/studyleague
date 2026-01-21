@@ -1,24 +1,25 @@
 import { TabScreen } from "@/components/layout/TabScreen";
 import { Text } from "@/components/Themed";
-import { SubjectPicker, TaskCard } from "@/components/ui";
+import { SubjectPicker } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ListCard, ListItem } from "@/components/ui/ListCard";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useTasks } from "@/hooks/useTasks";
 import { useAuth } from "@/utils/authContext";
+import { createSubjectColorMap } from "@/utils/color";
 import { Task } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { formatDateLabel, getTodayIso } from "@/utils/time";
 import { useFocusEffect } from "expo-router";
-import { CalendarClock, Plus } from "lucide-react-native";
+import { CalendarClock, Check, Plus, RotateCcw, Trash2 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   StyleSheet,
   View,
 } from "react-native";
@@ -50,8 +51,9 @@ export default function TasksScreen() {
   });
 
   const {
-    subjects, // All subjects (parents + children) - needed for TaskCard lookup
+    subjects, // All subjects (parents + children) - needed for task subject lookup
     parentSubjects, // Only parent subjects - for SubjectPicker
+    subjectTree, // Tree structure for color mapping
     loading: subjectsLoading,
     selectedSubjectId,
     selectedSubject,
@@ -60,6 +62,15 @@ export default function TasksScreen() {
     userId: user?.id ?? null,
     autoLoad: true,
   });
+
+  // Create color map for subjects
+  const subjectColorById = useMemo(() => {
+    return createSubjectColorMap(
+      subjectTree,
+      theme.subjectPalette ?? [],
+      theme.primary
+    );
+  }, [subjectTree, theme.subjectPalette, theme.primary]);
 
   const formatScheduledLabel = useCallback(
     (value?: string | null) => {
@@ -172,7 +183,7 @@ export default function TasksScreen() {
             />
           </View>
           <View style={styles.formRow}>
-            <View style={{ flex: 1 }}>
+            <View style={styles.subjectPickerContainer}>
               <SubjectPicker
                 subjects={parentSubjects}
                 selectedSubjectId={selectedSubjectId}
@@ -190,16 +201,18 @@ export default function TasksScreen() {
                 </Text>
               )}
             </View>
-            <Input
-              placeholder={t("tasks.form.minutes")}
-              value={newTaskMinutes}
-              onChangeText={setNewTaskMinutes}
-              returnKeyType="done"
-              onSubmitEditing={handleAddTask}
-              blurOnSubmit
-              keyboardType="numeric"
-              containerStyle={{ width: 110 }}
-            />
+            <View style={styles.minutesInputContainer}>
+              <Input
+                placeholder={t("tasks.form.minutes")}
+                value={newTaskMinutes}
+                onChangeText={setNewTaskMinutes}
+                returnKeyType="done"
+                onSubmitEditing={handleAddTask}
+                blurOnSubmit
+                keyboardType="numeric"
+                containerStyle={{ width: 110 }}
+              />
+            </View>
           </View>
           <Button
             title={t("tasks.form.add")}
@@ -225,28 +238,96 @@ export default function TasksScreen() {
             <View style={{ alignItems: "center", paddingVertical: 40 }}>
               <ActivityIndicator size="large" color={theme.primary} />
             </View>
+          ) : orderedTasks.length === 0 ? (
+            <View style={{ alignItems: "center", paddingVertical: 40 }}>
+              <Text variant="micro" colorName="textMuted" style={styles.emptyText}>
+                {t("tasks.emptyState")}
+              </Text>
+            </View>
           ) : (
-            <FlatList
-              data={orderedTasks}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item: task }) => (
-                <TaskCard
-                  task={task}
-                  subjects={subjects}
-                  onDelete={handleDeleteTask}
-                  onResume={viewMode === "done" ? handleResumeTask : undefined}
-                  onComplete={viewMode !== "done" ? handleCompleteTask : undefined}
-                  formatScheduledLabel={formatScheduledLabel}
-                />
-              )}
-              ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-              ListEmptyComponent={
-                <Text variant="micro" colorName="textMuted" style={styles.emptyText}>
-                  {t("tasks.emptyState")}
-                </Text>
-              }
-              scrollEnabled={false}
-            />
+            <ListCard>
+              {orderedTasks.map((task, index) => {
+                const subject = subjects.find((s) => s.id === task.subjectId);
+                const subjectLabel = task.subjectName || subject?.name || t("tasks.form.subject");
+                const planned = task.plannedMinutes ?? 0;
+                const loggedMinutes = Math.round(task.loggedSeconds / 60);
+                const isLast = index === orderedTasks.length - 1;
+
+                const subjectColor = task.subjectId
+                  ? subjectColorById[task.subjectId] ?? theme.primary
+                  : theme.primary;
+
+                return (
+                  <ListItem key={task.id} isLast={isLast}>
+                    <View style={styles.taskContent}>
+                      <View style={styles.taskHeader}>
+                        {task.subjectId && (
+                          <View
+                            style={[
+                              styles.subjectColorBadge,
+                              { backgroundColor: subjectColor },
+                            ]}
+                          />
+                        )}
+                        <Text variant="subtitle" style={{ fontWeight: "600", flex: 1 }}>
+                          {task.title}
+                        </Text>
+                        <Text variant="micro" colorName="textMuted" style={styles.timeLabel}>
+                          {planned > 0
+                            ? `${loggedMinutes}/${planned} min`
+                            : `${loggedMinutes} min`}
+                        </Text>
+                        <View style={styles.actionButtons}>
+                          {viewMode === "done" ? (
+                            <>
+                              <Button
+                                iconLeft={RotateCcw}
+                                iconOnly
+                                variant="ghost"
+                                size="sm"
+                                onPress={() => handleResumeTask(task)}
+                                accessibilityLabel={t("tasks.resume")}
+                              />
+                              <Button
+                                iconLeft={Trash2}
+                                iconOnly
+                                variant="ghost"
+                                size="sm"
+                                onPress={() => handleDeleteTask(task.id)}
+                                accessibilityLabel={t("tasks.delete", "Delete task")}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                iconLeft={Check}
+                                iconOnly
+                                variant="ghost"
+                                size="sm"
+                                onPress={() => handleCompleteTask(task)}
+                                accessibilityLabel={t("tasks.completeNow")}
+                              />
+                              <Button
+                                iconLeft={Trash2}
+                                iconOnly
+                                variant="ghost"
+                                size="sm"
+                                onPress={() => handleDeleteTask(task.id)}
+                                accessibilityLabel={t("tasks.delete", "Delete task")}
+                              />
+                            </>
+                          )}
+                        </View>
+                      </View>
+                      <Text variant="micro" colorName="textMuted" style={styles.taskMeta}>
+                        {subjectLabel}
+                        {task.scheduledFor ? ` • ${formatScheduledLabel(task.scheduledFor)}` : ""}
+                      </Text>
+                    </View>
+                  </ListItem>
+                );
+              })}
+            </ListCard>
           )}
         </View>
     </TabScreen>
@@ -274,11 +355,19 @@ const createStyles = (theme: typeof Colors.light) =>
     gap: 8,
   },
   cardTitle: { fontWeight: "700" },
-  emptyText: {},
+  emptyText: {
+    textAlign: "center",
+  },
   formRow: {
     flexDirection: "row",
     gap: 10,
-    alignItems: "center",
+    alignItems: "flex-start",
+  },
+  subjectPickerContainer: {
+    flex: 1,
+  },
+  minutesInputContainer: {
+    alignSelf: "flex-start",
   },
   addButton: {
     marginTop: 8,
@@ -292,5 +381,31 @@ const createStyles = (theme: typeof Colors.light) =>
   helperText: {
     marginTop: 4,
     marginLeft: 4,
+  },
+  taskContent: {
+    flex: 1,
+    gap: 6,
+  },
+  taskHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  subjectColorBadge: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  timeLabel: {
+    marginRight: 8,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginRight: -4,
+  },
+  taskMeta: {
+    marginTop: 2,
   },
 });

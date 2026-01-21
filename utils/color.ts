@@ -94,10 +94,15 @@ export const getReadableTextColor = (hex: string | null | undefined): string => 
 
 /**
  * Creates a mapping of subject IDs to colors based on their position in the subject tree.
- * Uses custom_color if available, otherwise uses a color palette, cycling through colors 
- * for parent subjects and assigning the same color to all children of a parent.
+ * Priority order:
+ * 1. custom_color (user-specific override from user_subjects)
+ * 2. color (global subject color from subjects table)
+ * 3. palette color (cycled based on index)
+ * 4. defaultColor (fallback)
  * 
- * @param subjectTree - Tree structure of subjects with custom_color property
+ * Assigns the same color to all children of a parent (unless child has its own custom_color).
+ * 
+ * @param subjectTree - Tree structure of subjects with custom_color and color properties
  * @param palette - Array of color hex strings to cycle through
  * @param defaultColor - Fallback color if palette is empty (default: theme primary)
  * @returns Record mapping subject ID to color hex string
@@ -107,24 +112,24 @@ export const getReadableTextColor = (hex: string | null | undefined): string => 
  * // Returns: { "subj1": "#60B3E3", "subj1-child": "#60B3E3", "subj2": "#26BD93", ... }
  */
 export function createSubjectColorMap(
-  subjectTree: { id: string; custom_color?: string | null; children: { id: string; custom_color?: string | null }[] }[],
+  subjectTree: { id: string; custom_color?: string | null; color?: string | null; children: { id: string; custom_color?: string | null; color?: string | null }[] }[],
   palette: string[],
   defaultColor: string
 ): Record<string, string> {
   const map: Record<string, string> = {};
   
   subjectTree.forEach((parent, index) => {
-    // Use custom_color if available, otherwise use palette
-    const color = parent.custom_color ?? (palette.length > 0 
+    // Priority: custom_color (user override) > color (global) > palette > default
+    const color = parent.custom_color ?? parent.color ?? (palette.length > 0 
       ? palette[index % palette.length] 
       : defaultColor);
     
     // Assign color to parent
     map[parent.id] = color;
     
-    // Assign same color to all children (or use child's custom_color if available)
+    // Assign same color to all children (or use child's custom_color/color if available)
     parent.children.forEach((child) => {
-      map[child.id] = child.custom_color ?? color;
+      map[child.id] = child.custom_color ?? child.color ?? color;
     });
   });
   
@@ -133,32 +138,37 @@ export function createSubjectColorMap(
 
 /**
  * Creates a mapping of subject IDs to colors from a flat array of subjects.
- * Uses custom_color if available, otherwise cycles through a color palette based on index.
+ * Priority order:
+ * 1. custom_color (user-specific override from user_subjects)
+ * 2. color (global subject color from subjects table)
+ * 3. palette color (cycled based on index)
+ * 4. defaultColor (fallback)
+ * 
  * This is a simpler version for flat arrays (unlike createSubjectColorMap which handles tree structures).
  * 
- * @param subjects - Flat array of subjects with custom_color property
+ * @param subjects - Flat array of subjects with custom_color and color properties
  * @param palette - Array of color hex strings to cycle through
  * @param defaultColor - Fallback color if palette is empty (default: theme primary)
  * @returns Record mapping subject ID to color hex string
  * 
  * @example
  * const colorMap = createSubjectColorMapFromFlat(
- *   [{ id: "1", custom_color: null }, { id: "2", custom_color: "#FF0000" }],
+ *   [{ id: "1", custom_color: null, color: "#FF0000" }, { id: "2", custom_color: "#00FF00" }],
  *   ["#60B3E3", "#26BD93"],
  *   "#4AC9CC"
  * );
- * // Returns: { "1": "#60B3E3", "2": "#FF0000" }
+ * // Returns: { "1": "#FF0000", "2": "#00FF00" }
  */
 export function createSubjectColorMapFromFlat(
-  subjects: { id: string; custom_color?: string | null }[],
+  subjects: { id: string; custom_color?: string | null; color?: string | null }[],
   palette: string[],
   defaultColor: string
 ): Record<string, string> {
   const map: Record<string, string> = {};
   
   subjects.forEach((subject, index) => {
-    // Use custom_color if available, otherwise use palette based on index
-    map[subject.id] = subject.custom_color ?? (
+    // Priority: custom_color (user override) > color (global) > palette > default
+    map[subject.id] = subject.custom_color ?? subject.color ?? (
       palette.length > 0 
         ? palette[index % palette.length] 
         : defaultColor

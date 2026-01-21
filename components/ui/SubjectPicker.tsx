@@ -1,16 +1,15 @@
 import { Text } from "@/components/Themed";
+import { createSubjectColorMap } from "@/utils/color";
 import { Subject } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
-import Colors from "@/constants/Colors";
-import { createSubjectColorMap } from "@/utils/color";
 import { ChevronDown } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export interface SubjectPickerProps {
@@ -46,12 +45,13 @@ export function SubjectPicker({
 
   const selectedSubject = displaySubjects.find((s) => s.id === selectedSubjectId) ?? null;
 
-  // Create color map for subjects (using custom_color if available)
+  // Create color map for subjects (using custom_color and color from database)
   const subjectColorMap = useMemo(() => {
     const subjectTree = displaySubjects.map((s) => ({
       id: s.id,
       custom_color: s.custom_color,
-      children: [] as { id: string; custom_color?: string | null }[],
+      color: s.color,
+      children: [] as { id: string; custom_color?: string | null; color?: string | null }[],
     }));
     return createSubjectColorMap(subjectTree, theme.subjectPalette ?? [], theme.primary);
   }, [displaySubjects, theme.subjectPalette, theme.primary]);

@@ -34,7 +34,7 @@ const withFocusMode = (config) => {
     return config;
   });
 
-  // iOS: Add com.apple.developer.family-controls entitlement
+  // iOS: Add com.apple.developer.family-controls entitlement and App Groups
   config = withEntitlementsPlist(config, (config) => {
     const entitlements = config.modResults;
     
@@ -44,6 +44,24 @@ const withFocusMode = (config) => {
     
     // Add the family-controls entitlement
     config.modResults['com.apple.developer.family-controls'] = true;
+    
+    // Add App Groups entitlement for persisting FamilyActivitySelection
+    // Note: You'll need to manually add the App Group capability in Xcode
+    // The group identifier should be: group.com.juliemaitre.studyleague
+    const bundleIdentifier = config.ios?.bundleIdentifier || config.android?.package || 'com.juliemaitre.studyleague';
+    const appGroupIdentifier = `group.${bundleIdentifier}`;
+    
+    if (!config.modResults['com.apple.security.application-groups']) {
+      config.modResults['com.apple.security.application-groups'] = [];
+    }
+    
+    // Add App Group if not already present
+    const appGroups = config.modResults['com.apple.security.application-groups'];
+    if (Array.isArray(appGroups) && !appGroups.includes(appGroupIdentifier)) {
+      appGroups.push(appGroupIdentifier);
+    } else if (!Array.isArray(appGroups)) {
+      config.modResults['com.apple.security.application-groups'] = [appGroupIdentifier];
+    }
     
     return config;
   });

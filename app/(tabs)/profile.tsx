@@ -328,21 +328,28 @@ export default function ProfileScreen() {
   }, [filteredSubjects, newSubjectName]);
 
   // Build hierarchical subject tree (includes both parents and children)
+  // Use subjects (visible) for the Subjects tab
   const subjectTree = useMemo(
     () => buildSubjectTree(subjects),
     [subjects]
   );
 
+  // Build tree from allSubjects for Stats tab (subjectTotals may include hidden subjects)
+  const allSubjectsTree = useMemo(
+    () => buildSubjectTree(allSubjects),
+    [allSubjects]
+  );
+
   // Create color map for subjects using shared utility with tree structure
-  // Use allSubjects to ensure we have colors for all subjects (including those in subjectTotals)
+  // Use allSubjects to ensure consistent colors across all pages (profile, index) and for all subjects
+  // This ensures subjects in subjectTotals (which may not be in subjects) get the same colors
   const subjectColorById = useMemo(() => {
-    const allSubjectsTree = buildSubjectTree(allSubjects);
     return createSubjectColorMap(
       allSubjectsTree,
       theme.subjectPalette ?? [],
       theme.primary
     );
-  }, [allSubjects, theme.subjectPalette, theme.primary]);
+  }, [allSubjectsTree, theme.subjectPalette, theme.primary]);
 
   const handleAddExistingSubject = async (subject: Subject) => {
     if (!user?.id) return;
@@ -610,14 +617,18 @@ export default function ProfileScreen() {
 
                     <ListCard>
                       {subjectTotals.map((row) => {
-                        // Find the parent subject in the tree to get its children
-                        const parentNode = subjectTree.find((node) => node.id === row.parentId);
+                        // Find the parent subject in allSubjectsTree (not just visible subjects)
+                        // because subjectTotals may include subjects that are hidden but have study time
+                        const parentNode = allSubjectsTree.find((node) => node.id === row.parentId);
                         const subjectColor = subjectColorById[row.parentId] ?? theme.primary;
                         
                         return (
                           <React.Fragment key={row.parentId}>
                             {/* Parent subject with total time */}
-                            <ListItem pointerEvents="box-none">
+                            <ListItem 
+                              pointerEvents="box-none"
+                              isLast={parentNode && parentNode.children.length > 0}
+                            >
                               <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
                                 <View
                                   style={[
@@ -636,7 +647,12 @@ export default function ProfileScreen() {
                             {parentNode?.children.map((child) => {
                               const childColor = subjectColorById[child.id] ?? subjectColor;
                               return (
-                                <ListItem key={child.id} pointerEvents="box-none" style={{ paddingLeft: 24 }}>
+                                <ListItem 
+                                  key={child.id} 
+                                  pointerEvents="box-none" 
+                                  paddingHorizontal={8}
+                                  style={{ paddingLeft: 24, paddingRight: 8 }}
+                                >
                                   <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
                                     <View
                                       style={[
@@ -647,7 +663,7 @@ export default function ProfileScreen() {
                                     <Text variant="body" colorName="textMuted">{child.name}</Text>
                                   </View>
                                   <View style={styles.subjectActions} pointerEvents="box-none">
-                                    <Text variant="caption" colorName="textMuted">—</Text>
+                                    <Text variant="body" colorName="textMuted">—</Text>
                                   </View>
                                 </ListItem>
                               );
@@ -703,7 +719,10 @@ export default function ProfileScreen() {
                   return (
                     <React.Fragment key={parent.id}>
                       {/* Parent subject */}
-                      <ListItem pointerEvents="box-none">
+                      <ListItem 
+                        pointerEvents="box-none"
+                        isLast={parent.children.length > 0}
+                      >
                         <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
                           <View
                             style={[
