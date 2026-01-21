@@ -1,0 +1,5 @@
+We have run an sql to add some display order and custom color in the UserSubject table.
+@20250116_add_subject_customization.sql (1-23) 
+
+Can you make sure they are used in the timer / task page.
+Ideally we want the ability to pick a color in the profile page (Custom_color) within a range of subject palette colors. Default value would need to be added first

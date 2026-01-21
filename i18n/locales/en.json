@@ -1,0 +1,351 @@
+{
+  "brand": "StudyLeague",
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "newPassword": "New password",
+    "or": "or",
+    "loading": "Loading...",
+    "forgotPassword": "Forgot password?",
+    "backToSignIn": "Back to sign in",
+    "errorUnexpected": "Unexpected error.",
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save",
+    "saving": "Saving...",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "join": "Join",
+    "search": "Search"
+  },
+  "auth": {
+    "placeholders": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "signin": {
+      "title": "Sign in",
+      "errorMissing": "Email and password are required.",
+      "button": "Sign in",
+      "buttonLoading": "Signing in...",
+      "footerText": "No account?",
+      "footerLink": "Sign up",
+      "googleFailed": "Google sign-in failed.",
+      "appleOnlyIOS": "Apple Sign-In is available on iOS only.",
+      "appleFailed": "Apple sign-in failed.",
+      "connectError": "Unable to sign in."
+    },
+    "signup": {
+      "title": "Create your account",
+      "errorMissing": "Email and password are required.",
+      "errorTerms": "Please accept the terms.",
+      "button": "Create my account",
+      "buttonLoading": "Creating...",
+      "alertCreated": "Account created! Check your email to confirm.",
+      "footerText": "Already have an account?",
+      "footerLink": "Sign in",
+      "createError": "Unable to create the account.",
+      "terms": "I accept the terms and privacy policy"
+    },
+    "resetRequest": {
+      "title": "Reset password",
+      "errorMissing": "Please enter your email.",
+      "sent": "A reset email has been sent. Open it to continue.",
+      "errorSend": "Unable to send the email.",
+      "button": "Send link",
+      "buttonLoading": "Sending...",
+      "back": "Back to sign in"
+    },
+    "resetComplete": {
+      "title": "New password",
+      "subtitle": "Choose a new password to finish resetting.",
+      "placeholderNew": "New password",
+      "placeholderConfirm": "Confirm password",
+      "errorMissing": "Please enter and confirm the password.",
+      "errorMismatch": "Passwords do not match.",
+      "errorMissingLink": "Reset link missing.",
+      "errorMissingCode": "Reset code not found.",
+      "errorGeneric": "Unable to update password.",
+      "success": "Password updated. Redirecting...",
+      "button": "Update",
+      "buttonLoading": "Updating..."
+    },
+    "verifyEmail": {
+      "title": "Check your email",
+      "subtitle": "Confirm your address to finish creating your account.",
+      "instructions": "We sent a confirmation link. Open it from your inbox, then come back and continue.",
+      "instructionsWithEmail": "We sent a confirmation link to {{email}}. Open it from your inbox, then come back and continue.",
+      "button": "Resend email",
+      "buttonLoading": "Sending...",
+      "sent": "Verification email sent.",
+      "errorSend": "Unable to send the email.",
+      "errorMissingKnown": "We need your email to resend. Try signing in again.",
+      "continue": "I've verified my email",
+      "notVerified": "We could not find a verified session yet. Open the link from your email, then try again.",
+      "back": "Back to sign in"
+    }
+  },
+  "onboarding": {
+    "fillProfile": {
+      "title": "Complete your profile",
+      "displayNamePlaceholder": "Username",
+      "categoryLabel": "Category · Pick your level",
+      "errorDisplayName": "Display name must have at least 3 characters.",
+      "errorCategory": "Please pick a category.",
+      "saving": "Saving...",
+      "avatarCta": "Add a profile photo",
+      "avatarUploading": "Uploading...",
+      "avatarPermission": "Photo permission is required to choose an avatar.",
+      "avatarError": "Unable to upload the photo."
+    },
+    "displayNameTitle": "Choose a display name",
+    "displayNameSubtitle": "This is how others will see you.",
+    "displayNameLabel": "Display name",
+    "displayNamePlaceholder": "Username",
+    "displayNameError": "Pick a name with at least 3 characters.",
+    "categoryTitle": "Pick your level",
+    "categorySubtitle": "We’ll suggest subjects that match you.",
+    "categoryError": "Please select a category.",
+    "subjectsTitle": "Pick your subjects for {{category}}",
+    "subjectsSubtitle": "You can add more later from the timer tab.",
+    "finish": "Finish",
+    "continue": "Continue",
+    "skipForNow": "Skip for now",
+    "categoryMissingTitle": "Category missing",
+    "categoryMissingSubtitle": "Choose a category to see subjects.",
+    "backToCategory": "Back to categories",
+    "userMissing": "User session missing. Please sign in again.",
+    "userMissingTitle": "You're signed out",
+    "userMissingMessage": "Reconnect to finish setting up your profile."
+  },
+  "tabs": {
+    "focus": "Focus",
+    "tasks": "Planner",
+    "stats": "Stats",
+    "league": "League",
+    "leaderboard": "Leaderboard",
+    "groups": "Groups",
+    "profile": "Profile"
+  },
+  "timer": {
+    "focusOn": "Focus On",
+    "inProgress": "In progress",
+    "ready": "Ready to start",
+    "subjectMissing": "Pick a subject",
+    "subtagHint": "Use a sub-tag to be precise",
+    "startButton": "Start",
+    "chooseSubjectHint": "Choose a subject to start",
+    "stop": "Stop",
+    "sessionFinishedTitle": "Session finished!",
+    "sessionFinishedMessage": "Great! {{minutes}} minutes of {{subject}} saved.",
+    "errorTitle": "Error",
+    "errorSave": "Unable to save.",
+    "addSubjectTitle": "Add a subject",
+    "addSubjectPlaceholder": "Subject name",
+    "saving": "Saving...",
+    "tabSubjects": "Subjects",
+    "tabTasks": "Tasks",
+    "tasksEmpty": "No active tasks",
+    "cancel": "Cancel",
+    "create": "Create",
+    "createNew": "Create new"
+  },
+  "groups": {
+    "title": "Groups",
+    "myGroups": "My groups",
+    "publicGroups": "Available public groups",
+    "noGroupsYet": "No groups yet",
+    "noPublicGroups": "No public groups available",
+    "searchPlaceholder": "Group code or name",
+    "code": "Code",
+    "adminApprovalRequired": "Admin approval required",
+    "passwordRequired": "Password required",
+    "create": {
+      "title": "Create a group",
+      "namePlaceholder": "Group name",
+      "descriptionPlaceholder": "Description (optional)",
+      "inviteCodeInfo": "The invitation code will be generated automatically.",
+      "passwordPlaceholder": "Group password (optional)",
+      "visibility": "Visibility",
+      "public": "Public",
+      "private": "Private",
+      "adminApproval": "Admin approval required",
+      "creating": "..."
+    },
+    "joinModal": {
+      "title": "Join {{name}}",
+      "adminWillApprove": "The admin will need to approve your request.",
+      "passwordPlaceholder": "Group password",
+      "noPasswordRequired": "This group does not require a password.",
+      "joining": "..."
+    },
+    "errors": {
+      "loadError": "Error loading groups",
+      "unknownError": "Unknown error",
+      "loadPublicError": "Error loading public groups",
+      "nameRequired": "Name required",
+      "createError": "Error creating group",
+      "addCreatorError": "Error adding creator to group",
+      "alreadyMember": "Already a member of this group",
+      "invalidPassword": "Incorrect password",
+      "notPublic": "This group is not public",
+      "joinError": "Error joining group",
+      "searchError": "Search failed",
+      "notFound": "No group found for this code"
+    },
+    "success": {
+      "requestSent": "Request sent",
+      "approvalNeeded": "Group admin approval is required."
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "errorLoading": "Unable to load leaderboard.",
+    "empty": "No data for this period.",
+    "period": {
+      "week": "Weekly",
+      "month": "Monthly",
+      "year": "Yearly"
+    }
+  },
+  "dashboard": {
+    "title": "My Overview",
+    "subtitle": "Stats: {{period}}",
+    "weeklyLabel": "Study time this week",
+    "goal": "Goal",
+    "activity": "Monthly activity",
+    "histogramTitle": "Study time over time",
+    "filterAll": "All subjects",
+    "selectSubject": "Select subject",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "period": {
+      "day": "Daily",
+      "week": "Weekly",
+      "month": "Monthly"
+    }
+  },
+  "profile": {
+    "defaultTitle": "My space",
+    "loading": "Loading...",
+    "error": "Unable to load data.",
+    "stats": {
+      "title": "My stats",
+      "totalTime": "Total time",
+      "thisMonth": "This month",
+      "streak": "Current streak",
+      "streakValue": "{{count}} days",
+      "streakRecord": "Record: {{count}}d",
+      "sessions": "Sessions",
+      "sessionsCompleted": "Completed",
+      "rank": "Leaderboard",
+      "average": "Average",
+      "perSession": "Per session"
+    },
+    "language": {
+      "label": "Language",
+      "english": "English",
+      "french": "French"
+    },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "tabs": {
+      "stats": "Stats",
+      "subjects": "Subjects",
+      "settings": "Settings"
+    },
+    "displayName": {
+      "title": "Display name",
+      "placeholder": "Your name",
+      "save": "Save",
+      "saving": "Saving...",
+      "success": "Display name updated.",
+      "error": "Name must be at least 3 characters.",
+      "errorSave": "Unable to update name."
+    },
+    "subjects": {
+      "title": "My subjects",
+      "empty": "No subjects yet",
+      "breakdownTitle": "Total time by subject",
+      "add": "Add",
+      "available": "Available subjects",
+      "moreAvailable": "+ more available subjects",
+      "createNew": "Create",
+      "create": "Create",
+      "searchPlaceholder": "Search or create a subject",
+      "searchResults": "Search results",
+      "noResults": "No results found",
+      "createHint": "Press \"Create\" to create a new subject named \"{{name}}\"",
+      "addError": "Unable to add the subject",
+      "delete": "Delete subject",
+      "deleteTitle": "Remove the subject?",
+      "deleteMessage": "This subject will be removed from your profile.",
+      "deleteErrorTitle": "Unable to remove",
+      "deleteError": "Please try again later.",
+      "customizeColor": "Customize color",
+      "colorPickerTitle": "Choose color",
+      "colorPickerSubtitle": "Select a color for {{name}}",
+      "defaultColor": "Default"
+    },
+    "account": {
+      "title": "Account",
+      "signOut": "Sign out",
+      "signOutLoading": "Signing out...",
+      "delete": "Delete account",
+      "deleting": "Deleting...",
+      "deleteTitle": "Delete account?",
+      "deleteMessage": "This will remove your data permanently.",
+      "deleteConfirm": "Delete",
+      "deleteErrorTitle": "Unable to delete account",
+      "deleteError": "Please try again."
+    }
+  },
+  "tasks": {
+    "title": "Planner",
+    "subtitle": "Organize study blocks and track time precisely.",
+    "today": "Today",
+    "form": {
+      "name": "Task name",
+      "subject": "Subject",
+      "selectSubject": "Select a subject",
+      "minutes": "Minutes",
+      "add": "Add to list",
+      "subjectRequired": "A subject must be selected to create a task"
+    },
+    "view": {
+      "active": "Active",
+      "done": "Done"
+    },
+    "status": {
+      "planned": "Planned",
+      "inProgress": "In progress",
+      "done": "Done"
+    },
+    "planBlock": "Plan a study block",
+    "timer": {
+      "active": "Active session",
+      "start": "Start",
+      "resume": "Resume",
+      "pause": "Pause",
+      "stop": "Stop & log",
+      "noTask": "Select a task to start"
+    },
+    "timerLabel": "Logged {{total}} / {{planned}} min planned",
+    "progress": "{{current}} / {{target}} min logged",
+    "loggedAlert": "Saved {{minutes}} min for {{task}}",
+    "resume": "Resume",
+    "completeNow": "Mark as done",
+    "emptyState": "No tasks yet. Add one to plan your focus."
+  }
+}

@@ -1,0 +1,46 @@
+-- ============================================================
+-- 1. Session-level aggregates per use
+-- ============================================================
+
+create or replace view session_overview as
+select
+  ss.user_id,
+  count(*)                                         as session_count,
+  coalesce(sum(ss.duration_seconds), 0)            as total_seconds,
+  coalesce(
+    sum(ss.duration_seconds)
+      filter (where ss.started_at >= date_trunc('month', now())),
+    0
+  )                                                as month_seconds,
+  coalesce(avg(ss.duration_seconds), 0)            as avg_seconds
+from study_sessions ss
+group by ss.user_id;
+
+
+-- ============================================================
+-- 2. Subject totals by parent
+-- ============================================================
+
+create or replace view session_subject_totals as
+with base as (
+  select
+    ss.user_id,
+    ss.duration_seconds,
+    ss.started_at,
+    s.id                       as subject_id,
+    coalesce(s.parent_subject_id, s.id) as parent_id,
+    coalesce(parent.name, s.name)       as parent_name,
+    s.parent_subject_id is null as is_root
+  from study_sessions ss
+  join subjects s on s.id = ss.subject_id
+  left join subjects parent on parent.id = s.parent_subject_id
+)
+select
+  user_id,
+  parent_id,
+  parent_name,
+  coalesce(sum(duration_seconds), 0)                                        as total_seconds,
+  coalesce(sum(duration_seconds) filter (where is_root), 0)                 as direct_seconds,
+  coalesce(sum(duration_seconds) filter (where not is_root), 0)             as subtag_seconds
+from base
+group by user_id, parent_id, parent_name;

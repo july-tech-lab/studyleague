@@ -1,0 +1,51 @@
+1) Install EAS CLI (once)
+npm i -g eas-cli
+
+2) Login to Expo (once)
+eas login
+
+3) Make sure your project has an Expo config
+
+You should have app.json (or app.config.js).
+(If you already do, skip.)
+
+4) Install expo-updates
+npx expo install expo-updates
+
+5) Configure EAS Update (adds config to app.json)
+npx eas update:configure
+
+6) Create EAS project + build config
+npx eas build:configure
+
+7) Do your first build (required to enable updates)
+
+Pick one:
+
+Android
+
+npx eas build --platform android
+
+
+iOS
+
+npx eas build --platform ios
+
+
+Both
+
+npx eas build --platform all
+
+8) Publish updates later (no rebuild needed)
+npx eas update --branch main --message "My update"
+
+9) (Optional but recommended) Use a preview branch for testing
+npx eas update --branch preview --message "Test update"
+
+Quick notes
+
+Steps 1–2 are one-time setup.
+
+Step 7 (first build) is the key step that makes EAS Update work on installed apps.
+
+If you tell me whether you’re building iOS, Android, or both, I’ll tailor the exact commands (and the right eas.json profiles) to your setup.

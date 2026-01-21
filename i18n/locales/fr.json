@@ -1,0 +1,344 @@
+{
+  "brand": "StudyLeague",
+  "common": {
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirme le mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "or": "ou",
+    "loading": "Chargement...",
+    "forgotPassword": "Mot de passe oublié ?",
+    "backToSignIn": "Retour à la connexion",
+    "errorUnexpected": "Erreur inattendue.",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "delete": "Supprimer",
+    "deleting": "Suppression...",
+    "join": "Rejoindre",
+    "search": "Chercher"
+  },
+  "auth": {
+    "placeholders": {
+      "email": "Email",
+      "password": "Mot de passe"
+    },
+    "signin": {
+      "title": "Connexion",
+      "errorMissing": "Email et mot de passe sont requis.",
+      "button": "Se connecter",
+      "buttonLoading": "Connexion...",
+      "footerText": "Pas de compte ?",
+      "footerLink": "Inscris-toi",
+      "googleFailed": "Connexion Google échouée.",
+      "appleOnlyIOS": "Apple Sign-In est disponible uniquement sur iOS.",
+      "appleFailed": "Connexion Apple échouée.",
+      "connectError": "Impossible de se connecter."
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "errorMissing": "Email et mot de passe sont requis.",
+      "errorTerms": "Merci d'accepter les conditions.",
+      "button": "Créer mon compte",
+      "buttonLoading": "Création...",
+      "alertCreated": "Compte créé ! Vérifie ton email pour valider ton compte.",
+      "footerText": "Déjà un compte ?",
+      "footerLink": "Connecte-toi",
+      "createError": "Impossible de créer le compte.",
+      "terms": "J'accepte les conditions et la confidentialité"
+    },
+    "resetRequest": {
+      "title": "Réinitialiser le mot de passe",
+      "errorMissing": "Veuillez entrer votre email.",
+      "sent": "Un email de réinitialisation a été envoyé. Ouvre-le pour continuer.",
+      "errorSend": "Impossible d'envoyer l'email.",
+      "button": "Envoyer le lien",
+      "buttonLoading": "Envoi...",
+      "back": "Retour à la connexion"
+    },
+    "resetComplete": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisis un nouveau mot de passe pour terminer la réinitialisation.",
+      "placeholderNew": "Nouveau mot de passe",
+      "placeholderConfirm": "Confirme le mot de passe",
+      "errorMissing": "Merci de renseigner et confirmer le mot de passe.",
+      "errorMismatch": "Les mots de passe ne correspondent pas.",
+      "errorMissingLink": "Lien de réinitialisation manquant.",
+      "errorMissingCode": "Code de réinitialisation introuvable.",
+      "errorGeneric": "Impossible de mettre à jour.",
+      "success": "Mot de passe mis à jour. Redirection...",
+      "button": "Mettre à jour",
+      "buttonLoading": "Mise à jour..."
+    },
+    "verifyEmail": {
+      "title": "Vérifie tes e-mails",
+      "subtitle": "Confirme ton adresse pour finaliser ton compte.",
+      "instructions": "Nous avons envoyé un lien de confirmation. Ouvre-le depuis ta boîte mail puis reviens continuer.",
+      "instructionsWithEmail": "Nous avons envoyé un lien de confirmation à {{email}}. Ouvre-le depuis ta boîte mail puis reviens continuer.",
+      "button": "Renvoyer l'e-mail",
+      "buttonLoading": "Envoi...",
+      "sent": "E-mail de vérification envoyé.",
+      "errorSend": "Impossible d'envoyer l'e-mail.",
+      "errorMissingKnown": "Nous avons besoin de ton e-mail pour renvoyer. Réessaie en te reconnectant.",
+      "continue": "J'ai vérifié mon e-mail",
+      "notVerified": "Nous ne trouvons pas encore de session confirmée. Ouvre le lien reçu par e-mail puis réessaie.",
+      "back": "Retour à la connexion"
+    }
+  },
+  "onboarding": {
+    "fillProfile": {
+      "title": "Complète ton profil",
+      "displayNamePlaceholder": "Nom d'utilisateur",
+      "categoryLabel": "Choisis ton niveau",
+      "errorDisplayName": "Le pseudo doit faire au moins 3 caractères.",
+      "errorCategory": "Merci de choisir une catégorie.",
+      "saving": "Enregistrement...",
+      "avatarCta": "Ajouter une photo de profil",
+      "avatarUploading": "Envoi...",
+      "avatarPermission": "Autorise l'accès aux photos pour choisir un avatar.",
+      "avatarError": "Impossible de téléverser la photo."
+    },
+
+    "subjectsTitle": "Choisis tes matières pour {{category}}",
+    "subjectsSubtitle": "Tu pourras en ajouter d'autres plus tard depuis le timer.",
+    "finish": "Terminer",
+    "continue": "Continuer",
+    "skipForNow": "Passer pour l'instant",
+    "categoryMissingTitle": "Catégorie manquante",
+    "categoryMissingSubtitle": "Choisis une catégorie pour voir les matières.",
+    "backToCategory": "Revenir aux catégories",
+    "userMissing": "Session utilisateur manquante. Reconnecte-toi.",
+    "userMissingTitle": "Tu es déconnecté(e)",
+    "userMissingMessage": "Reconnecte-toi pour finir la configuration."
+  },
+  "tabs": {
+    "focus": "Focus",
+    "tasks": "Planning",
+    "stats": "Stats",
+    "league": "League",
+    "leaderboard": "Classement",
+    "groups": "Groupes",
+    "profile": "Profil"
+  },
+  "timer": {
+    "focusOn": "Focus Activé",
+    "inProgress": "En cours",
+    "ready": "Prêt à lancer",
+    "subjectMissing": "Sélectionne une matière",
+    "subtagHint": "Choisis un sous-tag pour être précis",
+    "startButton": "Démarrer",
+    "chooseSubjectHint": "Choisis une matière pour démarrer",
+    "stop": "Arrêter",
+    "sessionFinishedTitle": "Session terminée !",
+    "sessionFinishedMessage": "Bravo ! {{minutes}} minutes de {{subject}} enregistrées.",
+    "errorTitle": "Erreur",
+    "errorSave": "Impossible de sauvegarder.",
+    "addSubjectTitle": "Ajouter une matière",
+    "addSubjectPlaceholder": "Nom de la matière",
+    "saving": "Enregistrement...",
+    "tabSubjects": "Matières",
+    "tabTasks": "Tâches",
+    "tasksEmpty": "Aucune tâche active",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "createNew": "Créer une nouvelle"
+  },
+  "groups": {
+    "title": "Groupes",
+    "myGroups": "Mes groupes",
+    "publicGroups": "Groupes publics disponibles",
+    "noGroupsYet": "Aucun groupe pour l'instant",
+    "noPublicGroups": "Aucun groupe public disponible",
+    "searchPlaceholder": "Code ou nom du groupe",
+    "code": "Code",
+    "adminApprovalRequired": "Approbation admin requise",
+    "passwordRequired": "Mot de passe requis",
+    "create": {
+      "title": "Créer un groupe",
+      "namePlaceholder": "Nom du groupe",
+      "descriptionPlaceholder": "Description (optionnel)",
+      "inviteCodeInfo": "Le code d'invitation sera généré automatiquement.",
+      "passwordPlaceholder": "Mot de passe du groupe (optionnel)",
+      "visibility": "Visibilité",
+      "public": "Public",
+      "private": "Privé",
+      "adminApproval": "Approbation admin requise",
+      "creating": "..."
+    },
+    "joinModal": {
+      "title": "Rejoindre {{name}}",
+      "adminWillApprove": "L'admin devra approuver votre demande.",
+      "passwordPlaceholder": "Mot de passe du groupe",
+      "noPasswordRequired": "Ce groupe n'exige pas de mot de passe.",
+      "joining": "..."
+    },
+    "errors": {
+      "loadError": "Erreur chargement groupes",
+      "unknownError": "Erreur inconnue",
+      "loadPublicError": "Erreur chargement groupes publics",
+      "nameRequired": "Nom requis",
+      "createError": "Erreur création groupe",
+      "addCreatorError": "Erreur ajout du créateur au groupe",
+      "alreadyMember": "Déjà membre de ce groupe",
+      "invalidPassword": "Mot de passe incorrect",
+      "notPublic": "Ce groupe n'est pas public",
+      "joinError": "Erreur lors de la demande d'adhésion",
+      "searchError": "Recherche impossible",
+      "notFound": "Aucun groupe trouvé pour ce code"
+    },
+    "success": {
+      "requestSent": "Demande envoyée",
+      "approvalNeeded": "Une approbation de l'admin du groupe est nécessaire."
+    }
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "errorLoading": "Impossible de charger le classement.",
+    "empty": "Aucune donnée pour cette période.",
+    "period": {
+      "week": "Hebdomadaire",
+      "month": "Mensuel",
+      "year": "Annuel"
+    }
+  },
+  "dashboard": {
+    "title": "Mon Bilan",
+    "subtitle": "Statistiques : {{period}}",
+    "weeklyLabel": "Temps d’étude cette semaine",
+    "goal": "Objectif",
+    "activity": "Activité du mois",
+    "histogramTitle": "Temps d'étude au fil du temps",
+    "filterAll": "Toutes les matières",
+    "selectSubject": "Choisir une matière",
+    "days": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    },
+    "period": {
+      "day": "Quotidien",
+      "week": "Hebdomadaire",
+      "month": "Mensuel"
+    }
+  },
+  "profile": {
+    "defaultTitle": "Mon espace",
+    "loading": "Chargement...",
+    "error": "Impossible de charger les données.",
+    "stats": {
+      "title": "Mes stats",
+      "totalTime": "Temps total",
+      "thisMonth": "Ce mois",
+      "streak": "Série actuelle",
+      "streakValue": "{{count}} jours",
+      "streakRecord": "Record : {{count}}j",
+      "sessions": "Sessions",
+      "sessionsCompleted": "Complétées",
+      "rank": "Classement",
+      "average": "Moyenne",
+      "perSession": "Par session"
+    },
+    "language": {
+      "label": "Langue",
+      "english": "Anglais",
+      "french": "Français"
+    },
+    "theme": {
+      "label": "Thème",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "tabs": {
+      "stats": "Stats",
+      "subjects": "Matières",
+      "settings": "Réglages"
+    },
+    "displayName": {
+      "title": "Pseudo",
+      "placeholder": "Votre nom",
+      "save": "Enregistrer",
+      "saving": "Enregistrement...",
+      "success": "Nom mis à jour.",
+      "error": "Le nom doit faire au moins 3 caractères.",
+      "errorSave": "Impossible de mettre à jour le nom."
+    },
+    "subjects": {
+      "title": "Mes matières",
+      "empty": "Aucune matière pour l'instant",
+      "breakdownTitle": "Temps total par matière",
+      "add": "Ajouter",
+      "available": "Matières disponibles",
+      "moreAvailable": "+ de matières disponibles",
+      "createNew": "Créer",
+      "create": "Créer",
+      "searchPlaceholder": "Rechercher ou créer une matière",
+      "searchResults": "Résultats de recherche",
+      "noResults": "Aucun résultat trouvé",
+      "createHint": "Appuyez sur \"Créer\" pour créer une nouvelle matière nommée \"{{name}}\"",
+      "addError": "Impossible d'ajouter la matière",
+      "delete": "Supprimer la matière",
+      "deleteTitle": "Retirer la matière ?",
+      "deleteMessage": "Cette matière sera retirée de votre profil.",
+      "deleteErrorTitle": "Impossible de retirer",
+      "deleteError": "Réessayez plus tard.",
+      "customizeColor": "Personnaliser la couleur",
+      "colorPickerTitle": "Choisir une couleur",
+      "colorPickerSubtitle": "Sélectionnez une couleur pour {{name}}",
+      "defaultColor": "Par défaut"
+    },
+    "account": {
+      "title": "Compte",
+      "signOut": "Se déconnecter",
+      "signOutLoading": "Déconnexion...",
+      "delete": "Supprimer le compte",
+      "deleting": "Suppression...",
+      "deleteTitle": "Supprimer le compte ?",
+      "deleteMessage": "Cette action supprimera vos données de façon permanente.",
+      "deleteConfirm": "Supprimer",
+      "deleteErrorTitle": "Impossible de supprimer le compte",
+      "deleteError": "Réessaie plus tard."
+    }
+  },
+  "tasks": {
+    "title": "Planning",
+    "subtitle": "Organisez vos séances et suivez le temps précisément.",
+    "today": "Aujourd'hui",
+    "form": {
+      "name": "Nom de tâche",
+      "subject": "Matière",
+      "selectSubject": "Sélectionner une matière",
+      "minutes": "Minutes",
+      "add": "Ajouter à la liste",
+      "subjectRequired": "Une matière doit être sélectionnée pour créer une tâche"
+    },
+    "view": {
+      "active": "En cours",
+      "done": "Terminées"
+    },
+    "status": {
+      "planned": "Prévu",
+      "inProgress": "En cours",
+      "done": "Terminé"
+    },
+    "planBlock": "Ajouter une tâche",
+    "timer": {
+      "active": "Tâche active",
+      "start": "Démarrer",
+      "resume": "Reprendre",
+      "pause": "Pause",
+      "stop": "Arrêter et enregistrer",
+      "noTask": "Sélectionnez une tâche pour commencer"
+    },
+    "timerLabel": "Enregistré {{total}} / {{planned}} min prévues",
+    "progress": "{{current}} / {{target}} min enregistrées",
+    "loggedAlert": "{{minutes}} min ajoutées pour {{task}}",
+    "resume": "Reprendre",
+    "completeNow": "Marquer terminé",
+    "emptyState": "Pas encore de tâches. Ajoutez-en pour planifier votre focus."
+  }
+}

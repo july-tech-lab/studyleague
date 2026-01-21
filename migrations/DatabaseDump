@@ -1,0 +1,3 @@
+Get the updated full structure of the database
+
+pg_dump "postgresql://postgres.xyuriwchmebrwhfndoeo:WnEF2xc2mLl1OxBF@aws-1-eu-west-1.pooler.supabase.com:5432/postgres" --schema-only --no-owner --no-privileges > full_structure.sql

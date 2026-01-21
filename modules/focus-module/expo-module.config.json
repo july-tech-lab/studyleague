@@ -1,0 +1,12 @@
+{
+  "platforms": ["android", "ios"],
+  "android": {
+    "package": "expo.modules.focusmodule",
+    "modules": [
+      "expo.modules.focusmodule.FocusModule"
+    ]
+  },
+  "ios": {
+    "modules": ["FocusModule"]
+  }
+}
