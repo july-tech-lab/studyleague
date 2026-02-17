@@ -38,6 +38,7 @@
       "expo-router",
       "expo-font",
       "expo-localization",
+      "expo-system-ui",
       "./plugins/withFocusMode"
     ],
     "experiments": {

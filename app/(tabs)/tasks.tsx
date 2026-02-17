@@ -4,6 +4,7 @@ import { SubjectPicker } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListCard, ListItem } from "@/components/ui/ListCard";
+import { Modal } from "@/components/ui/Modal";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { useSubjects } from "@/hooks/useSubjects";
@@ -14,7 +15,7 @@ import { Task } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { formatDateLabel, getTodayIso } from "@/utils/time";
 import { useFocusEffect } from "expo-router";
-import { CalendarClock, Check, Plus, RotateCcw, Trash2 } from "lucide-react-native";
+import { Check, Plus, RotateCcw, Trash2 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,6 +36,7 @@ export default function TasksScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskMinutes, setNewTaskMinutes] = useState("");
   const [viewMode, setViewMode] = useState<"active" | "done">("active");
+  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   // Use hooks for tasks and subjects
   const {
@@ -117,6 +119,7 @@ export default function TasksScreen() {
       });
       setNewTaskTitle("");
       setNewTaskMinutes("");
+      setCreateModalVisible(false);
     } catch (err) {
       console.error("Error creating task", err);
       Alert.alert(t("timer.errorTitle"), t("timer.errorSave"));
@@ -161,69 +164,14 @@ export default function TasksScreen() {
   }, [tasks, viewMode]);
 
   return (
-    <TabScreen title={t("tasks.title")}>
-        <View style={[styles.card, { backgroundColor: theme.surface }]}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardTitleRow}>
-              <CalendarClock size={18} color={theme.textMuted} />
-              <Text variant="subtitle" style={styles.cardTitle}>
-                {t("tasks.planBlock")}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.formRow}>
-            <Input
-              placeholder={t("tasks.form.name")}
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
-              returnKeyType="done"
-              onSubmitEditing={handleAddTask}
-              blurOnSubmit
-              containerStyle={{ flex: 1 }}
-            />
-          </View>
-          <View style={styles.formRow}>
-            <View style={styles.subjectPickerContainer}>
-              <SubjectPicker
-                subjects={parentSubjects}
-                selectedSubjectId={selectedSubjectId}
-                onSelect={handleSubjectSelect}
-                loading={subjectsLoading}
-                placeholder={t("tasks.form.selectSubject", {
-                  defaultValue: "Select a subject",
-                })}
-                containerStyle={{ flex: 1 }}
-                parentsOnly={true}
-              />
-              {!selectedSubject && (
-                <Text variant="micro" colorName="textMuted" style={styles.helperText}>
-                  {t("tasks.form.subjectRequired")}
-                </Text>
-              )}
-            </View>
-            <View style={styles.minutesInputContainer}>
-              <Input
-                placeholder={t("tasks.form.minutes")}
-                value={newTaskMinutes}
-                onChangeText={setNewTaskMinutes}
-                returnKeyType="done"
-                onSubmitEditing={handleAddTask}
-                blurOnSubmit
-                keyboardType="numeric"
-                containerStyle={{ width: 110 }}
-              />
-            </View>
-          </View>
-          <Button
-            title={t("tasks.form.add")}
-            variant="primary"
-            iconLeft={Plus}
-            onPress={handleAddTask}
-            style={styles.addButton}
-            disabled={!selectedSubject}
-          />
-        </View>
-
+    <TabScreen
+      title={t("tasks.title")}
+      rightIcon={{
+        icon: Plus,
+        onPress: () => setCreateModalVisible(true),
+        accessibilityLabel: t("tasks.form.add"),
+      }}
+    >
         <View style={{ gap: 12 }}>
           <Tabs
             options={[
@@ -330,31 +278,73 @@ export default function TasksScreen() {
             </ListCard>
           )}
         </View>
+
+        <Modal
+          visible={createModalVisible}
+          onClose={() => setCreateModalVisible(false)}
+          title={t("tasks.planBlock")}
+          padding={20}
+          actions={{
+            cancel: {
+              label: t("common.cancel"),
+              onPress: () => setCreateModalVisible(false),
+              variant: "outline",
+            },
+            confirm: {
+              label: t("tasks.form.add"),
+              variant: "primary",
+              iconLeft: Plus,
+              onPress: handleAddTask,
+              disabled: !selectedSubject,
+            },
+          }}
+        >
+          <Input
+            placeholder={t("tasks.form.name")}
+            value={newTaskTitle}
+            onChangeText={setNewTaskTitle}
+            returnKeyType="done"
+            onSubmitEditing={handleAddTask}
+            blurOnSubmit
+            containerStyle={{ marginBottom: 12 }}
+          />
+          <View style={styles.formRow}>
+            <View style={styles.subjectPickerContainer}>
+              <SubjectPicker
+                subjects={parentSubjects}
+                selectedSubjectId={selectedSubjectId}
+                onSelect={handleSubjectSelect}
+                loading={subjectsLoading}
+                placeholder={t("tasks.form.selectSubject", {
+                  defaultValue: "Select a subject",
+                })}
+                containerStyle={{ flex: 1 }}
+                parentsOnly={true}
+              />
+              {!selectedSubject && (
+                <Text variant="micro" colorName="textMuted" style={styles.helperText}>
+                  {t("tasks.form.subjectRequired")}
+                </Text>
+              )}
+            </View>
+            <Input
+              placeholder={t("tasks.form.minutes")}
+              value={newTaskMinutes}
+              onChangeText={setNewTaskMinutes}
+              returnKeyType="done"
+              onSubmitEditing={handleAddTask}
+              blurOnSubmit
+              keyboardType="numeric"
+              containerStyle={{ width: 110 }}
+            />
+          </View>
+        </Modal>
     </TabScreen>
   );
 }
 
 const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
-  container: { flex: 1 },
-  card: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: theme.divider,
-    gap: 12,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  cardTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  cardTitle: { fontWeight: "700" },
   emptyText: {
     textAlign: "center",
   },
@@ -365,18 +355,6 @@ const createStyles = (theme: typeof Colors.light) =>
   },
   subjectPickerContainer: {
     flex: 1,
-  },
-  minutesInputContainer: {
-    alignSelf: "flex-start",
-  },
-  addButton: {
-    marginTop: 8,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    flexDirection: "row",
   },
   helperText: {
     marginTop: 4,

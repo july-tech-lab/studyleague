@@ -8,6 +8,7 @@ import {
   GroupVisibility,
   MembershipStatus,
   requestJoinGroup,
+  updateGroup as updateGroupQuery,
 } from "@/utils/queries";
 import { supabase } from "@/utils/supabase";
 
@@ -29,6 +30,13 @@ export interface UseGroupsReturn {
     join_password?: string | null;
   }) => Promise<Group>;
   joinGroup: (group: Group, password?: string | null) => Promise<MembershipStatus>;
+  updateGroup: (groupId: string, payload: {
+    name?: string;
+    description?: string | null;
+    visibility?: GroupVisibility;
+    requires_admin_approval?: boolean;
+    join_password?: string | null;
+  }) => Promise<Group>;
   searchGroupByCode: (code: string) => Promise<Group | null>;
   refetch: () => Promise<void>;
 }
@@ -147,6 +155,24 @@ export function useGroups({
     [userId, loadGroups]
   );
 
+  const handleUpdateGroup = useCallback(
+    async (
+      groupId: string,
+      payload: {
+        name?: string;
+        description?: string | null;
+        visibility?: GroupVisibility;
+        requires_admin_approval?: boolean;
+        join_password?: string | null;
+      }
+    ): Promise<Group> => {
+      const updated = await updateGroupQuery(groupId, payload);
+      await loadGroups();
+      return updated;
+    },
+    [loadGroups]
+  );
+
   const handleSearchGroupByCode = useCallback(
     async (code: string): Promise<Group | null> => {
       try {
@@ -174,6 +200,7 @@ export function useGroups({
     error,
     createGroup: handleCreateGroup,
     joinGroup: handleJoinGroup,
+    updateGroup: handleUpdateGroup,
     searchGroupByCode: handleSearchGroupByCode,
     refetch: loadGroups,
   };

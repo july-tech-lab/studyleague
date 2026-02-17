@@ -31,7 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+# .env.example should be committed as a template
 
 # typescript
 *.tsbuildinfo

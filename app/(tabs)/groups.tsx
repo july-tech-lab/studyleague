@@ -1,13 +1,17 @@
 import { TabScreen } from "@/components/layout/TabScreen";
+import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
+import { useGroups } from "@/hooks/useGroups";
 import { useAuth } from "@/utils/authContext";
+import { Group } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { useRouter } from "expo-router";
-import { Eye, EyeOff, Plus, Trophy, Users } from "lucide-react-native";
+import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Shield, Trophy, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -17,9 +21,6 @@ import {
   Switch,
   View,
 } from "react-native";
-import { Text } from "@/components/Themed";
-import { useGroups } from "@/hooks/useGroups";
-import { Group } from "@/utils/queries";
 
 export default function GroupsScreen() {
   const { user } = useAuth();
@@ -33,6 +34,7 @@ export default function GroupsScreen() {
     publicGroups,
     createGroup: createGroupHook,
     joinGroup: joinGroupHook,
+    updateGroup: updateGroupHook,
     searchGroupByCode: searchGroupByCodeHook,
   } = useGroups({
     userId: user?.id ?? null,
@@ -54,6 +56,64 @@ export default function GroupsScreen() {
   const [joinLoading, setJoinLoading] = useState(false);
   const [searchingCode, setSearchingCode] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [editGroupName, setEditGroupName] = useState("");
+  const [editGroupDescription, setEditGroupDescription] = useState("");
+  const [editGroupVisibility, setEditGroupVisibility] = useState<"public" | "private">("private");
+  const [editRequiresApproval, setEditRequiresApproval] = useState(false);
+  const [editGroupPassword, setEditGroupPassword] = useState("");
+  const [editShowGroupPassword, setEditShowGroupPassword] = useState(false);
+  const [groupTab, setGroupTab] = useState<"my" | "public">("my");
+
+  const [editPasswordChanged, setEditPasswordChanged] = useState(false);
+
+  const openEditModal = (g: Group) => {
+    setEditingGroup(g);
+    setEditGroupName(g.name);
+    setEditGroupDescription(g.description ?? "");
+    setEditGroupVisibility(g.visibility);
+    setEditRequiresApproval(g.requires_admin_approval);
+    setEditGroupPassword("");
+    setEditPasswordChanged(false);
+    setEditShowGroupPassword(false);
+  };
+
+  const closeEditModal = () => {
+    setEditingGroup(null);
+    setEditGroupName("");
+    setEditGroupDescription("");
+    setEditGroupVisibility("private");
+    setEditRequiresApproval(false);
+    setEditGroupPassword("");
+    setEditPasswordChanged(false);
+    setEditShowGroupPassword(false);
+  };
+
+  const handleUpdateGroup = async () => {
+    if (!editingGroup?.id || !editGroupName.trim()) {
+      Alert.alert(t("groups.errors.nameRequired"));
+      return;
+    }
+
+    setUpdateLoading(true);
+    try {
+      await updateGroupHook(editingGroup.id, {
+        name: editGroupName.trim(),
+        description: editGroupDescription.trim() || null,
+        visibility: editGroupVisibility,
+        requires_admin_approval: editRequiresApproval,
+        ...(editPasswordChanged && { join_password: editGroupPassword.trim() || null }),
+      });
+      closeEditModal();
+    } catch (error: any) {
+      console.error("Error updating group:", error);
+      const errorMessage = error?.message ?? t("groups.errors.unknownError");
+      Alert.alert(t("groups.edit.updateError"), errorMessage);
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
@@ -151,131 +211,177 @@ export default function GroupsScreen() {
     }
   };
 
-  const renderBadge = (visibility: Group["visibility"]) => (
-    <View
-      style={[
-        styles.badge,
-        {
-          borderColor: visibility === "public" ? theme.primaryDark : theme.textMuted,
-        },
-      ]}
-    >
-      <Text
-        variant="caption"
+  const renderBadge = (visibility: Group["visibility"]) => {
+    const isPublic = visibility === "public";
+    const Icon = isPublic ? Globe : Lock;
+    return (
+      <View
         style={[
-          styles.badgeText,
-          { color: visibility === "public" ? theme.primaryDark : theme.textMuted },
+          styles.badge,
+          {
+            backgroundColor: isPublic ? theme.primaryTint : theme.surfaceElevated,
+          },
         ]}
       >
-        {visibility === "public" ? t("groups.create.public") : t("groups.create.private")}
-      </Text>
-    </View>
+        <Icon size={12} color={isPublic ? theme.primaryDark : theme.textMuted} />
+        <Text
+          variant="caption"
+          style={[
+            styles.badgeText,
+            { color: isPublic ? theme.primaryDark : theme.textMuted },
+          ]}
+        >
+          {isPublic ? t("groups.create.public") : t("groups.create.private")}
+        </Text>
+      </View>
+    );
+  };
+
+  const renderGroupCard = (g: Group, showJoinButton: boolean) => {
+    const isCreator = g.created_by === user?.id;
+    return (
+    <Card variant="border" style={styles.groupCard}>
+      <View style={styles.groupCardContent}>
+        <View style={styles.groupCardMain}>
+          <View style={styles.groupCardHeader}>
+            <Text variant="subtitle" style={styles.groupTitle} numberOfLines={1}>
+              {g.name}
+            </Text>
+            <View style={styles.badgeRow}>
+              {renderBadge(g.visibility)}
+              {g.requires_admin_approval && (
+                <Shield size={16} color={theme.textMuted} style={styles.shieldIcon} />
+              )}
+            </View>
+          </View>
+          {g.description ? (
+            <Text variant="caption" colorName="textMuted" style={styles.groupDesc} numberOfLines={2}>
+              {g.description}
+            </Text>
+          ) : null}
+          <View style={styles.memberRow}>
+            <Users size={14} color={theme.textMuted} />
+            <Text variant="caption" colorName="textMuted" style={styles.memberCount}>
+              {t("groups.membersCount", { count: g.member_count ?? 0 })}
+            </Text>
+          </View>
+          <View style={styles.groupMetaRow}>
+            <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
+              {t("groups.code")}: {g.invite_code}
+            </Text>
+            {g.requires_admin_approval ? (
+              <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
+                {t("groups.adminApprovalRequired")}
+              </Text>
+            ) : null}
+            {g.has_password ? (
+              <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
+                {t("groups.passwordRequired")}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+        <View style={styles.groupCardActions}>
+          {showJoinButton ? (
+            <Button
+              title={t("groups.joinGroup")}
+              variant="primary"
+              onPress={() => setSelectedGroup(g)}
+              size="sm"
+              style={styles.joinButton}
+            />
+          ) : isCreator ? (
+            <Button
+              iconLeft={Pencil}
+              iconOnly
+              variant="secondary"
+              size="sm"
+              onPress={() => openEditModal(g)}
+              accessibilityLabel={t("groups.edit.title")}
+              style={styles.editButton}
+            />
+          ) : null}
+        </View>
+      </View>
+    </Card>
   );
+};
 
   return (
     <TabScreen
       title={t("groups.title", "Groupes")}
-      rightIcon={{
-        icon: Trophy,
-        onPress: () => router.push("/(tabs)/leaderboard"),
-      }}
-    >
-        <Text variant="h2" style={{ marginTop: 12, marginBottom: 12 }}>
-          {t("groups.myGroups")}
-        </Text>
-        {groups.length === 0 ? (
-          <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
-            {t("groups.noGroupsYet")}
-          </Text>
-        ) : (
-          groups.map((g) => (
-            <Pressable key={g.id}>
-              <Card variant="border" style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Users size={22} color={theme.primary} />
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text variant="subtitle" style={styles.groupTitle}>{g.name}</Text>
-                  {renderBadge(g.visibility)}
-                </View>
-                {g.description ? (
-                  <Text variant="micro" colorName="textMuted" style={styles.groupDesc}>
-                    {g.description}
-                  </Text>
-                ) : null}
-              </View>
-              </Card>
-            </Pressable>
-          ))
-        )}
-
-        <Text variant="h2" style={{ marginTop: 24, marginBottom: 12 }}>
-          {t("groups.publicGroups")}
-        </Text>
-        <View style={styles.searchRow}>
-          <Input
-            placeholder={t("groups.searchPlaceholder", "Code ou nom du groupe")}
-            value={searchCode}
-            onChangeText={setSearchCode}
-            containerStyle={{ flex: 1 }}
+      rightAction={
+        <View style={styles.headerActions}>
+          <Button
+            iconLeft={Trophy}
+            iconOnly
+            variant="secondary"
+            size="lg"
+            onPress={() => router.push("/(tabs)/leaderboard")}
+            accessibilityLabel={t("groups.leaderboard", "Leaderboard")}
+            style={styles.headerIconButton}
           />
           <Button
-            title={searchingCode ? "..." : t("groups.search", "Chercher")}
+            iconLeft={Plus}
+            iconOnly
             variant="primary"
-            onPress={handleSearchGroupByCode}
-            disabled={searchingCode}
-            loading={searchingCode}
-            size="sm"
+            size="lg"
+            onPress={() => setModalVisible(true)}
+            accessibilityLabel={t("groups.create.title", "Create group")}
+            style={styles.headerIconButton}
           />
         </View>
-        {publicGroups.length === 0 ? (
-          <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
-            {t("groups.noPublicGroups", "Aucun groupe public disponible")}
-          </Text>
-        ) : (
-          filteredPublicGroups.map((g) => (
-            <Card key={g.id} variant="border" style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Users size={22} color={theme.primary} />
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text variant="subtitle" style={styles.groupTitle}>{g.name}</Text>
-                  {renderBadge(g.visibility)}
-                </View>
-                {g.description ? (
-                  <Text variant="micro" colorName="textMuted" style={styles.groupDesc}>
-                    {g.description}
-                  </Text>
-                ) : null}
-                <Text variant="caption" colorName="textMuted" style={styles.groupMeta}>
-                  {t("groups.code", "Code")}: {g.invite_code}
-                </Text>
-                {g.requires_admin_approval ? (
-                  <Text variant="caption" colorName="textMuted" style={styles.groupMeta}>
-                    {t("groups.adminApprovalRequired", "Approbation admin requise")}
-                  </Text>
-                ) : null}
-                {g.has_password ? (
-                  <Text variant="caption" colorName="textMuted" style={styles.groupMeta}>
-                    {t("groups.passwordRequired", "Mot de passe requis")}
-                  </Text>
-                ) : null}
-              </View>
-              <Button
-                title={t("groups.join", "Rejoindre")}
-                variant="outline"
-                onPress={() => setSelectedGroup(g)}
-                size="sm"
-              />
-            </Card>
-          ))
-        )}
+      }
+    >
+        <View style={{ gap: 12 }}>
+          <View style={styles.searchRow}>
+            <Input
+              placeholder={t("groups.searchPlaceholder", "Search...")}
+              value={searchCode}
+              onChangeText={setSearchCode}
+              leftIcon={Search}
+              containerStyle={{ flex: 1 }}
+              onSubmitEditing={handleSearchGroupByCode}
+            />
+            <Button
+              title={searchingCode ? "..." : t("groups.search", "Search")}
+              variant="primary"
+              onPress={handleSearchGroupByCode}
+              disabled={searchingCode || !searchCode.trim()}
+              loading={searchingCode}
+              size="sm"
+            />
+          </View>
 
-      <Button
-        iconLeft={Plus}
-        iconOnly
-        variant="primary"
-        onPress={() => setModalVisible(true)}
-        style={styles.addButton}
-      />
+          <Tabs
+            options={[
+              { value: "my", label: `${t("groups.myGroups")} (${groups.length})` },
+              { value: "public", label: `${t("groups.publicGroups")} (${publicGroups.length})` },
+            ]}
+            value={groupTab}
+            onChange={(v) => setGroupTab(v as "my" | "public")}
+          />
+
+          {groupTab === "my" ? (
+            groups.length === 0 ? (
+              <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
+                {t("groups.noGroupsYet")}
+              </Text>
+            ) : (
+              groups.map((g) => <View key={g.id}>{renderGroupCard(g, false)}</View>)
+            )
+          ) : (
+            <>
+              {publicGroups.length === 0 ? (
+                <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
+                  {t("groups.noPublicGroups", "Aucun groupe public disponible")}
+                </Text>
+              ) : (
+                filteredPublicGroups.map((g) => <View key={g.id}>{renderGroupCard(g, true)}</View>)
+              )}
+            </>
+          )}
+        </View>
 
       <Modal
         visible={modalVisible}
@@ -371,6 +477,97 @@ export default function GroupsScreen() {
       </Modal>
 
       <Modal
+        visible={!!editingGroup}
+        onClose={closeEditModal}
+        title={t("groups.edit.title")}
+        padding={20}
+        actions={{
+          cancel: {
+            label: t("common.cancel"),
+            onPress: closeEditModal,
+            variant: "outline",
+          },
+          confirm: {
+            label: updateLoading ? t("groups.edit.updating") : t("common.save"),
+            onPress: handleUpdateGroup,
+            variant: "primary",
+            disabled: updateLoading,
+            loading: updateLoading,
+          },
+        }}
+      >
+        <Input
+          placeholder={t("groups.create.namePlaceholder")}
+          value={editGroupName}
+          onChangeText={setEditGroupName}
+          containerStyle={{ marginBottom: 16 }}
+        />
+
+        <Input
+          placeholder={t("groups.create.descriptionPlaceholder")}
+          value={editGroupDescription}
+          onChangeText={setEditGroupDescription}
+          containerStyle={{ marginBottom: 10 }}
+        />
+
+        <Input
+          placeholder={t("groups.edit.passwordPlaceholder")}
+          value={editGroupPassword}
+          secureTextEntry={!editShowGroupPassword}
+          rightIcon={editShowGroupPassword ? EyeOff : Eye}
+          onRightIconPress={() => setEditShowGroupPassword((v) => !v)}
+          onChangeText={(text) => {
+            setEditGroupPassword(text);
+            setEditPasswordChanged(true);
+          }}
+          containerStyle={{ marginBottom: 10 }}
+        />
+
+        <View style={[styles.toggleRow, { marginBottom: 10 }]}>
+          <Text variant="bodyStrong">{t("groups.create.visibility")}</Text>
+          <View style={styles.toggleChips}>
+            {(["private", "public"] as const).map((value) => (
+              <Pressable
+                key={value}
+                onPress={() => setEditGroupVisibility(value)}
+                style={[
+                  styles.chip,
+                  {
+                    borderColor:
+                      editGroupVisibility === value ? theme.primaryDark : theme.divider,
+                    backgroundColor:
+                      editGroupVisibility === value
+                        ? theme.primaryDark + "22"
+                        : theme.surface,
+                  },
+                ]}
+              >
+                <Text
+                  variant="subtitle"
+                  style={{
+                    color: editGroupVisibility === value ? theme.primaryDark : theme.text,
+                    fontWeight: "600",
+                  }}
+                >
+                  {value === "public" ? t("groups.create.public") : t("groups.create.private")}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.toggleRow}>
+          <Text variant="bodyStrong">{t("groups.create.adminApproval")}</Text>
+          <Switch
+            value={editRequiresApproval}
+            onValueChange={setEditRequiresApproval}
+            trackColor={{ false: theme.divider, true: theme.primary }}
+            thumbColor={editRequiresApproval ? theme.primaryDark : "#f4f3f4"}
+          />
+        </View>
+      </Modal>
+
+      <Modal
         visible={!!selectedGroup}
         onClose={() => {
           setSelectedGroup(null);
@@ -426,23 +623,59 @@ const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
     emptyText: { marginTop: 40 },
-    // NOTE: groupCard style removed - now using Card component
-    groupTitle: { fontWeight: "700" },
-    groupDesc: {},
+    groupCard: { marginBottom: 12 },
+    groupCardContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    groupCardMain: { flex: 1, minWidth: 0 },
+    groupCardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      marginBottom: 4,
+    },
+    groupTitle: { fontWeight: "700", flex: 1 },
+    badgeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
     badge: {
-      borderWidth: 1,
-      borderRadius: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 12,
       paddingHorizontal: 8,
-      paddingVertical: 2,
+      paddingVertical: 4,
+      gap: 4,
     },
     badgeText: { fontWeight: "600" },
-    addButton: {
-      position: "absolute",
-      bottom: 26,
-      right: 22,
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+    shieldIcon: { marginLeft: 2 },
+    groupDesc: { marginBottom: 6 },
+    memberRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    memberCount: {},
+    groupMetaRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+    groupMeta: {},
+    groupCardActions: { alignSelf: "flex-start" },
+    joinButton: {},
+    editButton: {},
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    headerIconButton: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      minWidth: 56,
+      minHeight: 56,
     },
     // NOTE: Modal styles removed - now using Modal component from components/ui
     toggleRow: {
@@ -460,7 +693,5 @@ const createStyles = (theme: typeof Colors.light) =>
       paddingHorizontal: 10,
       paddingVertical: 6,
     },
-    groupMeta: {},
-    // NOTE: primaryButton and outlineButton styles removed - now using Button component
     searchRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   });

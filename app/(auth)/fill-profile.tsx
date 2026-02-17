@@ -1,22 +1,22 @@
+import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Text } from "@/components/Themed";
-import Colors from "@/constants/Colors";
-import { useTheme } from "@/utils/themeContext";
 import {
   CATEGORY_DEFINITIONS,
   type CategoryDefinition,
   type CategoryId,
 } from "@/constants/categories";
+import Colors from "@/constants/Colors";
 import { useAuth } from "@/utils/authContext";
 import {
   attachSubjectToUser,
   createAndAttachSubject,
   fetchSubjects,
   fetchUserSubjects,
-  upsertUserProfile,
   uploadAvatar,
+  upsertUserProfile,
 } from "@/utils/queries";
+import { useTheme } from "@/utils/themeContext";
 import * as ImagePicker from "expo-image-picker";
 import * as Localization from "expo-localization";
 import { useRouter } from "expo-router";

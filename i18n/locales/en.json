@@ -78,11 +78,17 @@
       "instructionsWithEmail": "We sent a confirmation link to {{email}}. Open it from your inbox, then come back and continue.",
       "button": "Resend email",
       "buttonLoading": "Sending...",
-      "sent": "Verification email sent.",
+      "sent": "Email sent!",
       "errorSend": "Unable to send the email.",
+      "errorMissingEmail": "No email address found.",
       "errorMissingKnown": "We need your email to resend. Try signing in again.",
+      "errorRateLimit": "Please wait a moment before trying again.",
+      "errorSecurity": "Please wait a few seconds.",
+      "openMailApp": "Open Mail App",
       "continue": "I've verified my email",
       "notVerified": "We could not find a verified session yet. Open the link from your email, then try again.",
+      "resend": "Resend email",
+      "resendCooldown": "Resend in {{count}}s",
       "back": "Back to sign in"
     }
   },
@@ -149,16 +155,35 @@
     "tasksEmpty": "No active tasks",
     "cancel": "Cancel",
     "create": "Create",
-    "createNew": "Create new"
+    "createNew": "Create new",
+    "focusModeRequired": "Focus mode required",
+    "focusModeRequiredDescription": "Study time is only recorded when focus mode is active. This blocks distracting apps and notifications.",
+    "focusModeActive": "Focus mode active",
+    "focusModeDisabled": "Focus mode disabled",
+    "sessionNotRecorded": "Session not recorded — focus mode was required",
+    "sessionRecorded": "{{minutes}} minutes recorded with focus mode",
+    "grantPermission": "Grant permission",
+    "permissionDenied": "Permission denied — cannot track time",
+    "noAppsSelected": "Select apps to block first",
+    "noAppsSelectedDescription": "Please select apps to block during study sessions (e.g., WhatsApp, Snapchat, Instagram).",
+    "selectApps": "Select apps",
+    "focusModeLost": "Focus mode disabled — timer paused",
+    "resumeRequiresFocus": "Re-enable focus mode to resume",
+    "permissionRequestTitle": "Focus Mode Permission",
+    "permissionRequestMessage": "To track study time, we need permission to enable focus mode. This helps you stay focused by blocking distracting apps.",
+    "permissionRequestIOS": "On iOS, you'll also need to select which apps to block.",
+    "openSettings": "Open settings"
   },
   "groups": {
     "title": "Groups",
     "myGroups": "My groups",
-    "publicGroups": "Available public groups",
+    "publicGroups": "Public groups",
     "noGroupsYet": "No groups yet",
     "noPublicGroups": "No public groups available",
     "searchPlaceholder": "Group code or name",
     "code": "Code",
+    "joinGroup": "Join Group",
+    "membersCount": "{{count}} members",
     "adminApprovalRequired": "Admin approval required",
     "passwordRequired": "Password required",
     "create": {
@@ -172,6 +197,12 @@
       "private": "Private",
       "adminApproval": "Admin approval required",
       "creating": "..."
+    },
+    "edit": {
+      "title": "Edit group",
+      "updating": "Saving...",
+      "passwordPlaceholder": "New password (leave blank to keep current)",
+      "updateError": "Error updating group"
     },
     "joinModal": {
       "title": "Join {{name}}",
@@ -235,6 +266,7 @@
   },
   "profile": {
     "defaultTitle": "My space",
+    "userFallback": "User",
     "loading": "Loading...",
     "error": "Unable to load data.",
     "stats": {
@@ -248,6 +280,7 @@
       "sessionsCompleted": "Completed",
       "rank": "Leaderboard",
       "average": "Average",
+      "avgSession": "Avg Session",
       "perSession": "Per session"
     },
     "language": {
@@ -267,6 +300,7 @@
     },
     "displayName": {
       "title": "Display name",
+      "hint": "Your display name can be updated below as required.",
       "placeholder": "Your name",
       "save": "Save",
       "saving": "Saving...",
@@ -309,6 +343,19 @@
       "deleteConfirm": "Delete",
       "deleteErrorTitle": "Unable to delete account",
       "deleteError": "Please try again."
+    },
+    "studyMode": {
+      "title": "Study Mode",
+      "description": "Block distracting apps during study sessions.",
+      "permissionStatus": "Permission Status",
+      "permissionGranted": "Focus mode permission is granted",
+      "permissionNotGranted": "Focus mode permission is required to track study time",
+      "grantPermission": "Grant Permission",
+      "appsToBlock": "Apps to Block",
+      "appsDescription": "Select which apps should be blocked during study sessions (e.g., WhatsApp, Snapchat, Instagram).",
+      "selectApps": "Select Apps",
+      "appsSelected": "Apps Selected",
+      "appsSelectedMessage": "Your app selection has been saved. These apps will be blocked when you start a study session."
     }
   },
   "tasks": {

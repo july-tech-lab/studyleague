@@ -1,0 +1,14 @@
+# Initialize Git: 
+git init
+
+# Review changes
+git status
+
+# Add files
+git add .
+
+# Commit changes
+git commit -m "Configure environment variables"
+
+# Push if needed
+git push origin main

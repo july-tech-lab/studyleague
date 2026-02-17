@@ -1,6 +1,6 @@
-import { useTheme } from "@/utils/themeContext";
-import Colors from "@/constants/Colors";
 import { Text } from "@/components/Themed";
+import Colors from "@/constants/Colors";
+import { useTheme } from "@/utils/themeContext";
 import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
 
 export type TabOption<T extends string = string> = {

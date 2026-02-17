@@ -1,15 +1,16 @@
+import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import Colors from "@/constants/Colors";
-import { Text } from "@/components/Themed";
+import { useTheme } from "@/utils/themeContext";
 import { LucideIcon } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@/utils/themeContext";
 
 export interface HeaderProps {
   title: string;
   subtitle?: string;
+  leftAction?: React.ReactNode;
   rightAction?: React.ReactNode;
   rightIcon?: {
     icon: LucideIcon;
@@ -21,7 +22,7 @@ export interface HeaderProps {
   theme?: typeof Colors.light;
 }
 
-export default function Header({ title, subtitle, rightAction, rightIcon, theme }: HeaderProps) {
+export default function Header({ title, subtitle, leftAction, rightAction, rightIcon, theme }: HeaderProps) {
   const defaultTheme = useTheme();
   const headerTheme = theme ?? defaultTheme;
   const insets = useSafeAreaInsets();
@@ -36,11 +37,11 @@ export default function Header({ title, subtitle, rightAction, rightIcon, theme 
             iconLeft={IconComponent}
             iconOnly
             variant="primary"
-            size="md"
+            size="lg"
             onPress={rightIcon.onPress}
             disabled={rightIcon.disabled}
             accessibilityLabel={rightIcon.accessibilityLabel}
-            style={[styles.headerIconButton, { backgroundColor: "transparent" }]}
+            style={styles.headerIconButton}
           />
           {rightIcon.badge && (
             <View style={styles.badgeContainer}>{rightIcon.badge}</View>
@@ -57,29 +58,30 @@ export default function Header({ title, subtitle, rightAction, rightIcon, theme 
   const rightActionElement = renderRightAction();
 
   return (
-    <View style={[styles.header, { backgroundColor: headerTheme.primaryDark }]}>
+    <View style={[styles.header, { backgroundColor: headerTheme.background }]}>
+      {leftAction && (
+        <View style={styles.leftActionContainer}>{leftAction}</View>
+      )}
       <View style={styles.titleContainer}>
-        <Text 
-          variant="h1" 
-          style={{ color: headerTheme.onPrimaryDark }}
-          align="center"
+        <Text
+          variant="h1"
+          style={{ color: headerTheme.text }}
+          align="left"
         >
           {title}
         </Text>
         {subtitle && (
-          <Text 
-            variant="subtitle" 
-            style={{ color: headerTheme.onPrimaryDark, opacity: 0.85 }}
-            align="center"
+          <Text
+            variant="subtitle"
+            style={{ color: headerTheme.textMuted }}
+            align="left"
           >
             {subtitle}
           </Text>
         )}
       </View>
       {rightActionElement && (
-        <View style={[styles.rightActionContainer, { top: insets.top + 30 }]}>
-          {rightActionElement}
-        </View>
+        <View style={styles.rightActionContainer}>{rightActionElement}</View>
       )}
     </View>
   );
@@ -98,7 +100,7 @@ const createStyles = (theme: typeof Colors.light, insets: { top: number }) =>
     },
     titleContainer: {
       flex: 1,
-      alignItems: "center",
+      alignItems: "flex-start",
       justifyContent: "center",
     },
     headerSubtitle: {
@@ -108,10 +110,13 @@ const createStyles = (theme: typeof Colors.light, insets: { top: number }) =>
       marginTop: 4,
       textAlign: "center",
     },
+    leftActionContainer: {
+      marginRight: 12,
+      justifyContent: "center",
+    },
     rightActionContainer: {
-      position: "absolute",
-      right: 24,
-      // top is set dynamically based on safe area insets
+      marginLeft: 8,
+      justifyContent: "center",
     },
     rightActionWrapper: {
       // Wrapper for custom rightAction to maintain positioning
@@ -122,7 +127,11 @@ const createStyles = (theme: typeof Colors.light, insets: { top: number }) =>
       justifyContent: "center",
     },
     headerIconButton: {
-      // Button component handles sizing via iconOnly prop
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      minWidth: 56,
+      minHeight: 56,
     },
     badgeContainer: {
       position: "absolute",

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/Themed";
 import Colors from "@/constants/Colors";
+import { hexToRgba } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 import { useAuth } from "@/utils/authContext";
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
@@ -250,10 +251,14 @@ const createStyles = (theme: typeof Colors.light) => {
     Platform.select<ViewStyle>({
       web: { boxShadow: "0px 4px 12px rgba(47,75,78,0.08)" } as ViewStyle,
       default: {
-        shadowColor: theme.primary,
-        shadowOpacity: 0.08,
-        shadowOffset: { width: 0, height: 4 },
-        shadowRadius: 8,
+        boxShadow: [
+          {
+            offsetX: 0,
+            offsetY: -4,
+            blurRadius: 8,
+            color: hexToRgba(theme.primary, 0.08),
+          },
+        ],
         elevation: 3,
       },
     }) || {};

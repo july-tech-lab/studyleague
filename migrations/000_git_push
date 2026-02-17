@@ -1,5 +1,0 @@
-Initialize Git: git init
-
-Add your files: git add .
-
-Commit: git commit -m "Before native prebuild"

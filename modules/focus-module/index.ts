@@ -1,4 +1,4 @@
-import { NativeModule, requireNativeModule } from 'expo-modules-core';
+import { NativeModule, Platform, requireNativeModule } from 'expo-modules-core';
 
 declare class FocusModule extends NativeModule {
   checkPermission(): Promise<boolean>;
@@ -8,4 +8,18 @@ declare class FocusModule extends NativeModule {
   getSelectedApps(): boolean;
 }
 
-export default requireNativeModule<FocusModule>('FocusModule');
+// Web fallback - focus mode is not available on web
+const webFallback: FocusModule = {
+  checkPermission: async () => false,
+  requestPermission: async () => {},
+  presentFamilyActivityPicker: async () => {},
+  setFocusMode: async (_enabled: boolean) => {},
+  getSelectedApps: () => false,
+} as FocusModule;
+
+// Only require native module on iOS/Android
+const FocusModuleInstance: FocusModule = Platform.OS === 'web' 
+  ? webFallback
+  : (requireNativeModule<FocusModule>('FocusModule') as FocusModule);
+
+export default FocusModuleInstance;

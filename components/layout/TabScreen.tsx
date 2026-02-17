@@ -4,10 +4,12 @@ import { View, StyleSheet } from "react-native";
 
 interface TabScreenProps extends Omit<ScreenProps, "variant" | "safeTop"> {
   // Header props
-  title: string;
+  title?: string;
   subtitle?: string;
+  leftAction?: React.ReactNode;
   rightAction?: React.ReactNode;
   rightIcon?: HeaderProps["rightIcon"];
+  hideHeader?: boolean;
   
   // Screen props (variant and safeTop are fixed for tabs)
   variant?: never; // Prevent setting variant - always "tabs"
@@ -40,25 +42,32 @@ interface TabScreenProps extends Omit<ScreenProps, "variant" | "safeTop"> {
  * </TabScreen>
  */
 export function TabScreen({
-  title,
+  title = "",
   subtitle,
+  leftAction,
   rightAction,
   rightIcon,
+  hideHeader,
   children,
   ...screenProps
 }: TabScreenProps) {
+  const showHeader = !hideHeader;
+
   return (
     <View style={styles.container}>
-      <Header 
-        title={title}
-        subtitle={subtitle}
-        rightAction={rightAction}
-        rightIcon={rightIcon}
-      />
-      <Screen 
+      {showHeader && (
+        <Header
+          title={title}
+          subtitle={subtitle}
+          leftAction={leftAction}
+          rightAction={rightAction}
+          rightIcon={rightIcon}
+        />
+      )}
+      <Screen
         variant="tabs"
-        safeTop={false} // Header handles top safe area
-        safeBottom={true} // Need bottom safe area for tab bar
+        safeTop={hideHeader}
+        safeBottom={true}
         {...screenProps}
       >
         {children}

@@ -78,11 +78,17 @@
       "instructionsWithEmail": "Nous avons envoyé un lien de confirmation à {{email}}. Ouvre-le depuis ta boîte mail puis reviens continuer.",
       "button": "Renvoyer l'e-mail",
       "buttonLoading": "Envoi...",
-      "sent": "E-mail de vérification envoyé.",
+      "sent": "E-mail envoyé !",
       "errorSend": "Impossible d'envoyer l'e-mail.",
+      "errorMissingEmail": "Aucune adresse e-mail trouvée.",
       "errorMissingKnown": "Nous avons besoin de ton e-mail pour renvoyer. Réessaie en te reconnectant.",
+      "errorRateLimit": "Attends un instant avant de réessayer.",
+      "errorSecurity": "Attends quelques secondes.",
+      "openMailApp": "Ouvrir l'application Mail",
       "continue": "J'ai vérifié mon e-mail",
       "notVerified": "Nous ne trouvons pas encore de session confirmée. Ouvre le lien reçu par e-mail puis réessaie.",
+      "resend": "Renvoyer l'e-mail",
+      "resendCooldown": "Renvoyer dans {{count}}s",
       "back": "Retour à la connexion"
     }
   },
@@ -142,16 +148,35 @@
     "tasksEmpty": "Aucune tâche active",
     "cancel": "Annuler",
     "create": "Créer",
-    "createNew": "Créer une nouvelle"
+    "createNew": "Créer une nouvelle",
+    "focusModeRequired": "Mode focus requis",
+    "focusModeRequiredDescription": "Le temps d'étude n'est enregistré que lorsque le mode focus est actif. Cela bloque les applications et notifications distrayantes.",
+    "focusModeActive": "Mode focus actif",
+    "focusModeDisabled": "Mode focus désactivé",
+    "sessionNotRecorded": "Session non enregistrée — le mode focus était requis",
+    "sessionRecorded": "{{minutes}} minutes enregistrées avec le mode focus",
+    "grantPermission": "Accorder la permission",
+    "permissionDenied": "Permission refusée — impossible de suivre le temps",
+    "noAppsSelected": "Sélectionnez d'abord les applications à bloquer",
+    "noAppsSelectedDescription": "Veuillez sélectionner les applications à bloquer pendant les sessions d'étude (par ex. WhatsApp, Snapchat, Instagram).",
+    "selectApps": "Sélectionner les applications",
+    "focusModeLost": "Mode focus désactivé — timer en pause",
+    "resumeRequiresFocus": "Réactiver le mode focus pour reprendre",
+    "permissionRequestTitle": "Permission Mode Focus",
+    "permissionRequestMessage": "Pour suivre le temps d'étude, nous avons besoin de la permission d'activer le mode focus. Cela vous aide à rester concentré en bloquant les applications distrayantes.",
+    "permissionRequestIOS": "Sur iOS, vous devrez également sélectionner les applications à bloquer.",
+    "openSettings": "Ouvrir les paramètres"
   },
   "groups": {
     "title": "Groupes",
     "myGroups": "Mes groupes",
-    "publicGroups": "Groupes publics disponibles",
+    "publicGroups": "Groupes publics",
     "noGroupsYet": "Aucun groupe pour l'instant",
     "noPublicGroups": "Aucun groupe public disponible",
     "searchPlaceholder": "Code ou nom du groupe",
     "code": "Code",
+    "joinGroup": "Rejoindre le groupe",
+    "membersCount": "{{count}} membres",
     "adminApprovalRequired": "Approbation admin requise",
     "passwordRequired": "Mot de passe requis",
     "create": {
@@ -165,6 +190,12 @@
       "private": "Privé",
       "adminApproval": "Approbation admin requise",
       "creating": "..."
+    },
+    "edit": {
+      "title": "Modifier le groupe",
+      "updating": "Enregistrement...",
+      "passwordPlaceholder": "Nouveau mot de passe (laisser vide pour garder l'actuel)",
+      "updateError": "Erreur lors de la mise à jour du groupe"
     },
     "joinModal": {
       "title": "Rejoindre {{name}}",
@@ -228,6 +259,7 @@
   },
   "profile": {
     "defaultTitle": "Mon espace",
+    "userFallback": "Utilisateur",
     "loading": "Chargement...",
     "error": "Impossible de charger les données.",
     "stats": {
@@ -241,6 +273,7 @@
       "sessionsCompleted": "Complétées",
       "rank": "Classement",
       "average": "Moyenne",
+      "avgSession": "Session moy.",
       "perSession": "Par session"
     },
     "language": {
@@ -260,6 +293,7 @@
     },
     "displayName": {
       "title": "Pseudo",
+      "hint": "Votre nom affiché peut être modifié ci-dessous :",
       "placeholder": "Votre nom",
       "save": "Enregistrer",
       "saving": "Enregistrement...",
@@ -302,6 +336,19 @@
       "deleteConfirm": "Supprimer",
       "deleteErrorTitle": "Impossible de supprimer le compte",
       "deleteError": "Réessaie plus tard."
+    },
+    "studyMode": {
+      "title": "Mode Focus",
+      "description": "Bloque les applications distrayantes pendant les sessions d'étude.",
+      "permissionStatus": "Statut de la permission",
+      "permissionGranted": "La permission du mode focus est accordée",
+      "permissionNotGranted": "La permission du mode focus est requise pour suivre le temps d'étude",
+      "grantPermission": "Accorder la permission",
+      "appsToBlock": "Applications à bloquer",
+      "appsDescription": "Sélectionnez les applications à bloquer pendant les sessions d'étude (par ex. WhatsApp, Snapchat, Instagram).",
+      "selectApps": "Sélectionner les applications",
+      "appsSelected": "Applications sélectionnées",
+      "appsSelectedMessage": "Votre sélection d'applications a été enregistrée. Ces applications seront bloquées lorsque vous démarrerez une session d'étude."
     }
   },
   "tasks": {

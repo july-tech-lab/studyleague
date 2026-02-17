@@ -792,6 +792,7 @@ export interface Group {
   has_password: boolean;
   created_by: string;
   created_at: string;
+  member_count?: number;
 }
 
 export interface GroupMember {
@@ -807,7 +808,7 @@ export const fetchUserGroups = async (userId: string): Promise<Group[]> => {
   const { data, error } = await supabase
     .from("group_members")
     .select(
-      "group_id, status, groups:group_id(id, name, description, visibility, created_by, created_at, requires_admin_approval, invite_code, has_password)"
+      "group_id, status, groups:group_id(id, name, description, visibility, created_by, created_at, requires_admin_approval, invite_code, has_password, member_count)"
     )
     .eq("user_id", userId)
     .eq("status", "approved");
@@ -831,7 +832,7 @@ export const fetchPublicGroups = async (excludeGroupIds: string[] = []): Promise
   const { data, error } = await supabase
     .from("groups")
     .select(
-      "id, name, description, visibility, created_by, created_at, requires_admin_approval, invite_code, has_password"
+      "id, name, description, visibility, created_by, created_at, requires_admin_approval, invite_code, has_password, member_count"
     )
     .eq("visibility", "public");
 
@@ -886,6 +887,34 @@ export const createGroup = async (
     // Still return the group even if member creation fails
   }
 
+  return data as Group;
+};
+
+export const updateGroup = async (
+  groupId: string,
+  payload: {
+    name?: string;
+    description?: string | null;
+    visibility?: GroupVisibility;
+    requires_admin_approval?: boolean;
+    join_password?: string | null;
+  }
+): Promise<Group> => {
+  const updates: Record<string, unknown> = {};
+  if (payload.name !== undefined) updates.name = payload.name.trim();
+  if (payload.description !== undefined) updates.description = payload.description?.trim() || null;
+  if (payload.visibility !== undefined) updates.visibility = payload.visibility;
+  if (payload.requires_admin_approval !== undefined) updates.requires_admin_approval = payload.requires_admin_approval;
+  if (payload.join_password !== undefined) updates.join_password = payload.join_password?.trim() || null;
+
+  const { data, error } = await supabase
+    .from("groups")
+    .update(updates)
+    .eq("id", groupId)
+    .select()
+    .single();
+
+  if (error) throw error;
   return data as Group;
 };
 

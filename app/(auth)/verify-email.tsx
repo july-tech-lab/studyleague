@@ -200,7 +200,7 @@ export default function VerifyEmail() {
 
         {/* Secondary Action: Manual Check */}
         <Button
-          title={authLoading ? t("common.loading") : t("auth.verifyEmail.continue", "I've verified it")}
+          title={authLoading ? t("common.loading") : t("auth.verifyEmail.continue")}
           variant="secondary"
           onPress={() => refreshSession()}
           disabled={authLoading || isResending}

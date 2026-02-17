@@ -8,6 +8,7 @@ import { SubjectPicker } from "@/components/ui/SubjectPicker";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { useProfile } from '@/hooks/useProfile';
+import { useStudyMode } from "@/hooks/useStudyMode";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useTasks } from "@/hooks/useTasks";
 import { useTimer } from "@/hooks/useTimer";
@@ -17,10 +18,10 @@ import { buildSubjectTree, SubjectNode } from '@/utils/queries';
 import { useTheme, useThemePreference } from '@/utils/themeContext';
 import { formatDateLabel, getTodayIso } from '@/utils/time';
 import { useFocusEffect } from "expo-router";
-import { Bell, Check, Circle, Lock, Plus, Square } from 'lucide-react-native';
+import { Bell, Check, Circle, Plus, Shield, ShieldAlert, Square } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function TimerScreen() {
   const { user } = useAuth();
@@ -83,6 +84,18 @@ export default function TimerScreen() {
   );
 
   // ============================================================================
+  // STUDY MODE HOOK
+  // ============================================================================
+  const {
+    hasPermission: hasFocusPermission,
+    isLoading: focusModeLoading,
+    enable: enableFocusMode,
+    requestPermission: requestFocusPermission,
+    presentAppPicker,
+    checkSelectedApps,
+  } = useStudyMode();
+
+  // ============================================================================
   // UI STATE (Component-only state)
   // ============================================================================
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -91,6 +104,8 @@ export default function TimerScreen() {
   const [newSubjectName, setNewSubjectName] = useState("");
   const [selectedParentSubjectId, setSelectedParentSubjectId] = useState<string | null>(null);
   const [savingSubject, setSavingSubject] = useState(false);
+  const [permissionModalVisible, setPermissionModalVisible] = useState(false);
+  const [appPickerModalVisible, setAppPickerModalVisible] = useState(false);
 
   // Helper function to find subject with parent (needed for timer callbacks)
   const findSubjectWithParent = React.useCallback(
@@ -137,16 +152,27 @@ export default function TimerScreen() {
     [t]
   );
 
-  // Use timer hook
+  // Use timer hook - focus mode not required on web (not available)
+  const requireFocusMode = Platform.OS !== 'web';
   const {
     isRunning,
     start: timerStart,
     stop: timerStop,
     formattedTime,
+    focusModeActive,
+    canStart: timerCanStart,
+    seconds: timerSeconds,
   } = useTimer({
     userId: user?.id ?? null,
     onSessionComplete: handleSessionComplete,
     onError: handleTimerError,
+    requireFocusMode,
+    onFocusModeLost: () => {
+      Alert.alert(
+        t("timer.focusModeLost"),
+        t("timer.resumeRequiresFocus")
+      );
+    },
   });
 
   // Use utility function for color mapping (moved before subjectListData)
@@ -233,7 +259,7 @@ export default function TimerScreen() {
   ]);
 
   // Timer actions
-  const handleStart = () => {
+  const handleStart = async () => {
     if (isRunning) {
       console.warn("Timer already running");
       return;
@@ -253,13 +279,49 @@ export default function TimerScreen() {
       );
       return;
     }
-    
+
+    // Check focus mode requirements (skip on web - focus mode not available)
+    if (requireFocusMode) {
+      if (!hasFocusPermission) {
+        // Show permission request modal
+        setPermissionModalVisible(true);
+        return;
+      }
+
+      // On iOS, check if apps are selected
+      if (Platform.OS === 'ios') {
+        const hasSelectedApps = await checkSelectedApps();
+        if (!hasSelectedApps) {
+          // Show app picker modal
+          setAppPickerModalVisible(true);
+          return;
+        }
+      }
+
+      // Try to enable focus mode and start timer
+      const focusEnabled = await enableFocusMode();
+      if (!focusEnabled) {
+        Alert.alert(
+          t("timer.errorTitle"),
+          t("timer.permissionDenied")
+        );
+        return;
+      }
+    }
+
     console.log("Starting timer", {
       subjectId: selectedSubjectId,
       subjectName: selectedSubject.name,
       taskId: selectedTaskId,
     });
-    timerStart();
+    
+    const started = await timerStart();
+    if (!started) {
+      Alert.alert(
+        t("timer.errorTitle"),
+        t("timer.permissionDenied")
+      );
+    }
   };
 
   const handleStop = async () => {
@@ -275,7 +337,22 @@ export default function TimerScreen() {
     }
 
     try {
-      await timerStop(subjectForLog.id, selectedTaskId ?? null);
+      const result = await timerStop(subjectForLog.id, selectedTaskId ?? null);
+      
+      if (result.saved) {
+        const totalMinutes = Math.floor(timerSeconds / 60);
+        Alert.alert(
+          t("timer.sessionFinishedTitle"),
+          t("timer.sessionRecorded", { minutes: totalMinutes })
+        );
+      } else {
+        Alert.alert(
+          t("timer.sessionNotRecorded"),
+          result.reason === 'focus_mode_required' 
+            ? t("timer.sessionNotRecorded")
+            : t("timer.errorSave")
+        );
+      }
     } catch (error: any) {
       // Error handling is done in the hook's onError callback
       console.error("Error stopping timer", error);
@@ -359,17 +436,44 @@ export default function TimerScreen() {
 
           <View style={styles.focusBadgeSlot}>
             {isRunning ? (
-              <View style={styles.focusBadge}>
-                <Lock size={14} color={safeTheme.textMuted} />
-                <Text variant="micro" colorName="textMuted">
-                  {t("timer.focusOn")}
-                </Text>
-              </View>
+              <>
+                <View style={[
+                  styles.focusBadge,
+                  !focusModeActive && styles.focusBadgeWarning
+                ]}>
+                  {focusModeActive ? (
+                    <Shield size={14} color={safeTheme.textMuted} />
+                  ) : (
+                    <ShieldAlert size={14} color={safeTheme.danger} />
+                  )}
+                  <Text 
+                    variant="micro" 
+                    style={{ color: focusModeActive ? safeTheme.textMuted : safeTheme.danger }}
+                  >
+                    {focusModeActive ? t("timer.focusModeActive") : t("timer.focusModeDisabled")}
+                  </Text>
+                </View>
+                {!focusModeActive && (
+                  <Text variant="micro" style={{ color: safeTheme.danger, marginTop: 4 }} align="center">
+                    {t("timer.focusModeLost")}
+                  </Text>
+                )}
+              </>
             ) : (
               <>
                 {!hasValidSubject && (
                   <Text variant="micro" colorName="textMuted" align="center">
                     {t("timer.chooseSubjectHint")}
+                  </Text>
+                )}
+                {hasValidSubject && !timerCanStart && !focusModeLoading && (
+                  <Text variant="micro" colorName="textMuted" align="center" style={{ marginBottom: 8 }}>
+                    {!hasFocusPermission 
+                      ? t("timer.focusModeRequired")
+                      : Platform.OS === 'ios' 
+                        ? t("timer.noAppsSelected")
+                        : t("timer.focusModeRequired")
+                    }
                   </Text>
                 )}
                 <Button
@@ -379,7 +483,8 @@ export default function TimerScreen() {
                     console.log("Start button pressed", { hasValidSubject, selectedSubjectId, event: e });
                     handleStart();
                   }}
-                  disabled={!hasValidSubject}
+                  disabled={!hasValidSubject || (!timerCanStart && !focusModeLoading)}
+                  loading={focusModeLoading}
                   fullWidth
                 />
               </>
@@ -431,7 +536,16 @@ export default function TimerScreen() {
                                   ? hexToRgba(subjectColor, 0.16)
                                   : "transparent",
                               },
-                              isRowActive && { shadowOpacity: 0.08, shadowRadius: 6 },
+                              isRowActive && {
+                                boxShadow: [
+                                  {
+                                    offsetX: 0,
+                                    offsetY: -2,
+                                    blurRadius: 6,
+                                    color: "rgba(0,0,0,0.08)",
+                                  },
+                                ],
+                              },
                               disableRowInteraction && { opacity: 0.45 },
                             ]}
                           >
@@ -600,7 +714,16 @@ export default function TimerScreen() {
                                 ? hexToRgba(taskSubjectColor, 0.16)
                                 : "transparent",
                             },
-                            isSelected && { shadowOpacity: 0.08, shadowRadius: 6 },
+                            isSelected && {
+                              boxShadow: [
+                                {
+                                  offsetX: 0,
+                                  offsetY: -2,
+                                  blurRadius: 6,
+                                  color: "rgba(0,0,0,0.08)",
+                                },
+                              ],
+                            },
                           ]}
                         >
                           <TouchableOpacity
@@ -759,6 +882,87 @@ export default function TimerScreen() {
           parentsOnly={true}
         />
       </Modal>
+
+      {/* Permission Request Modal */}
+      <Modal
+        visible={permissionModalVisible}
+        onClose={() => setPermissionModalVisible(false)}
+        title={t("timer.permissionRequestTitle")}
+        actions={{
+          cancel: {
+            label: t("common.cancel"),
+            onPress: () => setPermissionModalVisible(false),
+            variant: "ghost",
+          },
+          confirm: {
+            label: t("timer.grantPermission"),
+            onPress: async () => {
+              const granted = await requestFocusPermission();
+              setPermissionModalVisible(false);
+              if (granted) {
+                // On iOS, check if apps need to be selected
+                if (Platform.OS === 'ios') {
+                  const hasSelected = await checkSelectedApps();
+                  if (!hasSelected) {
+                    setAppPickerModalVisible(true);
+                  }
+                }
+              } else {
+                Alert.alert(
+                  t("timer.permissionDenied"),
+                  Platform.OS === 'ios' 
+                    ? t("timer.permissionRequestIOS")
+                    : t("timer.openSettings")
+                );
+              }
+            },
+            variant: "primary",
+          },
+        }}
+      >
+        <Text variant="body" colorName="text" style={{ marginBottom: 12 }}>
+          {t("timer.permissionRequestMessage")}
+        </Text>
+        {Platform.OS === 'ios' && (
+          <Text variant="body" colorName="textMuted">
+            {t("timer.permissionRequestIOS")}
+          </Text>
+        )}
+      </Modal>
+
+      {/* App Picker Modal (iOS only) */}
+      {Platform.OS === 'ios' && (
+        <Modal
+          visible={appPickerModalVisible}
+          onClose={() => setAppPickerModalVisible(false)}
+          title={t("timer.selectApps")}
+          actions={{
+            cancel: {
+              label: t("common.cancel"),
+              onPress: () => setAppPickerModalVisible(false),
+              variant: "ghost",
+            },
+            confirm: {
+              label: t("timer.selectApps"),
+              onPress: async () => {
+                const selected = await presentAppPicker();
+                setAppPickerModalVisible(false);
+                if (!selected) {
+                  Alert.alert(
+                    t("timer.noAppsSelected"),
+                    t("timer.noAppsSelectedDescription")
+                  );
+                }
+              },
+              variant: "primary",
+            },
+          }}
+        >
+          <Text variant="body" colorName="text" style={{ marginBottom: 12 }}>
+            {t("timer.noAppsSelectedDescription")}
+          </Text>
+        </Modal>
+      )}
     </TabScreen>
   );
 }
@@ -808,9 +1012,14 @@ function createStyles(theme: typeof Colors.light) {
       borderWidth: 1,
       borderColor: theme.divider,
       backgroundColor: theme.surfaceElevated,
-      shadowColor: "#000",
-      shadowOpacity: 0.04,
-      shadowRadius: 10,
+      boxShadow: [
+        {
+          offsetX: 0,
+          offsetY: -4,
+          blurRadius: 10,
+          color: "rgba(0,0,0,0.04)",
+        },
+      ],
       elevation: 3,
       minHeight: 240,
       overflow: "hidden", // For dark mode overlay
@@ -847,6 +1056,11 @@ function createStyles(theme: typeof Colors.light) {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
+    },
+    focusBadgeWarning: {
+      backgroundColor: hexToRgba(theme.danger, 0.1),
+      borderWidth: 1,
+      borderColor: hexToRgba(theme.danger, 0.3),
     },
     focusBadgeSlot: {
       minHeight: 30,

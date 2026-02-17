@@ -15,6 +15,7 @@ import {
   Star,
 } from "lucide-react-native";
 
+import { hexToRgba } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 import Colors from "@/constants/Colors";
 import { Text } from "@/components/Themed";
@@ -280,7 +281,14 @@ const createStyles = (theme: typeof Colors.light) =>
       borderColor: theme.divider ?? theme.border,
       borderRadius: 18,
       elevation: 2,
-      shadowColor: theme.text,
+      boxShadow: [
+        {
+          offsetX: 0,
+          offsetY: -2,
+          blurRadius: 4,
+          color: hexToRgba(theme.text, 0.08),
+        },
+      ],
     },
     row: {
       flexDirection: "row",

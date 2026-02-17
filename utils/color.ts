@@ -100,7 +100,7 @@ export const getReadableTextColor = (hex: string | null | undefined): string => 
  * 3. palette color (cycled based on index)
  * 4. defaultColor (fallback)
  * 
- * Assigns the same color to all children of a parent (unless child has its own custom_color).
+ * Assigns the same color to all children of a parent (children always inherit parent's color).
  * 
  * @param subjectTree - Tree structure of subjects with custom_color and color properties
  * @param palette - Array of color hex strings to cycle through
@@ -127,9 +127,9 @@ export function createSubjectColorMap(
     // Assign color to parent
     map[parent.id] = color;
     
-    // Assign same color to all children (or use child's custom_color/color if available)
+    // Children always inherit the parent's color (ignore child's custom_color/color)
     parent.children.forEach((child) => {
-      map[child.id] = child.custom_color ?? child.color ?? color;
+      map[child.id] = color;
     });
   });
   

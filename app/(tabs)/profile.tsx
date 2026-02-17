@@ -8,6 +8,7 @@ import { SubjectPicker } from "@/components/ui/SubjectPicker";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { useProfile } from "@/hooks/useProfile";
+import { useStudyMode } from "@/hooks/useStudyMode";
 import { changeLanguage } from "@/i18n";
 import { useAuth } from "@/utils/authContext";
 import { createSubjectColorMap } from "@/utils/color";
@@ -25,12 +26,13 @@ import {
 import { useTheme, useThemePreference } from "@/utils/themeContext";
 import { formatDuration } from "@/utils/time";
 import { useRouter } from "expo-router";
-import { Clock, Flame, LogOut, Palette, Plus, Save, Search, Star, Target, Trash, Trophy } from "lucide-react-native";
+import { BarChart2, Clock, Flame, Globe, LogOut, Moon, Palette, Plus, Save, Search, Shield, ShieldAlert, Sun, Trash, Trophy, User } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View
@@ -40,11 +42,10 @@ import {
 
 
 // Types
-interface StatItem {
-  icon: any;
+interface StatCard {
+  icon: React.ComponentType<{ size?: number; color?: string }>;
   label: string;
   value: string;
-  sublabel?: string;
 }
 
 export default function ProfileScreen() {
@@ -119,6 +120,14 @@ export default function ProfileScreen() {
   const [savingDisplayName, setSavingDisplayName] = useState(false);
   const [displayNameMessage, setDisplayNameMessage] = useState<string | null>(null);
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
+
+  // Study mode hook
+  const {
+    hasPermission: hasFocusPermission,
+    isLoading: focusModeLoading,
+    requestPermission: requestFocusPermission,
+    presentAppPicker,
+  } = useStudyMode();
   
   const handleLanguageChange = async (lng: "en" | "fr") => {
     if (!user?.id) return;
@@ -155,13 +164,12 @@ export default function ProfileScreen() {
   // Combine profile error with local error state for display
   const error = profileError ? profileError.message : null;
 
-  const stats: StatItem[] = useMemo(
+  const statCards: StatCard[] = useMemo(
     () => [
       {
         icon: Clock,
         label: t("profile.stats.totalTime"),
         value: formatDuration(sessionTotals.monthSeconds),
-        sublabel: t("profile.stats.thisMonth"),
       },
       {
         icon: Flame,
@@ -170,24 +178,13 @@ export default function ProfileScreen() {
           profile?.current_streak !== undefined
             ? t("profile.stats.streakValue", { count: profile.current_streak })
             : "--",
-        sublabel:
-          profile?.longest_streak !== undefined
-            ? t("profile.stats.streakRecord", { count: profile.longest_streak })
-            : undefined,
       },
       {
-        icon: Target,
-        label: t("profile.stats.sessions"),
-        value: sessionTotals.count ? `${sessionTotals.count}` : "--",
-        sublabel: t("profile.stats.sessionsCompleted"),
+        icon: BarChart2,
+        label: t("profile.stats.avgSession"),
+        value: formatDuration(sessionTotals.avgSeconds),
       },
       { icon: Trophy, label: t("profile.stats.rank"), value: rankLabel ?? "--" },
-      {
-        icon: Star,
-        label: t("profile.stats.average"),
-        value: formatDuration(sessionTotals.avgSeconds),
-        sublabel: t("profile.stats.perSession"),
-      },
     ],
     [profile, rankLabel, sessionTotals, t]
   );
@@ -351,6 +348,21 @@ export default function ProfileScreen() {
     );
   }, [allSubjectsTree, theme.subjectPalette, theme.primary]);
 
+  // "Total time per subject" uses same subjects as Subjects tab, ordered by total time (high to low)
+  const subjectTotalsForBreakdown = useMemo(() => {
+    const totalsById = new Map(subjectTotals.map((r) => [r.parentId, r]));
+    return subjectTree
+      .map((parent) => {
+        const row = totalsById.get(parent.id);
+        return {
+          parentId: parent.id,
+          parentName: parent.name,
+          totalSeconds: row?.totalSeconds ?? 0,
+        };
+      })
+      .sort((a, b) => b.totalSeconds - a.totalSeconds);
+  }, [subjectTree, subjectTotals]);
+
   const handleAddExistingSubject = async (subject: Subject) => {
     if (!user?.id) return;
     setSavingSubject(true);
@@ -450,7 +462,13 @@ export default function ProfileScreen() {
 
   return (
     <TabScreen
-      title={profile?.username ?? t("profile.defaultTitle")}
+      title={profile?.username ?? t("profile.userFallback", "User")}
+      subtitle={user?.email ?? undefined}
+      leftAction={
+        <View style={[styles.avatarCircle, styles.avatarCircleHeader, { backgroundColor: theme.primary }]}>
+          <User size={28} color="#FFFFFF" strokeWidth={2} />
+        </View>
+      }
       rightIcon={{
         icon: LogOut,
         onPress: handleSignOut,
@@ -469,10 +487,10 @@ export default function ProfileScreen() {
         />
 
         {activeTab === "settings" && (
-          <>
-            <View style={styles.sectionBlock}>
-              <Text variant="h2" style={{ marginTop: 12, marginBottom: 12 }}>
-                {t("profile.displayName.title", "Display name")}
+          <View style={styles.settingsList}>
+            <View style={styles.settingBlock}>
+              <Text variant="body" colorName="textMuted" style={{ marginBottom: 10 }}>
+                {t("profile.displayName.hint")}
               </Text>
               <View style={styles.displayNameRow}>
                 <Input
@@ -495,59 +513,134 @@ export default function ProfileScreen() {
                 />
               </View>
               {displayNameError ? (
-                <Text variant="body" align="center" style={{ marginTop: 6, color: theme.danger ?? "#f33" }}>{displayNameError}</Text>
+                <Text variant="micro" style={{ marginTop: 6, color: theme.danger ?? "#f33" }}>{displayNameError}</Text>
               ) : null}
               {displayNameMessage ? (
-                <Text variant="body" align="center" style={{ marginTop: 6, color: theme.success ?? theme.primary }}>{displayNameMessage}</Text>
+                <Text variant="micro" style={{ marginTop: 6, color: theme.success ?? theme.primary }}>{displayNameMessage}</Text>
               ) : null}
             </View>
 
-            <View style={styles.sectionBlock}>
-              <Text variant="h2" style={{ marginBottom: 12 }}>
-                {t("profile.language.label")}
-              </Text>
-              <View style={styles.pillRow}>
-                {(["fr", "en"] as const).map((lng) => {
-                  const active = i18n.language.startsWith(lng);
-                  return (
-                    <Button
-                      key={lng}
-                      title={lng === "fr" ? t("profile.language.french") : t("profile.language.english")}
-                      variant={active ? "primary" : "outline"}
-                      shape="pill"
-                      size="sm"
-                      onPress={() => handleLanguageChange(lng)}
-                    />
-                  );
-                })}
+            <View style={styles.settingBlock}>
+              <View style={styles.settingRow}>
+                <Globe size={22} color={theme.textMuted} />
+                <Text variant="subtitle" style={{ flex: 1, marginLeft: 12 }}>{t("profile.language.label")}</Text>
+                <View style={styles.pillRow}>
+                  {(["fr", "en"] as const).map((lng) => {
+                    const active = i18n.language.startsWith(lng);
+                    return (
+                      <Button
+                        key={lng}
+                        title={lng === "fr" ? t("profile.language.french") : t("profile.language.english")}
+                        variant={active ? "primary" : "outline"}
+                        shape="pill"
+                        size="sm"
+                        onPress={() => handleLanguageChange(lng)}
+                      />
+                    );
+                  })}
+                </View>
               </View>
             </View>
 
-            <View style={styles.sectionBlock}>
-              <Text variant="h2" style={{ marginBottom: 12 }}>
-                {t("profile.theme.label", "Theme")}
-              </Text>
-              <View style={styles.pillRow}>
-                {(["light", "dark"] as const).map(mode => {
-                  const isActive = colorScheme === mode;
-                  return (
-                    <Button
-                      key={mode}
-                      title={mode === "light" ? t("profile.theme.light", "Light") : t("profile.theme.dark", "Dark")}
-                      variant={isActive ? "primary" : "outline"}
-                      shape="pill"
-                      size="sm"
-                      onPress={() => handleThemeChange(mode)}
-                    />
-                  );
-                })}
+            <View style={styles.settingBlock}>
+              <View style={styles.settingRow}>
+                {colorScheme === "dark" ? (
+                  <Moon size={22} color={theme.textMuted} />
+                ) : (
+                  <Sun size={22} color={theme.textMuted} />
+                )}
+                <Text variant="subtitle" style={{ flex: 1, marginLeft: 12 }}>{t("profile.theme.label", "Theme")}</Text>
+                <View style={styles.pillRow}>
+                  {(["light", "dark"] as const).map((mode) => {
+                    const isActive = colorScheme === mode;
+                    return (
+                      <Button
+                        key={mode}
+                        title={mode === "light" ? t("profile.theme.light", "Light") : t("profile.theme.dark", "Dark")}
+                        variant={isActive ? "primary" : "outline"}
+                        shape="pill"
+                        size="sm"
+                        onPress={() => handleThemeChange(mode)}
+                      />
+                    );
+                  })}
+                </View>
               </View>
             </View>
 
-            <View style={styles.sectionBlock}>
-              <Text variant="h2" style={{ marginBottom: 12 }}>
-                {t("profile.account.title", "Account")}
+            <View style={styles.settingBlock}>
+              <View style={styles.settingRowWithIcon}>
+                {hasFocusPermission ? (
+                  <Shield size={22} color={theme.success} />
+                ) : (
+                  <ShieldAlert size={22} color={theme.danger} />
+                )}
+                <View style={styles.settingLabelButtonRow}>
+                  <Text variant="subtitle">{t("profile.studyMode.title", "Study Mode")}</Text>
+                  {!hasFocusPermission && (
+                    <Button
+                    title={t("profile.studyMode.grantPermission", "Grant Permission")}
+                    variant="primary"
+                    size="sm"
+                    onPress={async () => {
+                      const granted = await requestFocusPermission();
+                      if (!granted) {
+                        Alert.alert(
+                          t("timer.permissionDenied"),
+                          Platform.OS === 'ios'
+                            ? t("timer.permissionRequestIOS")
+                            : t("timer.openSettings")
+                        );
+                      }
+                    }}
+                    disabled={focusModeLoading}
+                    loading={focusModeLoading}
+                  />
+                  )}
+                </View>
+              </View>
+              <Text variant="micro" colorName="textMuted" style={{ marginTop: 8 }}>
+                {hasFocusPermission
+                  ? t("profile.studyMode.permissionGranted", "Focus mode permission is granted")
+                  : t("profile.studyMode.permissionNotGranted", "Focus mode permission is required to track study time")}
               </Text>
+              {Platform.OS === 'ios' && hasFocusPermission && (
+                <>
+                  <View style={[styles.settingRowWithIcon, { marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}>
+                    <Shield size={22} color={theme.primary} />
+                    <View style={styles.settingLabelButtonRow}>
+                      <Text variant="subtitle">{t("profile.studyMode.appsToBlock", "Apps to Block")}</Text>
+                      <Button
+                      title={t("profile.studyMode.selectApps", "Select Apps")}
+                      variant="outline"
+                      size="sm"
+                      onPress={async () => {
+                        const selected = await presentAppPicker();
+                        if (!selected) {
+                          Alert.alert(
+                            t("timer.noAppsSelected"),
+                            t("timer.noAppsSelectedDescription")
+                          );
+                        } else {
+                          Alert.alert(
+                            t("profile.studyMode.appsSelected", "Apps Selected"),
+                            t("profile.studyMode.appsSelectedMessage", "Your app selection has been saved. These apps will be blocked when you start a study session.")
+                          );
+                        }
+                      }}
+                      disabled={focusModeLoading}
+                      loading={focusModeLoading}
+                    />
+                    </View>
+                  </View>
+                  <Text variant="micro" colorName="textMuted" style={{ marginTop: 8 }}>
+                    {t("profile.studyMode.appsDescription", "Select which apps should be blocked during study sessions (e.g., WhatsApp, Snapchat, Instagram).")}
+                  </Text>
+                </>
+              )}
+            </View>
+
+            <View style={styles.settingBlock}>
               <View style={styles.accountActions}>
                 <Button
                   title={accountActionLoading === "signout"
@@ -559,7 +652,6 @@ export default function ProfileScreen() {
                   loading={accountActionLoading === "signout"}
                   fullWidth
                 />
-
                 <Button
                   title={accountActionLoading === "delete"
                     ? t("profile.account.deleting", "Deleting...")
@@ -572,7 +664,7 @@ export default function ProfileScreen() {
                 />
               </View>
             </View>
-          </>
+          </View>
         )}
 
         {activeTab === "stats" && (
@@ -583,95 +675,58 @@ export default function ProfileScreen() {
               <Text variant="body" align="center" style={{ marginTop: 12, color: theme.danger ?? "#f66" }}>{error}</Text>
             ) : (
               <>
-                <Text variant="h2" style={{ marginTop: 12, marginBottom: 12 }}>
-                  {t("profile.stats.title", "My stats")}
-                </Text>
+                <View style={styles.statsGrid}>
+                  {statCards.map((stat) => {
+                    const IconComponent = stat.icon;
+                    return (
+                      <View key={stat.label} style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
+                        <View style={styles.statCardIcon}>
+                          <IconComponent size={22} color={theme.primary} />
+                        </View>
+                        <Text variant="h1" align="center" style={[styles.statValue, { color: theme.text }]}>
+                          {stat.value}
+                        </Text>
+                        <Text variant="caption" colorName="textMuted" align="center">
+                          {stat.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
 
-                <ListCard>
-                  {stats.map((stat) => (
-                    <ListItem key={stat.label}>
-                      <View style={styles.iconBox}>
-                        <stat.icon size={20} color={theme.textMuted} />
-                      </View>
-                      <View style={styles.statInfo}>
-                        <Text variant="body" colorName="textMuted">{stat.label}</Text>
-                      </View>
-                      <View style={styles.statValues}>
-                        <Text variant="subtitle" style={{ fontWeight: "600" }}>{stat.value}</Text>
-                        {stat.sublabel && <Text variant="caption" colorName="textMuted">{stat.sublabel}</Text>}
-                      </View>
-                    </ListItem>
-                  ))}
-                </ListCard>
-
-                {subjectTotals.length > 0 && (
+                {subjectTotalsForBreakdown.length > 0 && (
                   <View style={styles.breakdownSection}>
-                    <View style={styles.sectionTitleGroup}>
-                      <Text variant="h2" style={{ marginTop: 24, marginBottom: 12 }}>
-                        {t("profile.subjects.breakdownTitle", "Temps total par matière (avec sous-tags)")}
-                      </Text>
-                      <Text variant="caption" colorName="textMuted">
-                        {subjectTotals.length > 0 ? `${subjectTotals.length}` : ""}
-                      </Text>
-                    </View>
+                    <Text variant="h2" style={{ marginTop: 24, marginBottom: 12 }}>
+                      {t("profile.subjects.breakdownTitle", "Time per subject")}
+                    </Text>
 
-                    <ListCard>
-                      {subjectTotals.map((row) => {
-                        // Find the parent subject in allSubjectsTree (not just visible subjects)
-                        // because subjectTotals may include subjects that are hidden but have study time
-                        const parentNode = allSubjectsTree.find((node) => node.id === row.parentId);
+                    <View style={styles.barChartSection}>
+                      {subjectTotalsForBreakdown.map((row) => {
                         const subjectColor = subjectColorById[row.parentId] ?? theme.primary;
-                        
+                        const maxSeconds = Math.max(...subjectTotalsForBreakdown.map((r) => r.totalSeconds), 1);
+                        const barWidthPercent = (row.totalSeconds / maxSeconds) * 100;
                         return (
-                          <React.Fragment key={row.parentId}>
-                            {/* Parent subject with total time */}
-                            <ListItem 
-                              pointerEvents="box-none"
-                              isLast={parentNode && parentNode.children.length > 0}
-                            >
-                              <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
-                                <View
-                                  style={[
-                                    styles.subjectColorBadge,
-                                    { backgroundColor: subjectColor },
-                                  ]}
-                                />
-                                <Text variant="body" colorName="textMuted">{row.parentName}</Text>
-                              </View>
-                              <View style={styles.subjectActions} pointerEvents="box-none">
-                                <Text variant="subtitle">{formatDuration(row.totalSeconds)}</Text>
-                              </View>
-                            </ListItem>
-                            
-                            {/* Child subjects (indented, if they exist) */}
-                            {parentNode?.children.map((child) => {
-                              const childColor = subjectColorById[child.id] ?? subjectColor;
-                              return (
-                                <ListItem 
-                                  key={child.id} 
-                                  pointerEvents="box-none" 
-                                  paddingHorizontal={8}
-                                  style={{ paddingLeft: 24, paddingRight: 8 }}
-                                >
-                                  <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
-                                    <View
-                                      style={[
-                                        styles.subjectColorBadge,
-                                        { backgroundColor: childColor },
-                                      ]}
-                                    />
-                                    <Text variant="body" colorName="textMuted">{child.name}</Text>
-                                  </View>
-                                  <View style={styles.subjectActions} pointerEvents="box-none">
-                                    <Text variant="body" colorName="textMuted">—</Text>
-                                  </View>
-                                </ListItem>
-                              );
-                            })}
-                          </React.Fragment>
+                          <View key={row.parentId} style={styles.barRow}>
+                            <View style={styles.barHeader}>
+                              <Text variant="subtitle" colorName="textMuted" style={styles.barLabel}>
+                                {row.parentName}
+                              </Text>
+                              <Text variant="subtitle" style={styles.barValue}>
+                                {formatDuration(row.totalSeconds)}
+                              </Text>
+                            </View>
+                            <View style={[styles.barBg, { backgroundColor: theme.divider }]}>
+                              <View
+                                style={[
+                                  styles.barFill,
+                                  { width: `${barWidthPercent}%`, backgroundColor: subjectColor },
+                                ]}
+                              />
+                            </View>
+                          </View>
                         );
                       })}
-                    </ListCard>
+                    </View>
                   </View>
                 )}
               </>
@@ -712,106 +767,55 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <ListCard>
-                {subjectTree.map((parent) => {
+                {subjectTree.map((parent, index) => {
                   const isDeleting = deletingId === parent.id;
                   const subjectColor = subjectColorById[parent.id] ?? theme.primary;
-                  
+
                   return (
-                    <React.Fragment key={parent.id}>
-                      {/* Parent subject */}
-                      <ListItem 
-                        pointerEvents="box-none"
-                        isLast={parent.children.length > 0}
-                      >
-                        <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
-                          <View
-                            style={[
-                              styles.subjectColorBadge,
-                              { backgroundColor: subjectColor },
-                            ]}
-                          />
-                          <Text variant="body" colorName="textMuted">{parent.name}</Text>
-                        </View>
+                    <ListItem
+                      key={parent.id}
+                      pointerEvents="box-none"
+                      isLast={index === subjectTree.length - 1}
+                    >
+                      <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
+                        <View
+                          style={[
+                            styles.subjectColorBadge,
+                            { backgroundColor: subjectColor },
+                          ]}
+                        />
+                        <Text variant="body" colorName="textMuted">{parent.name}</Text>
+                      </View>
 
-                        <View style={styles.subjectActions} pointerEvents="box-none">
-                          {isDeleting ? (
-                            <ActivityIndicator size="small" color={theme.textMuted} />
-                          ) : (
-                            <>
-                              <Button
-                                iconLeft={Palette}
-                                iconOnly
-                                variant="ghost"
-                                size="sm"
-                                onPress={() => handleOpenColorPicker(parent)}
-                                accessibilityLabel={t("profile.subjects.customizeColor", "Customize color")}
-                              />
-                              <Button
-                                iconLeft={Trash}
-                                iconOnly
-                                variant="ghost"
-                                size="sm"
-                                onPress={() => {
-                                  if (user?.id) {
-                                    confirmDeleteSubject(parent);
-                                  }
-                                }}
-                                accessibilityLabel={t("profile.subjects.delete", "Delete subject")}
-                              />
-                            </>
-                          )}
-                        </View>
-                      </ListItem>
-                      
-                      {/* Child subjects (indented) */}
-                      {parent.children.map((child) => {
-                        const isDeletingChild = deletingId === child.id;
-                        const childColor = subjectColorById[child.id] ?? subjectColor;
-                        
-                        return (
-                          <ListItem key={child.id} pointerEvents="box-none" style={{ paddingLeft: 24 }}>
-                            <View style={[styles.subjectInfo, { flexDirection: "row", alignItems: "center", gap: 8 }]} pointerEvents="none">
-                              <View
-                                style={[
-                                  styles.subjectColorBadge,
-                                  { backgroundColor: childColor },
-                                ]}
-                              />
-                              <Text variant="body" colorName="textMuted">{child.name}</Text>
-                            </View>
-
-                            <View style={styles.subjectActions} pointerEvents="box-none">
-                              {isDeletingChild ? (
-                                <ActivityIndicator size="small" color={theme.textMuted} />
-                              ) : (
-                                <>
-                                  <Button
-                                    iconLeft={Palette}
-                                    iconOnly
-                                    variant="ghost"
-                                    size="sm"
-                                    onPress={() => handleOpenColorPicker(child)}
-                                    accessibilityLabel={t("profile.subjects.customizeColor", "Customize color")}
-                                  />
-                                  <Button
-                                    iconLeft={Trash}
-                                    iconOnly
-                                    variant="ghost"
-                                    size="sm"
-                                    onPress={() => {
-                                      if (user?.id) {
-                                        confirmDeleteSubject(child);
-                                      }
-                                    }}
-                                    accessibilityLabel={t("profile.subjects.delete", "Delete subject")}
-                                  />
-                                </>
-                              )}
-                            </View>
-                          </ListItem>
-                        );
-                      })}
-                    </React.Fragment>
+                      <View style={styles.subjectActions} pointerEvents="box-none">
+                        {isDeleting ? (
+                          <ActivityIndicator size="small" color={theme.textMuted} />
+                        ) : (
+                          <>
+                            <Button
+                              iconLeft={Palette}
+                              iconOnly
+                              variant="ghost"
+                              size="sm"
+                              onPress={() => handleOpenColorPicker(parent)}
+                              accessibilityLabel={t("profile.subjects.customizeColor", "Customize color")}
+                            />
+                            <Button
+                              iconLeft={Trash}
+                              iconOnly
+                              variant="ghost"
+                              size="sm"
+                              onPress={() => {
+                                if (user?.id) {
+                                  confirmDeleteSubject(parent);
+                                }
+                              }}
+                              accessibilityLabel={t("profile.subjects.delete", "Delete subject")}
+                            />
+                          </>
+                        )}
+                      </View>
+                    </ListItem>
                   );
                 })}
               </ListCard>
@@ -1079,10 +1083,53 @@ export default function ProfileScreen() {
 const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
-
-    // HEADER (styles moved to Header component)
-
-    // Content
+    profileHeader: {
+      alignItems: "center",
+      paddingVertical: 20,
+      paddingBottom: 12,
+    },
+    avatarCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+    },
+    avatarCircleHeader: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      marginBottom: 0,
+    },
+    profileName: {
+      fontWeight: "700",
+      marginBottom: 4,
+    },
+    profileEmail: {
+      fontSize: 14,
+    },
+    statsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 12,
+      marginBottom: 24,
+    },
+    statCard: {
+      width: "47%",
+      borderRadius: 14,
+      padding: 16,
+      borderWidth: StyleSheet.hairlineWidth,
+      alignItems: "center",
+    },
+    statCardIcon: {
+      marginBottom: 8,
+    },
+    statValue: {
+      fontSize: 24,
+      fontWeight: "700",
+      marginBottom: 4,
+    },
     iconBox: {
       width: 40,
       height: 40,
@@ -1241,6 +1288,17 @@ const createStyles = (theme: typeof Colors.light) =>
     },
     // Note: Typography handled by Themed Text component with variant prop
     breakdownSection: { marginBottom: 24 },
+    barChartSection: { gap: 4 },
+    barRow: { marginBottom: 12 },
+    barHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+    barLabel: {},
+    barValue: { fontWeight: "600" },
+    barBg: {
+      height: 8,
+      borderRadius: 4,
+      overflow: "hidden",
+    },
+    barFill: { height: "100%", borderRadius: 4 },
     // Note: Typography handled by Themed Text component with variant prop
 
     // Account actions
@@ -1258,14 +1316,58 @@ const createStyles = (theme: typeof Colors.light) =>
     accountActions: { gap: 8 },
 
 
+    // Settings tab flat layout
+    settingsList: { gap: 0 },
+    settingBlock: {
+      paddingVertical: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.divider ?? theme.border,
+    },
+    settingRowTouchable: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 14,
+      paddingHorizontal: 4,
+      gap: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.divider ?? theme.border,
+    },
     // Settings pills
     sectionBlock: {
       marginBottom: 24,
       gap: 8,
     },
+    labelPillRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     pillRow: { flexDirection: "row", gap: 8 },
     // NOTE: pillButton styles removed - now using Button component with shape="pill"
-
+    settingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    settingRowWithIcon: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    settingLabelButtonRow: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    settingInfo: {
+      flex: 1,
+    },
+    settingHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
     // Display name edit
     displayNameRow: {
       flexDirection: "row",

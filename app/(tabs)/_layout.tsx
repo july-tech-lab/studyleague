@@ -1,6 +1,6 @@
 import { useTheme } from "@/utils/themeContext";
-import { Tabs } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { Tabs } from "expo-router";
 import { BarChart2, Clock, ListChecks, Palette, User, UsersRound } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,24 +11,16 @@ export default function TabsLayout() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = useMemo(() => createStyles(), []);
 
   const makeTabIcon = (IconComponent: typeof Clock, label: string) => {
     const TabIcon = ({ color, focused }: { color: string; focused: boolean }) => (
       <View style={styles.tabButton}>
-        <View
-          style={[
-            styles.iconBubble,
-            focused && { backgroundColor: theme.primaryTint },
-            focused && styles.iconBubbleFocused,
-          ]}
-        >
-          <IconComponent
-            size={22}
-            color={focused ? theme.primary : color}
-            strokeWidth={2.2}
-          />
-        </View>
+        <IconComponent
+          size={22}
+          color={focused ? theme.tabIconSelected : color}
+          strokeWidth={2.2}
+        />
       </View>
     );
 
@@ -40,7 +32,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
@@ -55,16 +47,29 @@ export default function TabsLayout() {
           fontSize: 12,
           fontWeight: "500",
         },
-        tabBarButton: (props) => (
-          <TouchableOpacity
-            {...props}
-            onPress={(e) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              props.onPress?.(e);
-            }}
-            activeOpacity={0.7}
-          />
-        ),
+        tabBarButton: (props) => {
+          const focused = props.accessibilityState?.selected;
+          return (
+            <TouchableOpacity
+              {...(props as React.ComponentProps<typeof TouchableOpacity>)}
+              onPress={(e) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                props.onPress?.(e);
+              }}
+              activeOpacity={0.7}
+              style={[
+                props.style,
+                focused && {
+                  backgroundColor: theme.primaryTint,
+                  borderRadius: 20,
+                  marginHorizontal: 4,
+                  paddingVertical: 6,
+                  paddingHorizontal: 10,
+                },
+              ]}
+            />
+          );
+        },
       }}
     >
       <Tabs.Screen
@@ -72,14 +77,6 @@ export default function TabsLayout() {
         options={{
           title: t("tabs.focus"),
           tabBarIcon: makeTabIcon(Clock, t("tabs.focus")),
-        }}
-      />
-
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: t("tabs.stats"),
-          tabBarIcon: makeTabIcon(BarChart2, t("tabs.stats")),
         }}
       />
 
@@ -108,6 +105,14 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: t("tabs.stats"),
+          tabBarIcon: makeTabIcon(BarChart2, t("tabs.stats")),
+        }}
+      />
+
+      <Tabs.Screen
         name="profile"
         options={{
           title: t("tabs.profile"),
@@ -127,20 +132,10 @@ export default function TabsLayout() {
   );
 }
 
-const createStyles = (theme: typeof Colors.light) =>
+const createStyles = () =>
   StyleSheet.create({
     tabButton: {
       alignItems: "center",
       justifyContent: "center",
-    },
-    iconBubble: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    iconBubbleFocused: {
-      transform: [{ scale: 1.06 }],
     },
   });

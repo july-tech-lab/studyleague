@@ -1,18 +1,18 @@
 import { LucideIcon } from "lucide-react-native";
 import {
-  ActivityIndicator,
-  Pressable,
-  PressableProps,
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextStyle,
-  View,
-  ViewStyle,
+    ActivityIndicator,
+    Pressable,
+    PressableProps,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TextStyle,
+    View,
+    ViewStyle,
 } from "react-native";
 
-import { useTheme } from "@/utils/themeContext";
 import Colors from "@/constants/Colors";
+import { useTheme } from "@/utils/themeContext";
 
 type ButtonVariant = "primary" | "secondary" | "destructive" | "outline" | "ghost";
 type ButtonSize = "xs" | "sm" | "md" | "lg";

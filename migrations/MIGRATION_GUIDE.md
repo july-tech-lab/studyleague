@@ -49,6 +49,7 @@ Run these migrations **in this exact order** if you're setting up a fresh databa
 31. **`20251212_fix_tasks_update_simple.sql`** - Simplified tasks update policy
 32. **`20251212_verify_and_fix_tasks_update_policy.sql`** - Verification and final fix
 33. **`20251212_fix_tasks_update_policy_final.sql`** - Final tasks update policy
+34. **`20260217_study_plans.sql`** - Adds study_plans table for recurring study schedules
 
 ## How to Determine Which Migrations to Run
 

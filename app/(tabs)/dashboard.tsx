@@ -1,4 +1,5 @@
 import { TabScreen } from "@/components/layout/TabScreen";
+import { Text } from "@/components/Themed";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
@@ -7,7 +8,6 @@ import { Clock, Flame, Trophy, Zap } from "lucide-react-native";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Text } from "@/components/Themed";
 
 // --- MOCK DATA ---
 const weeklyStudyTime = { hours: 25, minutes: 30, goal: 30 };

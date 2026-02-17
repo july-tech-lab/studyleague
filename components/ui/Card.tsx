@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, View, ViewProps } from "react-native";
 
+import { hexToRgba } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 
 type CardRadius = 14 | 16 | 20;
@@ -28,6 +29,21 @@ export function Card({
     border: styles.border,
   }[variant];
 
+  const elevatedShadow =
+    variant === "elevated"
+      ? {
+          boxShadow: [
+            {
+              offsetX: 0,
+              offsetY: -8,
+              blurRadius: 8,
+              color: hexToRgba(colors.text, 0.08),
+            },
+          ],
+          elevation: 4,
+        }
+      : {};
+
   return (
     <View
       style={[
@@ -36,8 +52,8 @@ export function Card({
           backgroundColor: colors.surface,
           padding,
           borderRadius: radius,
-          shadowColor: colors.text,
           ...(variant === "border" && { borderColor: colors.divider }),
+          ...elevatedShadow,
         },
         variantStyles,
         style,
@@ -53,12 +69,7 @@ const styles = StyleSheet.create({
   base: {
     // Base styles - borderRadius and borderColor set dynamically
   },
-  elevated: {
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
+  elevated: {},
   flat: {
     // No border, no shadow - just background
   },

@@ -3,5 +3,12 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "files.exclude": {
+    "/android": true,
+    "/ios": true
+  },
+  "gradle.nestedProjects": false,
+  "java.import.gradle.enabled": false,
+  "java.import.gradle.wrapper.enabled": false
 }

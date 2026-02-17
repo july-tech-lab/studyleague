@@ -14,21 +14,23 @@ const withFocusMode = (config) => {
       androidManifest.manifest = {};
     }
     
-    if (!androidManifest.manifest.usesPermission) {
-      androidManifest.manifest.usesPermission = [];
-    }
+    // Use 'uses-permission' (kebab-case) to match XML element name
+    const permissions = androidManifest.manifest['uses-permission'] || [];
     
     // Check if permission already exists
-    const hasPermission = androidManifest.manifest.usesPermission.some(
+    const hasPermission = permissions.some(
       (permission) => permission.$['android:name'] === 'android.permission.ACCESS_NOTIFICATION_POLICY'
     );
     
     if (!hasPermission) {
-      androidManifest.manifest.usesPermission.push({
-        $: {
-          'android:name': 'android.permission.ACCESS_NOTIFICATION_POLICY',
+      androidManifest.manifest['uses-permission'] = [
+        ...permissions,
+        {
+          $: {
+            'android:name': 'android.permission.ACCESS_NOTIFICATION_POLICY',
+          },
         },
-      });
+      ];
     }
     
     return config;
