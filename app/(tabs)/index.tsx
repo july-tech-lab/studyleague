@@ -659,7 +659,7 @@ export default function TimerScreen() {
                                 </View>
                               </TouchableOpacity>
                               {sub.children.length > 0 && (
-                                <View style={styles.subtagRowInline}>
+                                <View style={styles.subtagRowBelow}>
                                   {sub.children.map((child) => {
                                     const childSelected = selectedSubjectId === child.id;
                                     return (
@@ -1117,10 +1117,10 @@ function createStyles(theme: typeof Colors.light) {
     },
     subjectInfo: { flex: 1 },
     subjectRowWithChildren: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
+      flexDirection: "column",
+      alignItems: "stretch",
       width: "100%",
+      gap: 6,
     },
     subjectMainTapArea: {
       flex: 1,
@@ -1134,6 +1134,12 @@ function createStyles(theme: typeof Colors.light) {
       gap: 4,
       marginLeft: 8,
       flexShrink: 0,
+    },
+    subtagRowBelow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 4,
+      paddingLeft: 20, // Align with subject name (dot 10 + marginRight 10)
     },
     taskContent: {
       flex: 1,
