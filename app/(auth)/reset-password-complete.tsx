@@ -69,7 +69,7 @@ export default function ResetPasswordComplete() {
         setStatus("ready");
       } catch (err) {
         setStatus("error");
-        setError(err instanceof Error ? err.message : t("common.errorUnexpected"));
+        setError(err instanceof Error ? err.message : t("common.errors.unexpected"));
       }
     };
 
@@ -141,7 +141,7 @@ export default function ResetPasswordComplete() {
         shape="pill"
         size="xs"
         onPress={handleBack}
-        accessibilityLabel={t("common.back", "Back")}
+        accessibilityLabel={t("common.actions.back")}
       />
 
       <Text variant="h1" style={styles.title}>

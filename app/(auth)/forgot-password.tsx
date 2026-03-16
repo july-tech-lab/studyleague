@@ -68,14 +68,14 @@ export default function ForgotPassword() {
         shape="pill"
         size="xs"
         onPress={handleBack}
-        accessibilityLabel={t("common.back", "Back")}
+        accessibilityLabel={t("common.actions.back")}
       />
 
       <Text variant="h1" style={styles.title}>{t("auth.resetRequest.title")}</Text>
 
       <View style={styles.card}>
         <Input
-          placeholder={t("auth.placeholders.email")}
+          placeholder={t("common.fields.email")}
           leftIcon={Mail}
           autoCapitalize="none"
           autoCorrect={false}

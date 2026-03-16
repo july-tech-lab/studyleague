@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListCard, ListItem } from "@/components/ui/ListCard";
 import { Modal } from "@/components/ui/Modal";
+import { StatCard } from "@/components/ui/StatCard";
 import { SubjectPicker } from "@/components/ui/SubjectPicker";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
+import { useDashboard } from "@/hooks/useDashboard";
 import { useProfile } from "@/hooks/useProfile";
 import { useStudyMode } from "@/hooks/useStudyMode";
 import { changeLanguage } from "@/i18n";
@@ -24,9 +26,9 @@ import {
   updateUserSubjectCustomization,
 } from "@/utils/queries";
 import { useTheme, useThemePreference } from "@/utils/themeContext";
-import { formatDuration } from "@/utils/time";
+import { formatDuration, formatDurationCompact } from "@/utils/time";
 import { useRouter } from "expo-router";
-import { BarChart2, Clock, Flame, Globe, LogOut, Moon, Palette, Plus, Save, Search, Shield, ShieldAlert, Sun, Trash, Trophy, User } from "lucide-react-native";
+import { Award, Clock, Flame, Globe, LogOut, Moon, Palette, Plus, Save, Search, Shield, ShieldAlert, Sun, Timer, Trash, Trophy, User, Zap } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -42,10 +44,11 @@ import {
 
 
 // Types
-interface StatCard {
+interface StatCardData {
   icon: React.ComponentType<{ size?: number; color?: string }>;
   label: string;
   value: string;
+  iconColor: string;
 }
 
 export default function ProfileScreen() {
@@ -71,6 +74,8 @@ export default function ProfileScreen() {
     userId: user?.id ?? null,
     autoLoad: true,
   });
+
+  const { longestSessionSeconds, bestSubjectName } = useDashboard(user?.id ?? null);
 
   // Initialize display name input when profile loads
   useEffect(() => {
@@ -164,12 +169,15 @@ export default function ProfileScreen() {
   // Combine profile error with local error state for display
   const error = profileError ? profileError.message : null;
 
-  const statCards: StatCard[] = useMemo(
+  const iconColor = theme.primary;
+
+  const statCards: StatCardData[] = useMemo(
     () => [
       {
         icon: Clock,
-        label: t("profile.stats.totalTime"),
-        value: formatDuration(sessionTotals.monthSeconds),
+        label: t("common.totalTime"),
+        value: formatDurationCompact(sessionTotals.totalSeconds),
+        iconColor,
       },
       {
         icon: Flame,
@@ -178,15 +186,34 @@ export default function ProfileScreen() {
           profile?.current_streak !== undefined
             ? t("profile.stats.streakValue", { count: profile.current_streak })
             : "--",
+        iconColor,
       },
       {
-        icon: BarChart2,
-        label: t("profile.stats.avgSession"),
-        value: formatDuration(sessionTotals.avgSeconds),
+        icon: Zap,
+        label: t("profile.stats.sessions"),
+        value: String(sessionTotals.count ?? 0),
+        iconColor,
       },
-      { icon: Trophy, label: t("profile.stats.rank"), value: rankLabel ?? "--" },
+      {
+        icon: Trophy,
+        label: t("tabs.leaderboard"),
+        value: rankLabel ?? "--",
+        iconColor,
+      },
+      {
+        icon: Timer,
+        label: t("dashboard.longestSession"),
+        value: formatDurationCompact(longestSessionSeconds),
+        iconColor,
+      },
+      {
+        icon: Award,
+        label: t("dashboard.bestSubject"),
+        value: bestSubjectName ?? "--",
+        iconColor,
+      },
     ],
-    [profile, rankLabel, sessionTotals, t]
+    [profile, rankLabel, sessionTotals, longestSessionSeconds, bestSubjectName, iconColor, t]
   );
 
   const handleCreateSubject = async () => {
@@ -386,9 +413,9 @@ export default function ProfileScreen() {
       t("profile.subjects.deleteTitle", "Retirer la matière ?"),
       t("profile.subjects.deleteMessage", "Cette matière sera retirée de votre profil."),
       [
-        { text: t("common.cancel", "Annuler"), style: "cancel" },
+        { text: t("common.actions.cancel"), style: "cancel" },
         {
-          text: t("common.delete", "Supprimer"),
+          text: t("common.actions.delete"),
           style: "destructive",
           onPress: async () => {
             setDeletingId(subject.id);
@@ -437,9 +464,9 @@ export default function ProfileScreen() {
       t("profile.account.deleteTitle", "Delete account?"),
       t("profile.account.deleteMessage", "This will remove your data permanently."),
       [
-        { text: t("common.cancel", "Annuler"), style: "cancel" },
+        { text: t("common.actions.cancel"), style: "cancel" },
         {
-          text: t("profile.account.deleteConfirm", "Delete"),
+          text: t("common.actions.delete"),
           style: "destructive",
           onPress: async () => {
             setAccountActionLoading("delete");
@@ -478,7 +505,7 @@ export default function ProfileScreen() {
     >
         <Tabs
           options={[
-            { value: "stats", label: t("profile.tabs.stats", "Stats") },
+            { value: "stats", label: t("tabs.stats") },
             { value: "subjects", label: t("profile.tabs.subjects", "Subjects") },
             { value: "settings", label: t("profile.tabs.settings", "Settings") },
           ]}
@@ -509,7 +536,7 @@ export default function ProfileScreen() {
                   onPress={handleSaveDisplayName}
                   disabled={savingDisplayName || !displayNameInput.trim()}
                   loading={savingDisplayName}
-                  accessibilityLabel={savingDisplayName ? t("profile.displayName.saving", "Saving...") : t("profile.displayName.save", "Save")}
+                  accessibilityLabel={savingDisplayName ? t("common.status.saving") : t("common.actions.save")}
                 />
               </View>
               {displayNameError ? (
@@ -579,7 +606,7 @@ export default function ProfileScreen() {
                   <Text variant="subtitle">{t("profile.studyMode.title", "Study Mode")}</Text>
                   {!hasFocusPermission && (
                     <Button
-                    title={t("profile.studyMode.grantPermission", "Grant Permission")}
+                    title={t("common.grantPermission")}
                     variant="primary"
                     size="sm"
                     onPress={async () => {
@@ -611,7 +638,7 @@ export default function ProfileScreen() {
                     <View style={styles.settingLabelButtonRow}>
                       <Text variant="subtitle">{t("profile.studyMode.appsToBlock", "Apps to Block")}</Text>
                       <Button
-                      title={t("profile.studyMode.selectApps", "Select Apps")}
+                      title={t("common.selectApps")}
                       variant="outline"
                       size="sm"
                       onPress={async () => {
@@ -654,8 +681,8 @@ export default function ProfileScreen() {
                 />
                 <Button
                   title={accountActionLoading === "delete"
-                    ? t("profile.account.deleting", "Deleting...")
-                    : t("profile.account.delete", "Delete account")}
+                    ? t("common.status.deleting")
+                    : t("profile.account.delete")}
                   variant="destructive"
                   onPress={handleDeleteAccount}
                   disabled={accountActionLoading === "delete"}
@@ -670,28 +697,25 @@ export default function ProfileScreen() {
         {activeTab === "stats" && (
           <>
             {loading ? (
-              <Text variant="body" align="center" style={{ marginTop: 12 }}>{t("profile.loading")}</Text>
+              <Text variant="body" align="center" style={{ marginTop: 12 }}>{t("common.status.loading")}</Text>
             ) : error ? (
               <Text variant="body" align="center" style={{ marginTop: 12, color: theme.danger ?? "#f66" }}>{error}</Text>
             ) : (
               <>
                 <View style={styles.statsGrid}>
-                  {statCards.map((stat) => {
-                    const IconComponent = stat.icon;
-                    return (
-                      <View key={stat.label} style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.divider }]}>
-                        <View style={styles.statCardIcon}>
-                          <IconComponent size={22} color={theme.primary} />
-                        </View>
-                        <Text variant="h1" align="center" style={[styles.statValue, { color: theme.text }]}>
-                          {stat.value}
-                        </Text>
-                        <Text variant="caption" colorName="textMuted" align="center">
-                          {stat.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                  {[statCards.slice(0, 3), statCards.slice(3, 6)].map((row, rowIdx) => (
+                    <View key={rowIdx} style={styles.statsRow}>
+                      {row.map((stat) => (
+                        <StatCard
+                          key={stat.label}
+                          icon={stat.icon}
+                          value={stat.value}
+                          label={stat.label}
+                          iconColor={stat.iconColor}
+                        />
+                      ))}
+                    </View>
+                  ))}
                 </View>
 
                 {subjectTotalsForBreakdown.length > 0 && (
@@ -747,7 +771,7 @@ export default function ProfileScreen() {
               </View>
               {user?.id && (
                 <Button
-                  title={t("profile.subjects.add", "Add")}
+                  title={t("common.actions.add")}
                   variant="primary"
                   size="sm"
                   onPress={() => setAddModalVisible(true)}
@@ -757,7 +781,7 @@ export default function ProfileScreen() {
 
             {loading ? (
               <View style={styles.subjectsCard}>
-                <Text variant="body" align="center" style={{ paddingVertical: 20, color: theme.textMuted }}>{t("common.loading")}</Text>
+                <Text variant="body" align="center" style={{ paddingVertical: 20, color: theme.textMuted }}>{t("common.status.loading")}</Text>
               </View>
               ) : subjectTree.length === 0 ? (
               <View style={styles.subjectsCard}>
@@ -831,10 +855,10 @@ export default function ProfileScreen() {
           setAddError(null);
           setAddModalVisible(false);
         }}
-        title={t("timer.addSubjectTitle", "Ajouter une matière")}
+        title={t("common.addSubject")}
         actions={{
           cancel: {
-            label: t("timer.cancel", "Annuler"),
+            label: t("common.actions.cancel"),
             onPress: () => {
               setNewSubjectName("");
               setSelectedParentSubjectId(null);
@@ -846,10 +870,10 @@ export default function ProfileScreen() {
           },
           confirm: {
             label: savingSubject 
-              ? t("timer.saving", "Enregistrement...") 
+              ? t("common.status.saving") 
               : exactMatch 
-                ? t("profile.subjects.add", "Ajouter")
-                : t("profile.subjects.createNew", "Créer"),
+                ? t("common.actions.add")
+                : t("profile.subjects.create"),
             onPress: exactMatch 
               ? () => handleAddExistingSubject(exactMatch)
               : handleCreateSubject,
@@ -874,7 +898,7 @@ export default function ProfileScreen() {
           subjects={subjects}
           selectedSubjectId={selectedParentSubjectId}
           onSelect={setSelectedParentSubjectId}
-          placeholder={t("profile.subjects.parentPlaceholder", "Parent subject (optional)")}
+          placeholder={t("common.parentSubjectPlaceholder")}
           containerStyle={{ marginBottom: 12 }}
           parentsOnly={true}
         />
@@ -917,7 +941,7 @@ export default function ProfileScreen() {
                       size="sm"
                       onPress={() => handleAddExistingSubject(subject)}
                       disabled={savingSubject || isDeleting}
-                      accessibilityLabel={t("profile.subjects.add", "Add subject")}
+                      accessibilityLabel={t("common.addSubject")}
                     />
                   </View>
                 </View>
@@ -957,7 +981,7 @@ export default function ProfileScreen() {
                       size="sm"
                       onPress={() => handleAddExistingSubject(subject)}
                       disabled={savingSubject || isDeleting}
-                      accessibilityLabel={t("profile.subjects.add", "Add subject")}
+                      accessibilityLabel={t("common.addSubject")}
                     />
                   </View>
                 </View>
@@ -990,12 +1014,12 @@ export default function ProfileScreen() {
         title={t("profile.subjects.deleteTitle", "Retirer la matière ?")}
         actions={{
           cancel: {
-            label: t("common.cancel", "Annuler"),
+            label: t("common.actions.cancel"),
             onPress: handleCancelDelete,
             variant: "secondary",
           },
           confirm: {
-            label: t("common.delete", "Supprimer"),
+            label: t("common.actions.delete"),
             onPress: handleConfirmDelete,
             variant: "destructive",
           },
@@ -1016,7 +1040,7 @@ export default function ProfileScreen() {
         title={t("profile.subjects.colorPickerTitle", "Choose color")}
         actions={{
           cancel: {
-            label: t("common.cancel", "Annuler"),
+            label: t("common.actions.cancel"),
             onPress: () => {
               setColorPickerVisible(false);
               setSubjectForColor(null);
@@ -1110,25 +1134,13 @@ const createStyles = (theme: typeof Colors.light) =>
       fontSize: 14,
     },
     statsGrid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 12,
+      gap: 10,
       marginBottom: 24,
     },
-    statCard: {
-      width: "47%",
-      borderRadius: 14,
-      padding: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      alignItems: "center",
-    },
-    statCardIcon: {
-      marginBottom: 8,
-    },
-    statValue: {
-      fontSize: 24,
-      fontWeight: "700",
-      marginBottom: 4,
+    statsRow: {
+      flexDirection: "row",
+      gap: 10,
+      marginBottom: 10,
     },
     iconBox: {
       width: 40,

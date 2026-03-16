@@ -1,8 +1,8 @@
 import { TabScreen } from "@/components/layout/TabScreen";
 import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { ListCard, ListItem } from "@/components/ui/ListCard";
 import { Modal } from "@/components/ui/Modal";
 import { SubjectPicker } from "@/components/ui/SubjectPicker";
 import { Tabs } from "@/components/ui/Tabs";
@@ -15,18 +15,25 @@ import { useTimer } from "@/hooks/useTimer";
 import { useAuth } from '@/utils/authContext';
 import { createSubjectColorMap, getReadableTextColor, hexToRgba } from '@/utils/color';
 import { buildSubjectTree, SubjectNode } from '@/utils/queries';
-import { useTheme, useThemePreference } from '@/utils/themeContext';
+import { useTheme } from '@/utils/themeContext';
 import { formatDateLabel, getTodayIso } from '@/utils/time';
-import { useFocusEffect } from "expo-router";
-import { Bell, Check, Circle, Plus, Shield, ShieldAlert, Square } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import { useFocusEffect, useRouter } from "expo-router";
+import { Bell, Plus, Square, Target } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
+import Svg, { Circle as SvgCircle } from "react-native-svg";
 
 export default function TimerScreen() {
   const { user } = useAuth();
-  const { colorScheme } = useThemePreference();
   const theme = useTheme();
+  const router = useRouter();
   
   // Ensure theme is always available
   const safeTheme = React.useMemo(() => {
@@ -219,6 +226,23 @@ export default function TimerScreen() {
     return isValid;
   }, [findSubjectWithParent, subjectTree, selectedSubjectId, selectedSubject]);
 
+  // Pulse animation for the ring when timer is running
+  const pulseOpacity = useSharedValue(0);
+  const pulseAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+  useEffect(() => {
+    if (isRunning) {
+      pulseOpacity.value = withRepeat(
+        withTiming(0.4, { duration: 1200 }),
+        -1,
+        true
+      );
+    } else {
+      pulseOpacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [isRunning, pulseOpacity]);
+
   // Refresh tasks and subjects when tab comes into focus
   // This ensures data stays in sync when switching between tabs
   useFocusEffect(
@@ -275,7 +299,7 @@ export default function TimerScreen() {
       });
       Alert.alert(
         t("timer.errorTitle"),
-        t("timer.chooseSubjectHint", "Veuillez sélectionner une matière avant de démarrer")
+        t("subjects.select.hint")
       );
       return;
     }
@@ -362,7 +386,7 @@ export default function TimerScreen() {
   const handleCreateSubject = async () => {
     const name = newSubjectName.trim();
     if (!name) {
-      Alert.alert(t("timer.errorTitle"), t("common.errorUnexpected"));
+      Alert.alert(t("timer.errorTitle"), t("common.errors.unexpected"));
       return;
     }
 
@@ -383,7 +407,7 @@ export default function TimerScreen() {
 
   // Simplified selectedSubjectLabel - use selectedSubject from hook, with breadcrumb support
   const selectedSubjectLabel = React.useMemo(() => {
-    if (!selectedSubject) return t("timer.subjectMissing", "Sélectionne une matière");
+    if (!selectedSubject) return t("subjects.select.missing");
     
     // Check if it's a child subject and build breadcrumb
     const match = findSubjectWithParent(subjectTree, selectedSubjectId);
@@ -401,26 +425,82 @@ export default function TimerScreen() {
   return (
     <TabScreen
       title={t("tabs.focus")}
-      rightIcon={{
-        icon: Bell,
-        badge: <View style={styles.notificationDot} />,
-      }}
+      rightAction={
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/goals")}
+            style={styles.headerIconBtn}
+          >
+            <Target size={22} color={safeTheme.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIconBtn}>
+            <Bell size={22} color={safeTheme.text} />
+            <View style={styles.notificationDot} />
+          </TouchableOpacity>
+        </View>
+      }
+      gap={8}
     >
         {/* BIG TIMER */}
-        <View 
-          style={[styles.timerContainer, isRunning && styles.timerContainerExpanded]}
-        >
-          {/* Dark mode teal tint overlay */}
-          {colorScheme === "dark" && (
-            <View style={[StyleSheet.absoluteFill, {
-              backgroundColor: hexToRgba(safeTheme.primary, 0.12),
-              borderRadius: 22,
-            }]} />
-          )}
-          <Text style={styles.timerText}>
-            {formattedTime.hours}:{formattedTime.mins}:{formattedTime.secs}
-          </Text>
-          <View style={styles.selectedSubjectRow}>
+        <View style={styles.timerContainer}>
+          {/* Circular progress ring (thin track + thicker progress arc) */}
+          <View style={styles.timerRingWrapper}>
+            {/* Pulse ring (visible when running) */}
+            {isRunning && (
+              <Animated.View style={[styles.timerPulseRing, pulseAnimatedStyle]} pointerEvents="none">
+                <Svg width={180} height={180} style={styles.timerPulseSvg}>
+                  <SvgCircle
+                    cx={90}
+                    cy={90}
+                    r={84}
+                    stroke={hexToRgba(safeTheme.primary, 0.25)}
+                    strokeWidth={2.5}
+                    fill="none"
+                  />
+                </Svg>
+              </Animated.View>
+            )}
+            <Svg width={168} height={168} style={styles.timerRingSvg}>
+              {/* Thin background track */}
+              <SvgCircle
+                cx={84}
+                cy={84}
+                r={74}
+                stroke={hexToRgba(safeTheme.textMuted, 0.12)}
+                strokeWidth={4}
+                fill="none"
+              />
+              {/* Thicker progress arc (clockwise from top, 25-min reference) */}
+              <SvgCircle
+                cx={84}
+                cy={84}
+                r={74}
+                stroke={safeTheme.primary}
+                strokeWidth={9}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={
+                  (() => {
+                    const circumference = 2 * Math.PI * 74;
+                    const progress = isRunning ? Math.min(1, timerSeconds / 1500) : 0;
+                    return `${progress * circumference} ${circumference}`;
+                  })()
+                }
+                transform="rotate(-90 84 84)"
+              />
+            </Svg>
+            <View style={styles.timerTextContainer}>
+              <Text
+                style={styles.timerText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+              >
+                {formattedTime.hours}:{formattedTime.mins}:{formattedTime.secs}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.selectedSubjectRow, styles.selectedSubjectPill]}>
             {selectedSubjectColor && (
               <View
                 style={[
@@ -435,77 +515,75 @@ export default function TimerScreen() {
           </View>
 
           <View style={styles.focusBadgeSlot}>
+            {/* Messages above button (variable height) */}
+            <View style={styles.buttonMessagesArea}>
+              {isRunning && !focusModeActive && (
+                <Text variant="micro" style={{ color: safeTheme.danger }} align="center">
+                  {t("timer.focusModeLost")}
+                </Text>
+              )}
+              {!isRunning && !hasValidSubject && (
+                <Text variant="micro" colorName="textMuted" align="center">
+                  {t("subjects.select.hint")}
+                </Text>
+              )}
+              {!isRunning && hasValidSubject && !timerCanStart && !focusModeLoading && (
+                <Text variant="micro" colorName="textMuted" align="center">
+                  {!hasFocusPermission 
+                    ? t("timer.focusModeRequired")
+                    : Platform.OS === 'ios' 
+                      ? t("timer.noAppsSelected")
+                      : t("timer.focusModeRequired")
+                  }
+                </Text>
+              )}
+            </View>
+            {/* Button always in same place (Start or Stop) */}
             {isRunning ? (
-              <>
-                <View style={[
-                  styles.focusBadge,
-                  !focusModeActive && styles.focusBadgeWarning
-                ]}>
-                  {focusModeActive ? (
-                    <Shield size={14} color={safeTheme.textMuted} />
-                  ) : (
-                    <ShieldAlert size={14} color={safeTheme.danger} />
-                  )}
-                  <Text 
-                    variant="micro" 
-                    style={{ color: focusModeActive ? safeTheme.textMuted : safeTheme.danger }}
-                  >
-                    {focusModeActive ? t("timer.focusModeActive") : t("timer.focusModeDisabled")}
-                  </Text>
-                </View>
-                {!focusModeActive && (
-                  <Text variant="micro" style={{ color: safeTheme.danger, marginTop: 4 }} align="center">
-                    {t("timer.focusModeLost")}
-                  </Text>
-                )}
-              </>
+              <Button
+                iconLeft={Square}
+                title={t("timer.stop")}
+                variant="secondary"
+                onPress={handleStop}
+                fullWidth
+                style={{ backgroundColor: safeTheme.secondary }}
+                textStyle={{ color: safeTheme.onPrimaryDark }}
+              />
             ) : (
-              <>
-                {!hasValidSubject && (
-                  <Text variant="micro" colorName="textMuted" align="center">
-                    {t("timer.chooseSubjectHint")}
-                  </Text>
-                )}
-                {hasValidSubject && !timerCanStart && !focusModeLoading && (
-                  <Text variant="micro" colorName="textMuted" align="center" style={{ marginBottom: 8 }}>
-                    {!hasFocusPermission 
-                      ? t("timer.focusModeRequired")
-                      : Platform.OS === 'ios' 
-                        ? t("timer.noAppsSelected")
-                        : t("timer.focusModeRequired")
-                    }
-                  </Text>
-                )}
-                <Button
-                  title={t("timer.startButton")}
-                  variant="primary"
-                  onPress={(e) => {
-                    console.log("Start button pressed", { hasValidSubject, selectedSubjectId, event: e });
-                    handleStart();
-                  }}
-                  disabled={!hasValidSubject || (!timerCanStart && !focusModeLoading)}
-                  loading={focusModeLoading}
-                  fullWidth
-                />
-              </>
+              <Button
+                title={t("timer.startButton")}
+                variant="primary"
+                onPress={(e) => {
+                  console.log("Start button pressed", { hasValidSubject, selectedSubjectId, event: e });
+                  handleStart();
+                }}
+                disabled={!hasValidSubject || (!timerCanStart && !focusModeLoading)}
+                loading={focusModeLoading}
+                fullWidth
+              />
+            )}
+            {Platform.OS === "web" && (
+              <Text variant="micro" colorName="textMuted" style={styles.focusSimulatedText}>
+                {t("timer.focusSimulated")}
+              </Text>
             )}
           </View>
         </View>
 
-        {/* SUBJECT / TASK CONTENT */}
-        {!isRunning ? (
-          <>
+        {/* SUBJECT / TASK CONTENT (always visible, below timer) */}
+        <>
             {/* TAB SWITCHER (after timer) */}
             <Tabs
               options={[
-                { value: "subjects", label: t("timer.tabSubjects", "Matières") },
-                { value: "tasks", label: t("timer.tabTasks", "Tâches") },
+                { value: "subjects", label: t("timer.tabSubjects") },
+                { value: "tasks", label: t("timer.tabTasks") },
               ]}
               value={listTab}
               onChange={(newTab) => {
                 console.log("Tab changed", { from: listTab, to: newTab });
                 setListTab(newTab);
               }}
+              style={{ marginBottom: 6 }}
             />
 
             <View style={styles.listContainer}>
@@ -515,7 +593,7 @@ export default function TimerScreen() {
                     <ActivityIndicator size="large" color={safeTheme.primary} />
                   </View>
                 ) : (
-                  <ListCard style={{ marginBottom: 0 }}>
+                  <View style={styles.subjectCardsContainer}>
                     {subjectListData.map((item) => {
                       const sub = item.node;
                       const subjectColor = item.subjectColor;
@@ -526,60 +604,35 @@ export default function TimerScreen() {
                       const disableRowInteraction = isRunning && !isRowActive;
 
                       return (
-                        <React.Fragment key={sub.id}>
-                          <ListItem
-                            pointerEvents="box-none"
-                            isLast={sub.children.length > 0}
-                            style={[
-                              {
-                                backgroundColor: isRowActive
-                                  ? hexToRgba(subjectColor, 0.16)
-                                  : "transparent",
-                              },
-                              isRowActive && {
-                                boxShadow: [
-                                  {
-                                    offsetX: 0,
-                                    offsetY: -2,
-                                    blurRadius: 6,
-                                    color: "rgba(0,0,0,0.08)",
-                                  },
-                                ],
-                              },
-                              disableRowInteraction && { opacity: 0.45 },
-                            ]}
-                          >
-                            <TouchableOpacity
-                              activeOpacity={0.9}
-                              style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
-                              onPress={(e) => {
-                                console.log("Subject row pressed", { subjectId: sub.id, event: e });
-                                if (isRunning && !isRowActive) {
-                                  console.warn("Cannot select subject: timer is running");
-                                  return;
-                                }
-                                console.log("Subject selected (parent)", {
-                                  subjectId: sub.id,
-                                  subjectName: sub.name,
-                                  wasSelected: selectedSubjectId === sub.id,
-                                });
-                                setSelectedSubjectId(sub.id);
-                              }}
-                              disabled={disableRowInteraction}
-                            >
-                              {/* PLAY BUTTON (Select only) */}
+                        <Card
+                          key={sub.id}
+                          variant="border"
+                          radius={14}
+                          padding={8}
+                          style={[
+                            {
+                              backgroundColor: isRowActive
+                                ? hexToRgba(subjectColor, 0.16)
+                                : undefined,
+                            },
+                            isRowActive && {
+                              borderColor: subjectColor,
+                              borderWidth: 1.5,
+                            },
+                            disableRowInteraction && { opacity: 0.45 },
+                          ]}
+                        >
+                          <View style={styles.subjectRowWithChildren}>
                               <TouchableOpacity
-                                style={[
-                                  styles.subjectPlayButton,
-                                  { backgroundColor: subjectColor },
-                                  disableRowInteraction && { opacity: 0.6 },
-                                ]}
-                                onPress={() => {
+                                activeOpacity={0.9}
+                                style={styles.subjectMainTapArea}
+                                onPress={(e) => {
+                                  console.log("Subject row pressed", { subjectId: sub.id, event: e });
                                   if (isRunning && !isRowActive) {
                                     console.warn("Cannot select subject: timer is running");
                                     return;
                                   }
-                                  console.log("Subject selected (play button)", {
+                                  console.log("Subject selected (parent)", {
                                     subjectId: sub.id,
                                     subjectName: sub.name,
                                     wasSelected: selectedSubjectId === sub.id,
@@ -588,100 +641,90 @@ export default function TimerScreen() {
                                 }}
                                 disabled={disableRowInteraction}
                               >
-                                {isRowActive && isRunning ? (
-                                  <View
-                                    style={{
-                                      width: 8,
-                                      height: 8,
-                                      backgroundColor: textOnColor,
-                                      borderRadius: 2,
-                                    }}
-                                  />
-                                ) : isRowActive ? (
-                                  <Check size={20} color={textOnColor} strokeWidth={2.5} />
-                                ) : (
-                                  <Circle size={20} color={textOnColor} strokeWidth={2} fill="none" />
-                                )}
-                              </TouchableOpacity>
-
-                              <View style={styles.subjectInfo}>
-                                <Text
-                                  variant="subtitle"
-                                  style={isRowActive ? { fontWeight: "600" } : undefined}
-                                >
-                                  {sub.name}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          </ListItem>
-
-                          {sub.children.length > 0 && (
-                            <View style={[styles.subtagRow, { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 8 }]}>
-                              {sub.children.map((child) => {
-                                const childSelected = selectedSubjectId === child.id;
-                                return (
-                                  <TouchableOpacity
-                                    key={child.id}
-                                    style={[
-                                      styles.subtagPill,
-                                      {
-                                        backgroundColor: childSelected
-                                          ? hexToRgba(subjectColor, 0.24)
-                                          : safeTheme.surface,
-                                        borderColor: subjectColor,
-                                      },
-                                      disableRowInteraction && !childSelected && { opacity: 0.6 },
-                                    ]}
-                                    onPress={() => {
-                                      if (isRunning && !childSelected) {
-                                        console.warn("Cannot select child subject: timer is running");
-                                        return;
-                                      }
-                                      console.log("Child subject selected", {
-                                        childId: child.id,
-                                        childName: child.name,
-                                        parentId: sub.id,
-                                        wasSelected: selectedSubjectId === child.id,
-                                      });
-                                      setSelectedSubjectId(child.id);
-                                    }}
-                                    disabled={isRunning && !childSelected}
+                                {/* Small color dot (compact, reference style) */}
+                                <View
+                                  style={[
+                                    styles.subjectColorDot,
+                                    { backgroundColor: subjectColor },
+                                    disableRowInteraction && { opacity: 0.6 },
+                                  ]}
+                                />
+                                <View style={styles.subjectInfo}>
+                                  <Text
+                                    variant="subtitle"
+                                    style={isRowActive ? { fontWeight: "600" } : undefined}
                                   >
-                                    <Text
-                                      variant="micro"
-                                      style={
-                                        childSelected
-                                          ? { color: textOnColor, fontWeight: "700" }
-                                          : undefined
-                                      }
-                                    >
-                                      {child.name}
-                                    </Text>
-                                  </TouchableOpacity>
-                                );
-                              })}
+                                    {sub.name}
+                                  </Text>
+                                </View>
+                              </TouchableOpacity>
+                              {sub.children.length > 0 && (
+                                <View style={styles.subtagRowInline}>
+                                  {sub.children.map((child) => {
+                                    const childSelected = selectedSubjectId === child.id;
+                                    return (
+                                      <TouchableOpacity
+                                        key={child.id}
+                                        style={[
+                                          styles.subtagPill,
+                                          {
+                                            backgroundColor: childSelected
+                                              ? hexToRgba(subjectColor, 0.24)
+                                              : safeTheme.surface,
+                                            borderColor: subjectColor,
+                                          },
+                                          disableRowInteraction && !childSelected && { opacity: 0.6 },
+                                        ]}
+                                        onPress={() => {
+                                          if (isRunning && !childSelected) {
+                                            console.warn("Cannot select child subject: timer is running");
+                                            return;
+                                          }
+                                          console.log("Child subject selected", {
+                                            childId: child.id,
+                                            childName: child.name,
+                                            parentId: sub.id,
+                                            wasSelected: selectedSubjectId === child.id,
+                                          });
+                                          setSelectedSubjectId(child.id);
+                                        }}
+                                        disabled={isRunning && !childSelected}
+                                      >
+                                        <Text
+                                          variant="micro"
+                                          style={
+                                            childSelected
+                                              ? { color: textOnColor, fontWeight: "700" }
+                                              : undefined
+                                          }
+                                        >
+                                          {child.name}
+                                        </Text>
+                                      </TouchableOpacity>
+                                    );
+                                  })}
+                                </View>
+                              )}
                             </View>
-                          )}
-                        </React.Fragment>
+                        </Card>
                       );
                     })}
-                  </ListCard>
+                  </View>
                 )
             ) : (
               // Show loading indicator for tasks if needed
               tasks.length === 0 && !subjectsLoading ? (
                 <View style={styles.loaderContainer}>
                   <Text colorName="textMuted">
-                    {t("timer.tasksEmpty", "Aucune tâche active")}
+                    {t("timer.tasksEmpty")}
                   </Text>
                 </View>
               ) : (
-                <ListCard style={{ marginBottom: 0 }}>
+                <View style={styles.subjectCardsContainer}>
                   {tasks
                     .filter((t) => t.status !== "done" && t.subjectId)
-                    .map((task, index, array) => {
+                    .map((task) => {
                       const isSelected = selectedTaskId === task.id;
-                      const isLast = index === array.length - 1;
                       
                       // Get subject info
                       const subjectName = task.subjectName || 
@@ -689,7 +732,6 @@ export default function TimerScreen() {
                         t("tasks.form.subject");
                       const taskSubjectId = task.subjectId!;
                       const taskSubjectColor = subjectColorById[taskSubjectId] ?? safeTheme.primary;
-                      const textOnColor = getReadableTextColor(taskSubjectColor);
                       
                       // Calculate time info
                       const planned = task.plannedMinutes ?? 0;
@@ -704,31 +746,26 @@ export default function TimerScreen() {
                         : null;
                       
                       return (
-                        <ListItem
+                        <Card
                           key={task.id}
-                          isLast={isLast}
-                          pointerEvents="box-none"
+                          variant="border"
+                          radius={14}
+                          padding={10}
                           style={[
                             {
                               backgroundColor: isSelected
                                 ? hexToRgba(taskSubjectColor, 0.16)
-                                : "transparent",
+                                : undefined,
                             },
                             isSelected && {
-                              boxShadow: [
-                                {
-                                  offsetX: 0,
-                                  offsetY: -2,
-                                  blurRadius: 6,
-                                  color: "rgba(0,0,0,0.08)",
-                                },
-                              ],
+                              borderColor: taskSubjectColor,
+                              borderWidth: 1.5,
                             },
                           ]}
                         >
                           <TouchableOpacity
                             activeOpacity={0.9}
-                            style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
+                            style={{ flexDirection: "row", alignItems: "center" }}
                             onPress={() => {
                               console.log("Task selected", {
                                 taskId: task.id,
@@ -741,31 +778,13 @@ export default function TimerScreen() {
                               setSelectedTaskId(task.id);
                             }}
                           >
-                            {/* SELECTION BUTTON */}
-                            <TouchableOpacity
+                            {/* Small color dot (compact, consistent with subjects) */}
+                            <View
                               style={[
-                                styles.subjectPlayButton,
+                                styles.subjectColorDot,
                                 { backgroundColor: taskSubjectColor },
                               ]}
-                              onPress={() => {
-                                console.log("Task selected (play button)", {
-                                  taskId: task.id,
-                                  taskTitle: task.title,
-                                  subjectId: task.subjectId,
-                                });
-                                if (task.subjectId) {
-                                  setSelectedSubjectId(task.subjectId);
-                                }
-                                setSelectedTaskId(task.id);
-                              }}
-                            >
-                              {isSelected ? (
-                                <Check size={20} color={textOnColor} strokeWidth={2.5} />
-                              ) : (
-                                <Circle size={20} color={textOnColor} strokeWidth={2} fill="none" />
-                              )}
-                            </TouchableOpacity>
-
+                            />
                             {/* TASK CONTENT */}
                             <View style={styles.taskContent}>
                               <View style={styles.taskHeader}>
@@ -787,36 +806,14 @@ export default function TimerScreen() {
                               </Text>
                             </View>
                           </TouchableOpacity>
-                        </ListItem>
+                        </Card>
                       );
                     })}
-                </ListCard>
+                </View>
               )
             )}
             </View>
           </>
-        ) : null}
-
-      {/* STOP BUTTON (Visible only when running) */}
-      {isRunning && (
-        <View style={styles.stopButtonContainer}>
-          <Button
-            iconLeft={Square}
-            iconOnly
-            variant="destructive"
-            size="lg"
-            onPress={(e) => {
-              console.log("Stop button pressed", { event: e });
-              handleStop();
-            }}
-            accessibilityLabel={t("timer.stop", "Arrêter")}
-            style={styles.stopButtonFloating}
-          />
-          <Text variant="caption" colorName="textMuted">
-            {t("timer.stop", "Arrêter")}
-          </Text>
-        </View>
-      )}
 
       {/* FLOATING ADD BUTTON (Pour aller vers Profil/Ajout) - Only in subjects tab */}
       {!isRunning && listTab === "subjects" && (
@@ -841,10 +838,10 @@ export default function TimerScreen() {
           setSelectedParentSubjectId(null);
           setAddModalVisible(false);
         }}
-        title={t("timer.addSubjectTitle", "Ajouter une matière")}
+        title={t("common.addSubject")}
         actions={{
           cancel: {
-            label: t("timer.cancel", "Annuler"),
+            label: t("common.actions.cancel"),
             onPress: () => {
               setNewSubjectName("");
               setSelectedParentSubjectId(null);
@@ -855,8 +852,8 @@ export default function TimerScreen() {
           },
           confirm: {
             label: savingSubject
-              ? t("timer.saving", "Enregistrement...")
-              : t("timer.create", "Créer"),
+              ? t("common.status.saving")
+              : t("common.actions.create"),
             onPress: handleCreateSubject,
             variant: "primary",
             disabled: savingSubject,
@@ -867,7 +864,7 @@ export default function TimerScreen() {
         <Input
           value={newSubjectName}
           onChangeText={setNewSubjectName}
-          placeholder={t("timer.addSubjectPlaceholder", "Nom de la matière")}
+          placeholder={t("timer.addSubjectPlaceholder")}
           autoFocus
           editable={!savingSubject}
           containerStyle={{ marginBottom: 12 }}
@@ -877,7 +874,7 @@ export default function TimerScreen() {
           subjects={subjects}
           selectedSubjectId={selectedParentSubjectId}
           onSelect={setSelectedParentSubjectId}
-          placeholder={t("timer.parentSubjectPlaceholder", "Parent subject (optional)")}
+          placeholder={t("common.parentSubjectPlaceholder")}
           containerStyle={{ marginBottom: 0 }}
           parentsOnly={true}
         />
@@ -890,12 +887,12 @@ export default function TimerScreen() {
         title={t("timer.permissionRequestTitle")}
         actions={{
           cancel: {
-            label: t("common.cancel"),
+            label: t("common.actions.cancel"),
             onPress: () => setPermissionModalVisible(false),
             variant: "ghost",
           },
           confirm: {
-            label: t("timer.grantPermission"),
+            label: t("common.grantPermission"),
             onPress: async () => {
               const granted = await requestFocusPermission();
               setPermissionModalVisible(false);
@@ -935,15 +932,15 @@ export default function TimerScreen() {
         <Modal
           visible={appPickerModalVisible}
           onClose={() => setAppPickerModalVisible(false)}
-          title={t("timer.selectApps")}
+          title={t("common.selectApps")}
           actions={{
             cancel: {
-              label: t("common.cancel"),
+              label: t("common.actions.cancel"),
               onPress: () => setAppPickerModalVisible(false),
               variant: "ghost",
             },
             confirm: {
-              label: t("timer.selectApps"),
+              label: t("common.selectApps"),
               onPress: async () => {
                 const selected = await presentAppPicker();
                 setAppPickerModalVisible(false);
@@ -982,12 +979,26 @@ function createStyles(theme: typeof Colors.light) {
     listContainer: {
       minHeight: 200,
     },
+    subjectCardsContainer: {
+      gap: 5,
+    },
     contentAreaRunning: {
       justifyContent: "center",
       paddingHorizontal: 4,
     },
 
     // HEADER (styles moved to Header component, keeping notificationDot here)
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    headerIconBtn: {
+      padding: 8,
+      justifyContent: "center",
+      alignItems: "center",
+      position: "relative",
+    },
     notificationDot: {
       position: "absolute",
       top: 4,
@@ -1001,73 +1012,77 @@ function createStyles(theme: typeof Colors.light) {
     },
 
     // TIMER — PREMIUM NEUTRAL VERSION
+    timerRingWrapper: {
+      position: "relative",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    timerPulseRing: {
+      position: "absolute",
+      width: 180,
+      height: 180,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    timerPulseSvg: {
+      position: "absolute",
+    },
+    timerRingSvg: {
+      position: "absolute",
+    },
+    timerTextContainer: {
+      width: 168,
+      height: 168,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    focusSimulatedText: {
+      marginTop: 6,
+      textAlign: "center",
+    },
     timerContainer: { 
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 80,
-      paddingHorizontal: 20,
-      marginTop: 18,
-      marginBottom: 10,
-      borderRadius: 22,
-      borderWidth: 1,
-      borderColor: theme.divider,
-      backgroundColor: theme.surfaceElevated,
-      boxShadow: [
-        {
-          offsetX: 0,
-          offsetY: -4,
-          blurRadius: 10,
-          color: "rgba(0,0,0,0.04)",
-        },
-      ],
-      elevation: 3,
-      minHeight: 240,
-      overflow: "hidden", // For dark mode overlay
-    },
-    timerContainerExpanded: {
-      flex: 1,
-      marginTop: 24,
-      marginBottom: 12,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      marginTop: 0,
+      marginBottom: 0,
     },
     timerText: {
-      fontSize: 56,
-      fontWeight: "500",
+      fontSize: 28,
+      fontWeight: "600",
       fontVariant: ['tabular-nums'],
+      lineHeight: 34,
       color: theme.text,
     },
     selectedSubjectRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      marginTop: 20,
-      gap: 8,
+      marginTop: 6,
+      gap: 6,
+    },
+    selectedSubjectPill: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
     },
     subjectColorBadge: {
       width: 8,
       height: 8,
       borderRadius: 4,
     },
-    focusBadge: {
-      marginTop: 10,
-      backgroundColor: theme.secondaryTint, // secondary tint
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 20,
-      flexDirection: "row",
+    buttonMessagesArea: {
+      height: 36,
       alignItems: "center",
-      gap: 6,
-    },
-    focusBadgeWarning: {
-      backgroundColor: hexToRgba(theme.danger, 0.1),
-      borderWidth: 1,
-      borderColor: hexToRgba(theme.danger, 0.3),
+      justifyContent: "center",
+      marginBottom: 8,
     },
     focusBadgeSlot: {
-      minHeight: 30,
-      justifyContent: "center",
-      marginTop: 16,
+      marginTop: 6,
       alignItems: "center",
-      gap: 12,
+      width: "100%",
     },
     // NOTE: startButton styles removed - now using Button component
     // Cards in list
@@ -1093,44 +1108,60 @@ function createStyles(theme: typeof Colors.light) {
     },
     // Note: Typography handled by Themed Text component with variant prop
 
-    // SUBJECT LIST
-    subjectPlayButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: 12,
-      backgroundColor: theme.secondaryTint,
+    // SUBJECT LIST (compact: small color dot like reference)
+    subjectColorDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      marginRight: 10,
     },
     subjectInfo: { flex: 1 },
+    subjectRowWithChildren: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+    subjectMainTapArea: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      minWidth: 0,
+    },
+    subtagRowInline: {
+      flexDirection: "row",
+      flexWrap: "nowrap",
+      gap: 4,
+      marginLeft: 8,
+      flexShrink: 0,
+    },
     taskContent: {
       flex: 1,
-      gap: 6,
+      gap: 2,
     },
     taskHeader: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: 6,
     },
     timeLabel: {
-      marginRight: 8,
+      marginRight: 0,
     },
     taskMeta: {
-      marginTop: 2,
+      marginTop: 0,
     },
     subtagRow: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 6,
+      gap: 4,
       paddingHorizontal: 6,
       paddingBottom: 2,
     },
     subtagPill: {
       borderWidth: 1,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 10,
     },
     // Note: Typography handled by Themed Text component with variant prop
     list: {
@@ -1161,20 +1192,5 @@ function createStyles(theme: typeof Colors.light) {
       // NOTE: Button component handles styling, this just sets size and position for floating button
     },
 
-    // STOP BUTTON
-    stopButtonContainer: {
-      position: "absolute",
-      alignSelf: 'center',
-      bottom: 40,
-      alignItems: "center",
-      gap: 8,
-      zIndex: 1000, // Ensure it's above other content
-    },
-    stopButtonFloating: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      // NOTE: Button component handles styling, this just sets size for floating button
-    },
   });
 }

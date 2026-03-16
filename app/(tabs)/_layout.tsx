@@ -1,7 +1,7 @@
 import { useTheme } from "@/utils/themeContext";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
-import { BarChart2, Clock, ListChecks, Palette, User, UsersRound } from "lucide-react-native";
+import { BarChart2, Clock, ListChecks, User, UsersRound } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -91,16 +91,24 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="leaderboard"
         options={{
-          href: null, // Hide from tab bar
-          title: t("tabs.leaderboard", "Classement"),
+          href: null, // Hide from tab bar - access via Groups tab
+          title: t("tabs.leaderboard"),
+        }}
+      />
+
+      <Tabs.Screen
+        name="goals"
+        options={{
+          href: null, // Hide from tab bar - accessed via Focus tab
+          title: t("goals.title"),
         }}
       />
 
       <Tabs.Screen
         name="groups"
         options={{
-          title: t("tabs.groups", "Groupes"),
-          tabBarIcon: makeTabIcon(UsersRound, t("tabs.groups", "Groupes")),
+          title: t("tabs.groups"),
+          tabBarIcon: makeTabIcon(UsersRound, t("tabs.groups")),
         }}
       />
 
@@ -120,12 +128,11 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* TEMPORARY: Color palette page for theme visualization - remove when done */}
+      {/* TEMPORARY: Color palette page for theme visualization - not in bar */}
       <Tabs.Screen
         name="color-palette"
         options={{
-          title: t("tabs.colorPalette"),
-          tabBarIcon: makeTabIcon(Palette, t("tabs.colorPalette")),
+          href: null, // Hidden from tab bar
         }}
       />
     </Tabs>

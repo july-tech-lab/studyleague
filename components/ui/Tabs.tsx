@@ -1,7 +1,13 @@
 import { Text } from "@/components/Themed";
 import Colors from "@/constants/Colors";
 import { useTheme } from "@/utils/themeContext";
-import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 
 export type TabOption<T extends string = string> = {
   value: T;
@@ -32,7 +38,10 @@ export function Tabs<T extends string = string>({
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
-            style={[styles.button, isActive && styles.buttonActive]}
+            style={[
+              styles.button,
+              isActive && styles.buttonActive,
+            ]}
           >
             <Text
               variant="subtitle"
@@ -51,33 +60,43 @@ const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     container: {
       flexDirection: "row",
-      justifyContent: "space-around",
-      marginHorizontal: 0,
-      paddingHorizontal: 0,
-      marginTop: 0,
-      marginBottom: 16,
-      backgroundColor: "transparent",
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.border,
-      gap: 8,
+      alignItems: "stretch",
+      alignSelf: "stretch",
+      marginBottom: 8,
+      padding: 4,
+      backgroundColor: theme.border,
+      borderRadius: 12,
+      gap: 4,
     },
     button: {
       flex: 1,
+      minWidth: 0,
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 12,
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      borderRadius: 8,
     },
     buttonActive: {
-      borderBottomWidth: 3,
-      borderBottomColor: theme.primaryDark,
+      backgroundColor: theme.surface,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.shadow,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.12,
+          shadowRadius: 2,
+        },
+        android: {
+          elevation: 2,
+        },
+      }),
     },
     buttonText: {
       color: theme.textMuted,
-      // Typography handled by Themed Text variant
       fontWeight: "600",
     },
     buttonTextActive: {
-      color: theme.primaryDark,
-      fontWeight: "800",
+      color: theme.text,
+      fontWeight: "700",
     },
   });

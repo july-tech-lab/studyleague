@@ -147,7 +147,7 @@ export default function FillProfileScreen() {
       setUploadingAvatar(true);
       await uploadAvatarToSupabase(asset.uri);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("common.errorUnexpected");
+      const message = err instanceof Error ? err.message : t("common.errors.unexpected");
       setError(message);
     } finally {
       setUploadingAvatar(false);
@@ -199,7 +199,7 @@ export default function FillProfileScreen() {
 
       router.replace("/(tabs)/profile");
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("common.errorUnexpected");
+      const message = err instanceof Error ? err.message : t("common.errors.unexpected");
       setError(message);
     } finally {
       setSaving(false);
@@ -215,7 +215,7 @@ export default function FillProfileScreen() {
         shape="pill"
         size="xs"
         onPress={handleBack}
-        accessibilityLabel={t("common.back", "Back")}
+        accessibilityLabel={t("common.actions.back")}
       />
 
       <Text variant="h1" style={styles.title}>
@@ -245,7 +245,7 @@ export default function FillProfileScreen() {
           </Pressable>
 
           <Input
-            label={t("onboarding.fillProfile.displayNameLabel", "Choisis ton pseudo")}
+            label={t("onboarding.fillProfile.displayNameLabel")}
             placeholder={t("onboarding.fillProfile.displayNamePlaceholder")}
             leftIcon={User}
             value={displayName}
@@ -282,7 +282,7 @@ export default function FillProfileScreen() {
           {/* NOTE: Using shape="pill" to match other auth screens. 
               TODO: Decide on consistent button shape across app (pill vs default) */}
           <Button
-            title={saving ? t("onboarding.fillProfile.saving") : t("onboarding.continue")}
+            title={saving ? t("common.status.saving") : t("onboarding.continue")}
             variant="primary"
             size="lg"
             iconRight={ArrowRight}

@@ -4,7 +4,7 @@ import { Text } from "@/components/Themed";
 import { Task } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { formatDateLabel, getTodayIso } from "@/utils/time";
-import { Trash2 } from "lucide-react-native";
+import { Check, RotateCcw, Trash2 } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
@@ -63,13 +63,21 @@ export function TaskCard({
   const formatLabel = formatScheduledLabel ?? defaultFormatScheduled;
 
   const styles = StyleSheet.create({
-    taskHeader: {
+    actionRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
+      gap: 4,
     },
-    // Note: Typography handled by Themed Text component with variant prop
+    iconButton: {
+      borderRadius: 12,
+    },
+    progressRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
     progressBar: {
+      flex: 1,
       height: 8,
       borderRadius: 8,
       backgroundColor: "rgba(0,0,0,0.05)",
@@ -79,80 +87,90 @@ export function TaskCard({
       height: "100%",
       borderRadius: 8,
     },
-    progressLabels: {
+    titleBlock: {
       flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
+      alignItems: "flex-start",
+      marginBottom: 12,
     },
-    inlineActionButton: {
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 12,
-      borderWidth: 1,
-      alignItems: "center",
-      justifyContent: "center",
+    titleColumn: {
+      flex: 1,
+      gap: 2,
+    },
+    actionRowWrapper: {
+      alignSelf: "flex-start",
     },
   });
 
   return (
     <Card variant="border">
-      <View style={styles.taskHeader}>
-        <Text variant="subtitle" style={{ fontWeight: "600" }}>
-          {task.title}
-        </Text>
-        {onDelete && (
-          <Button
-            iconLeft={Trash2}
-            iconOnly
-            variant="ghost"
-            size="sm"
-            onPress={() => onDelete(task.id)}
-            accessibilityLabel={t("tasks.delete", "Delete task")}
-          />
+      <View style={styles.titleBlock}>
+        <View style={styles.titleColumn}>
+          <Text variant="subtitle" style={{ fontWeight: "600" }}>
+            {task.title}
+          </Text>
+          <Text variant="micro" colorName="textMuted">
+            {subjectLabel}
+            {task.scheduledFor ? ` • ${formatLabel(task.scheduledFor)}` : ""}
+          </Text>
+        </View>
+        {(onDelete || onResume || onComplete) && (
+          <View style={[styles.actionRow, styles.actionRowWrapper]}>
+            {task.status === "done" && onResume ? (
+              <Button
+                iconLeft={RotateCcw}
+                iconOnly
+                variant="ghost"
+                size="xs"
+                onPress={() => onResume(task)}
+                accessibilityLabel={t("tasks.resume")}
+                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+              />
+            ) : onComplete ? (
+              <Button
+                iconLeft={Check}
+                iconOnly
+                variant="ghost"
+                size="xs"
+                onPress={() => onComplete(task)}
+                accessibilityLabel={t("tasks.completeNow")}
+                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+              />
+            ) : null}
+            {onDelete && (
+              <Button
+                iconLeft={Trash2}
+                iconOnly
+                variant="ghost"
+                size="xs"
+                onPress={() => onDelete(task.id)}
+                accessibilityLabel={t("tasks.delete")}
+                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+              />
+            )}
+          </View>
         )}
       </View>
-      <Text variant="micro" colorName="textMuted">
-        {subjectLabel}
-        {task.scheduledFor ? ` • ${formatLabel(task.scheduledFor)}` : ""}
-      </Text>
-      <View style={styles.progressBar}>
-        <View
-          style={[
-            styles.progressFill,
-            {
-              backgroundColor: theme.primary,
-              width: `${progress * 100}%`,
-            },
-          ]}
-        />
-      </View>
-      {showActions && (
-        <View style={styles.progressLabels}>
+      <View style={styles.progressRow}>
+        <View style={styles.progressBar}>
+          <View
+            style={[
+              styles.progressFill,
+              {
+                backgroundColor: theme.primary,
+                width: `${progress * 100}%`,
+              },
+            ]}
+          />
+        </View>
+        {showActions && (
           <Text variant="micro" colorName="textMuted">
             {t("tasks.progress", {
               current: Math.round(task.loggedSeconds / 60),
               target: planned || "—",
             })}
           </Text>
-          {task.status === "done" && onResume ? (
-            <Button
-              title={t("tasks.resume")}
-              variant="primary"
-              size="sm"
-              onPress={() => onResume(task)}
-              style={styles.inlineActionButton}
-            />
-          ) : onComplete ? (
-            <Button
-              title={t("tasks.completeNow")}
-              variant="primary"
-              size="sm"
-              onPress={() => onComplete(task)}
-              style={styles.inlineActionButton}
-            />
-          ) : null}
-        </View>
-      )}
+        )}
+      </View>
     </Card>
   );
 }

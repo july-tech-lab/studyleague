@@ -57,7 +57,7 @@ if (!i18n.isInitialized) {
     .use(initReactI18next)
     .init({
       compatibilityJSON: "v4",
-      fallbackLng: "fr",
+      fallbackLng: "en",
       resources: { en: { translation: en }, fr: { translation: fr } },
       interpolation: { escapeValue: false },
       defaultNS: "translation",

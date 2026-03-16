@@ -11,7 +11,7 @@ import { useAuth } from "@/utils/authContext";
 import { Group } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { useRouter } from "expo-router";
-import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Shield, Trophy, Users } from "lucide-react-native";
+import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Shield, Trophy, UserPlus, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -108,7 +108,7 @@ export default function GroupsScreen() {
       closeEditModal();
     } catch (error: any) {
       console.error("Error updating group:", error);
-      const errorMessage = error?.message ?? t("groups.errors.unknownError");
+      const errorMessage = error?.message ?? t("groups.errors.unknown");
       Alert.alert(t("groups.edit.updateError"), errorMessage);
     } finally {
       setUpdateLoading(false);
@@ -122,7 +122,7 @@ export default function GroupsScreen() {
     }
 
     if (!user?.id) {
-      Alert.alert(t("groups.errors.createError"), "User not authenticated");
+      Alert.alert(t("groups.errors.create"), "User not authenticated");
       return;
     }
 
@@ -145,8 +145,8 @@ export default function GroupsScreen() {
     } catch (error: any) {
       console.error("Error creating group:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
-      const errorMessage = error?.message || error?.error?.message || JSON.stringify(error) || t("groups.errors.unknownError");
-      Alert.alert(t("groups.errors.createError"), errorMessage);
+      const errorMessage = error?.message || error?.error?.message || JSON.stringify(error) || t("groups.errors.unknown");
+      Alert.alert(t("groups.errors.create"), errorMessage);
     } finally {
       setCreateLoading(false);
     }
@@ -174,7 +174,7 @@ export default function GroupsScreen() {
       } else if (error.message?.includes("GROUP_NOT_PUBLIC")) {
         Alert.alert(t("groups.errors.notPublic"));
       } else {
-        Alert.alert(t("groups.errors.joinError"), error.message ?? t("groups.errors.unknownError"));
+        Alert.alert(t("groups.errors.join"), error.message ?? t("groups.errors.unknown"));
       }
     } finally {
       setJoinLoading(false);
@@ -205,7 +205,7 @@ export default function GroupsScreen() {
         setSearchCode(found.invite_code);
       }
     } catch (error: any) {
-      Alert.alert(t("groups.errors.searchError"), error.message ?? t("groups.errors.unknownError"));
+      Alert.alert(t("groups.errors.search"), error.message ?? t("groups.errors.unknown"));
     } finally {
       setSearchingCode(false);
     }
@@ -284,6 +284,7 @@ export default function GroupsScreen() {
         <View style={styles.groupCardActions}>
           {showJoinButton ? (
             <Button
+              iconLeft={UserPlus}
               title={t("groups.joinGroup")}
               variant="primary"
               onPress={() => setSelectedGroup(g)}
@@ -294,11 +295,11 @@ export default function GroupsScreen() {
             <Button
               iconLeft={Pencil}
               iconOnly
-              variant="secondary"
-              size="sm"
+              variant="ghost"
+              size="xs"
               onPress={() => openEditModal(g)}
               accessibilityLabel={t("groups.edit.title")}
-              style={styles.editButton}
+              style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
             />
           ) : null}
         </View>
@@ -318,7 +319,7 @@ export default function GroupsScreen() {
             variant="secondary"
             size="lg"
             onPress={() => router.push("/(tabs)/leaderboard")}
-            accessibilityLabel={t("groups.leaderboard", "Leaderboard")}
+            accessibilityLabel={t("tabs.leaderboard")}
             style={styles.headerIconButton}
           />
           <Button
@@ -344,7 +345,7 @@ export default function GroupsScreen() {
               onSubmitEditing={handleSearchGroupByCode}
             />
             <Button
-              title={searchingCode ? "..." : t("groups.search", "Search")}
+              title={searchingCode ? "..." : t("common.actions.search")}
               variant="primary"
               onPress={handleSearchGroupByCode}
               disabled={searchingCode || !searchCode.trim()}
@@ -368,7 +369,9 @@ export default function GroupsScreen() {
                 {t("groups.noGroupsYet")}
               </Text>
             ) : (
-              groups.map((g) => <View key={g.id}>{renderGroupCard(g, false)}</View>)
+              <View style={styles.groupCardsContainer}>
+                {groups.map((g) => <View key={g.id}>{renderGroupCard(g, false)}</View>)}
+              </View>
             )
           ) : (
             <>
@@ -377,7 +380,9 @@ export default function GroupsScreen() {
                   {t("groups.noPublicGroups", "Aucun groupe public disponible")}
                 </Text>
               ) : (
-                filteredPublicGroups.map((g) => <View key={g.id}>{renderGroupCard(g, true)}</View>)
+                <View style={styles.groupCardsContainer}>
+                  {filteredPublicGroups.map((g) => <View key={g.id}>{renderGroupCard(g, true)}</View>)}
+                </View>
               )}
             </>
           )}
@@ -390,12 +395,12 @@ export default function GroupsScreen() {
         padding={20}
         actions={{
           cancel: {
-            label: t("common.cancel"),
+            label: t("common.actions.cancel"),
             onPress: () => setModalVisible(false),
             variant: "outline",
           },
           confirm: {
-            label: createLoading ? t("groups.create.creating") : t("common.create"),
+            label: createLoading ? t("groups.create.creating") : t("common.actions.create"),
             onPress: handleCreateGroup,
             variant: "primary",
             iconLeft: Plus,
@@ -483,12 +488,12 @@ export default function GroupsScreen() {
         padding={20}
         actions={{
           cancel: {
-            label: t("common.cancel"),
+            label: t("common.actions.cancel"),
             onPress: closeEditModal,
             variant: "outline",
           },
           confirm: {
-            label: updateLoading ? t("groups.edit.updating") : t("common.save"),
+            label: updateLoading ? t("common.status.saving") : t("common.actions.save"),
             onPress: handleUpdateGroup,
             variant: "primary",
             disabled: updateLoading,
@@ -577,7 +582,7 @@ export default function GroupsScreen() {
         padding={20}
         actions={{
           cancel: {
-            label: t("common.cancel"),
+            label: t("common.actions.cancel"),
             onPress: () => {
               setSelectedGroup(null);
               setJoinPassword("");
@@ -585,7 +590,7 @@ export default function GroupsScreen() {
             variant: "outline",
           },
           confirm: {
-            label: joinLoading ? t("groups.joinModal.joining") : t("groups.join"),
+            label: joinLoading ? t("groups.joinModal.joining") : t("common.actions.join"),
             onPress: () => selectedGroup && handleJoinGroup(selectedGroup, joinPassword),
             variant: "primary",
             disabled: joinLoading,
@@ -623,7 +628,8 @@ const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
     emptyText: { marginTop: 40 },
-    groupCard: { marginBottom: 12 },
+    groupCard: {},
+    groupCardsContainer: { gap: 10 },
     groupCardContent: {
       flexDirection: "row",
       alignItems: "center",
@@ -663,8 +669,8 @@ const createStyles = (theme: typeof Colors.light) =>
     groupMetaRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
     groupMeta: {},
     groupCardActions: { alignSelf: "flex-start" },
+    iconButton: { borderRadius: 12 },
     joinButton: {},
-    editButton: {},
     headerActions: {
       flexDirection: "row",
       alignItems: "center",

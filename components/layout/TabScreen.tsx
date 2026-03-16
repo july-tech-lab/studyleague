@@ -1,6 +1,6 @@
-import { Screen, ScreenProps } from "@/components/layout/Screen";
 import Header, { HeaderProps } from "@/components/layout/Header";
-import { View, StyleSheet } from "react-native";
+import { Screen, ScreenProps } from "@/components/layout/Screen";
+import { StyleSheet, View } from "react-native";
 
 interface TabScreenProps extends Omit<ScreenProps, "variant" | "safeTop"> {
   // Header props

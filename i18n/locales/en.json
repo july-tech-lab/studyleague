@@ -1,29 +1,66 @@
 {
-  "brand": "StudyLeague",
   "common": {
-    "email": "Email",
-    "password": "Password",
-    "confirmPassword": "Confirm password",
-    "newPassword": "New password",
+    "actions": {
+      "back": "Back",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "create": "Create",
+      "save": "Save",
+      "delete": "Delete",
+      "join": "Join",
+      "search": "Search",
+      "add": "Add"
+    },
+    "status": {
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "deleting": "Deleting..."
+    },
+    "errors": {
+      "unexpected": "Unexpected error."
+    },
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "subject": "Subject",
+      "minutes": "Minutes",
+      "taskName": "Task name",
+      "name": "Name"
+    },
     "or": "or",
-    "loading": "Loading...",
     "forgotPassword": "Forgot password?",
-    "backToSignIn": "Back to sign in",
-    "errorUnexpected": "Unexpected error.",
-    "cancel": "Cancel",
-    "create": "Create",
-    "save": "Save",
-    "saving": "Saving...",
-    "delete": "Delete",
-    "deleting": "Deleting...",
-    "join": "Join",
-    "search": "Search"
+    "grantPermission": "Grant permission",
+    "selectApps": "Select apps",
+    "parentSubjectPlaceholder": "Parent subject (optional)",
+    "totalTime": "Total time",
+    "addSubject": "Add a subject",
+    "actual": "Actual",
+    "planned": "Planned",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "period": {
+      "day": "Daily",
+      "week": "Weekly",
+      "month": "Monthly",
+      "year": "Yearly"
+    }
+  },
+  "subjects": {
+    "select": {
+      "placeholder": "Select a subject",
+      "hint": "Choose a subject to start",
+      "missing": "Pick a subject",
+      "required": "A subject must be selected to create a task"
+    }
   },
   "auth": {
-    "placeholders": {
-      "email": "Email",
-      "password": "Password"
-    },
     "signin": {
       "title": "Sign in",
       "errorMissing": "Email and password are required.",
@@ -95,84 +132,51 @@
   "onboarding": {
     "fillProfile": {
       "title": "Complete your profile",
+      "displayNameLabel": "Display name",
       "displayNamePlaceholder": "Username",
       "categoryLabel": "Category · Pick your level",
       "errorDisplayName": "Display name must have at least 3 characters.",
       "errorCategory": "Please pick a category.",
-      "saving": "Saving...",
-      "avatarCta": "Add a profile photo",
-      "avatarUploading": "Uploading...",
       "avatarPermission": "Photo permission is required to choose an avatar.",
       "avatarError": "Unable to upload the photo."
     },
-    "displayNameTitle": "Choose a display name",
-    "displayNameSubtitle": "This is how others will see you.",
-    "displayNameLabel": "Display name",
-    "displayNamePlaceholder": "Username",
-    "displayNameError": "Pick a name with at least 3 characters.",
-    "categoryTitle": "Pick your level",
-    "categorySubtitle": "We’ll suggest subjects that match you.",
-    "categoryError": "Please select a category.",
-    "subjectsTitle": "Pick your subjects for {{category}}",
-    "subjectsSubtitle": "You can add more later from the timer tab.",
-    "finish": "Finish",
     "continue": "Continue",
-    "skipForNow": "Skip for now",
-    "categoryMissingTitle": "Category missing",
-    "categoryMissingSubtitle": "Choose a category to see subjects.",
-    "backToCategory": "Back to categories",
-    "userMissing": "User session missing. Please sign in again.",
-    "userMissingTitle": "You're signed out",
-    "userMissingMessage": "Reconnect to finish setting up your profile."
+    "userMissing": "User session missing. Please sign in again."
   },
   "tabs": {
     "focus": "Focus",
     "tasks": "Planner",
     "stats": "Stats",
-    "league": "League",
     "leaderboard": "Leaderboard",
     "groups": "Groups",
     "profile": "Profile"
   },
   "timer": {
-    "focusOn": "Focus On",
     "inProgress": "In progress",
-    "ready": "Ready to start",
-    "subjectMissing": "Pick a subject",
-    "subtagHint": "Use a sub-tag to be precise",
     "startButton": "Start",
-    "chooseSubjectHint": "Choose a subject to start",
     "stop": "Stop",
     "sessionFinishedTitle": "Session finished!",
     "sessionFinishedMessage": "Great! {{minutes}} minutes of {{subject}} saved.",
     "errorTitle": "Error",
     "errorSave": "Unable to save.",
-    "addSubjectTitle": "Add a subject",
     "addSubjectPlaceholder": "Subject name",
-    "saving": "Saving...",
     "tabSubjects": "Subjects",
     "tabTasks": "Tasks",
     "tasksEmpty": "No active tasks",
-    "cancel": "Cancel",
-    "create": "Create",
-    "createNew": "Create new",
     "focusModeRequired": "Focus mode required",
     "focusModeRequiredDescription": "Study time is only recorded when focus mode is active. This blocks distracting apps and notifications.",
-    "focusModeActive": "Focus mode active",
-    "focusModeDisabled": "Focus mode disabled",
     "sessionNotRecorded": "Session not recorded — focus mode was required",
     "sessionRecorded": "{{minutes}} minutes recorded with focus mode",
-    "grantPermission": "Grant permission",
     "permissionDenied": "Permission denied — cannot track time",
     "noAppsSelected": "Select apps to block first",
     "noAppsSelectedDescription": "Please select apps to block during study sessions (e.g., WhatsApp, Snapchat, Instagram).",
-    "selectApps": "Select apps",
     "focusModeLost": "Focus mode disabled — timer paused",
     "resumeRequiresFocus": "Re-enable focus mode to resume",
     "permissionRequestTitle": "Focus Mode Permission",
     "permissionRequestMessage": "To track study time, we need permission to enable focus mode. This helps you stay focused by blocking distracting apps.",
     "permissionRequestIOS": "On iOS, you'll also need to select which apps to block.",
-    "openSettings": "Open settings"
+    "openSettings": "Open settings",
+    "focusSimulated": "Focus mode simulated on web"
   },
   "groups": {
     "title": "Groups",
@@ -183,7 +187,8 @@
     "searchPlaceholder": "Group code or name",
     "code": "Code",
     "joinGroup": "Join Group",
-    "membersCount": "{{count}} members",
+    "membersCount_one": "{{count}} member",
+    "membersCount_other": "{{count}} members",
     "adminApprovalRequired": "Admin approval required",
     "passwordRequired": "Password required",
     "create": {
@@ -200,7 +205,6 @@
     },
     "edit": {
       "title": "Edit group",
-      "updating": "Saving...",
       "passwordPlaceholder": "New password (leave blank to keep current)",
       "updateError": "Error updating group"
     },
@@ -212,17 +216,17 @@
       "joining": "..."
     },
     "errors": {
-      "loadError": "Error loading groups",
-      "unknownError": "Unknown error",
-      "loadPublicError": "Error loading public groups",
+      "load": "Error loading groups",
+      "loadPublic": "Error loading public groups",
+      "unknown": "Unknown error",
       "nameRequired": "Name required",
-      "createError": "Error creating group",
-      "addCreatorError": "Error adding creator to group",
+      "create": "Error creating group",
+      "addCreator": "Error adding creator to group",
       "alreadyMember": "Already a member of this group",
       "invalidPassword": "Incorrect password",
       "notPublic": "This group is not public",
-      "joinError": "Error joining group",
-      "searchError": "Search failed",
+      "join": "Error joining group",
+      "search": "Search failed",
       "notFound": "No group found for this code"
     },
     "success": {
@@ -231,57 +235,32 @@
     }
   },
   "leaderboard": {
-    "title": "Leaderboard",
     "errorLoading": "Unable to load leaderboard.",
-    "empty": "No data for this period.",
-    "period": {
-      "week": "Weekly",
-      "month": "Monthly",
-      "year": "Yearly"
-    }
+    "empty": "No data for this period."
   },
   "dashboard": {
     "title": "My Overview",
-    "subtitle": "Stats: {{period}}",
-    "weeklyLabel": "Study time this week",
-    "goal": "Goal",
-    "activity": "Monthly activity",
-    "histogramTitle": "Study time over time",
+    "longestSession": "Longest session",
+    "bestSubject": "Best subject",
     "filterAll": "All subjects",
-    "selectSubject": "Select subject",
-    "days": {
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat",
-      "sun": "Sun"
-    },
-    "period": {
-      "day": "Daily",
-      "week": "Weekly",
-      "month": "Monthly"
-    }
+    "distribution": "Distribution",
+    "dailyProgress": "Daily progress",
+    "noSessionsForPeriod": "No session recorded for this period.",
+    "streakDays_one": "{{count}} day",
+    "streakDays_other": "{{count}} days",
+    "streakDays_zero": "-- days",
+    "weeklyObjective": "Weekly objective",
+    "totalTime": "Total time",
+    "percentComplete": "{{percent}}% complete"
   },
   "profile": {
-    "defaultTitle": "My space",
     "userFallback": "User",
-    "loading": "Loading...",
     "error": "Unable to load data.",
     "stats": {
-      "title": "My stats",
-      "totalTime": "Total time",
-      "thisMonth": "This month",
       "streak": "Current streak",
-      "streakValue": "{{count}} days",
-      "streakRecord": "Record: {{count}}d",
-      "sessions": "Sessions",
-      "sessionsCompleted": "Completed",
-      "rank": "Leaderboard",
-      "average": "Average",
-      "avgSession": "Avg Session",
-      "perSession": "Per session"
+      "streakValue_one": "{{count}} day",
+      "streakValue_other": "{{count}} days",
+      "sessions": "Sessions"
     },
     "language": {
       "label": "Language",
@@ -294,16 +273,12 @@
       "dark": "Dark"
     },
     "tabs": {
-      "stats": "Stats",
       "subjects": "Subjects",
       "settings": "Settings"
     },
     "displayName": {
-      "title": "Display name",
       "hint": "Your display name can be updated below as required.",
       "placeholder": "Your name",
-      "save": "Save",
-      "saving": "Saving...",
       "success": "Display name updated.",
       "error": "Name must be at least 3 characters.",
       "errorSave": "Unable to update name."
@@ -312,10 +287,8 @@
       "title": "My subjects",
       "empty": "No subjects yet",
       "breakdownTitle": "Total time by subject",
-      "add": "Add",
       "available": "Available subjects",
       "moreAvailable": "+ more available subjects",
-      "createNew": "Create",
       "create": "Create",
       "searchPlaceholder": "Search or create a subject",
       "searchResults": "Search results",
@@ -333,66 +306,56 @@
       "defaultColor": "Default"
     },
     "account": {
-      "title": "Account",
       "signOut": "Sign out",
       "signOutLoading": "Signing out...",
       "delete": "Delete account",
-      "deleting": "Deleting...",
       "deleteTitle": "Delete account?",
       "deleteMessage": "This will remove your data permanently.",
-      "deleteConfirm": "Delete",
       "deleteErrorTitle": "Unable to delete account",
       "deleteError": "Please try again."
     },
     "studyMode": {
       "title": "Study Mode",
-      "description": "Block distracting apps during study sessions.",
-      "permissionStatus": "Permission Status",
       "permissionGranted": "Focus mode permission is granted",
       "permissionNotGranted": "Focus mode permission is required to track study time",
-      "grantPermission": "Grant Permission",
       "appsToBlock": "Apps to Block",
       "appsDescription": "Select which apps should be blocked during study sessions (e.g., WhatsApp, Snapchat, Instagram).",
-      "selectApps": "Select Apps",
       "appsSelected": "Apps Selected",
       "appsSelectedMessage": "Your app selection has been saved. These apps will be blocked when you start a study session."
     }
   },
   "tasks": {
     "title": "Planner",
-    "subtitle": "Organize study blocks and track time precisely.",
     "today": "Today",
     "form": {
       "name": "Task name",
       "subject": "Subject",
-      "selectSubject": "Select a subject",
       "minutes": "Minutes",
-      "add": "Add to list",
-      "subjectRequired": "A subject must be selected to create a task"
+      "add": "Add to list"
     },
     "view": {
       "active": "Active",
       "done": "Done"
     },
-    "status": {
-      "planned": "Planned",
-      "inProgress": "In progress",
-      "done": "Done"
-    },
     "planBlock": "Plan a study block",
-    "timer": {
-      "active": "Active session",
-      "start": "Start",
-      "resume": "Resume",
-      "pause": "Pause",
-      "stop": "Stop & log",
-      "noTask": "Select a task to start"
-    },
-    "timerLabel": "Logged {{total}} / {{planned}} min planned",
-    "progress": "{{current}} / {{target}} min logged",
-    "loggedAlert": "Saved {{minutes}} min for {{task}}",
+    "progress": "{{current}} / {{target}} min",
     "resume": "Resume",
+    "delete": "Delete task",
     "completeNow": "Mark as done",
     "emptyState": "No tasks yet. Add one to plan your focus."
+  },
+  "goals": {
+    "title": "Goals",
+    "bySubject": "By Subject",
+    "byDay": "By Day",
+    "saved": "Goals saved.",
+    "noTime": "0min/week",
+    "clear": "Clear",
+    "minutesPlaceholder": "minutes",
+    "apply": "Apply",
+    "allSubjectsAdded": "All available subjects have been added.",
+    "errorLoad": "Unable to load subjects.",
+    "errorAdd": "Unable to add subject.",
+    "errorSave": "Unable to save goals."
   }
 }

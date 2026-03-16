@@ -272,6 +272,99 @@ export const updateUserSubjectCustomization = async (
   return data;
 };
 
+// Subject weekly goals: per-day minutes per subject (0=Sun, 1=Mon, ..., 6=Sat)
+export interface SubjectWeeklyGoal {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  day_of_week: number;
+  minutes: number;
+}
+
+export const fetchSubjectWeeklyGoals = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("subject_weekly_goals")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error) throw error;
+  return (data ?? []) as SubjectWeeklyGoal[];
+};
+
+/** Sum of goal minutes for the current week from subject_weekly_goals */
+export const sumWeeklyGoalMinutes = (goals: SubjectWeeklyGoal[]): number => {
+  return goals.reduce((sum, g) => sum + g.minutes, 0);
+};
+
+/** Aggregate goals by subject: subject_id -> total minutes for the week */
+export const aggregateGoalsBySubject = (
+  goals: SubjectWeeklyGoal[]
+): Record<string, number> => {
+  const bySubject: Record<string, number> = {};
+  goals.forEach((g) => {
+    bySubject[g.subject_id] = (bySubject[g.subject_id] ?? 0) + g.minutes;
+  });
+  return bySubject;
+};
+
+/** Aggregate goals by day of week: day (1=Mon..7=Sun) -> total minutes. Uses 1-7 for Mon-Sun. */
+export const aggregateGoalsByDay = (
+  goals: SubjectWeeklyGoal[]
+): Record<number, number> => {
+  const byDay: Record<number, number> = {};
+  goals.forEach((g) => {
+    const d = g.day_of_week === 0 ? 7 : g.day_of_week;
+    byDay[d] = (byDay[d] ?? 0) + g.minutes;
+  });
+  return byDay;
+};
+
+/** Aggregate goals by day and subject: day (1–7) -> subject_id -> minutes. For histogram planned bars. */
+export const aggregateGoalsByDayAndSubject = (
+  goals: SubjectWeeklyGoal[]
+): Record<number, Record<string, number>> => {
+  const byDay: Record<number, Record<string, number>> = {};
+  goals.forEach((g) => {
+    const d = g.day_of_week === 0 ? 7 : g.day_of_week;
+    if (!byDay[d]) byDay[d] = {};
+    byDay[d][g.subject_id] = (byDay[d][g.subject_id] ?? 0) + g.minutes;
+  });
+  return byDay;
+};
+
+export const upsertSubjectWeeklyGoals = async (
+  userId: string,
+  goals: { subject_id: string; day_of_week: number; minutes: number }[]
+) => {
+  // Delete zero-minute entries and upsert the rest
+  const toUpsert = goals.filter((g) => g.minutes > 0);
+  const toDelete = goals.filter((g) => g.minutes === 0);
+
+  for (const g of toDelete) {
+    await supabase
+      .from("subject_weekly_goals")
+      .delete()
+      .eq("user_id", userId)
+      .eq("subject_id", g.subject_id)
+      .eq("day_of_week", g.day_of_week);
+  }
+
+  if (toUpsert.length === 0) return;
+
+  const rows = toUpsert.map((g) => ({
+    user_id: userId,
+    subject_id: g.subject_id,
+    day_of_week: g.day_of_week,
+    minutes: g.minutes,
+  }));
+
+  const { error } = await supabase.from("subject_weekly_goals").upsert(rows, {
+    onConflict: "user_id,subject_id,day_of_week",
+  });
+
+  if (error) throw error;
+};
+
 export const buildSubjectTree = (subjects: Subject[]): SubjectNode[] => {
   const byId = new Map<string, SubjectNode>();
   subjects.forEach((s) => {
@@ -558,6 +651,49 @@ export const logSession = async (
   }
 
   return data;
+};
+
+export interface WeeklySessionRow {
+  subject_id: string;
+  duration_seconds: number;
+  ended_at: string;
+}
+
+/** Fetch study sessions for a date range (for weekly stats). */
+export const fetchSessionsInRange = async (
+  userId: string,
+  fromDateIso: string,
+  toDateIso: string
+): Promise<WeeklySessionRow[]> => {
+  const fromStart = `${fromDateIso}T00:00:00.000Z`;
+  const toEnd = `${toDateIso}T23:59:59.999Z`;
+  const { data, error } = await supabase
+    .from("study_sessions")
+    .select("subject_id, duration_seconds, ended_at")
+    .eq("user_id", userId)
+    .not("ended_at", "is", null)
+    .gte("ended_at", fromStart)
+    .lte("ended_at", toEnd);
+
+  if (error) throw error;
+  return (data ?? []) as WeeklySessionRow[];
+};
+
+/** Get the longest single session duration in seconds for a user. */
+export const fetchLongestSessionSeconds = async (
+  userId: string
+): Promise<number> => {
+  const { data, error } = await supabase
+    .from("study_sessions")
+    .select("duration_seconds")
+    .eq("user_id", userId)
+    .not("ended_at", "is", null)
+    .order("duration_seconds", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.duration_seconds ?? 0;
 };
 
 //---------------------------------------------------------------

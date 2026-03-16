@@ -111,12 +111,10 @@ export function SubjectPicker({
           style={{ color: selectedSubject ? theme.text : theme.textMuted, flex: 1 }}
         >
           {loading
-            ? t("common.loading", "Chargement...")
+            ? t("common.status.loading")
             : selectedSubject
             ? selectedSubject.name
-            : placeholder ?? t("tasks.form.selectSubject", {
-                defaultValue: "Select a subject",
-              })}
+            : placeholder ?? t("subjects.select.placeholder")}
         </Text>
         <ChevronDown size={18} color={theme.textMuted} />
       </TouchableOpacity>
@@ -126,7 +124,7 @@ export function SubjectPicker({
             <View style={[styles.dropdownItem, { flexDirection: "row", alignItems: "center", gap: 8 }]}>
               <ActivityIndicator size="small" color={theme.textMuted} />
               <Text variant="subtitle" colorName="textMuted">
-                {t("common.loading", "Chargement...")}
+                {t("common.status.loading")}
               </Text>
             </View>
           ) : displaySubjects.length === 0 ? (

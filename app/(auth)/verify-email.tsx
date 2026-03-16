@@ -160,7 +160,7 @@ export default function VerifyEmail() {
         shape="pill"
         size="xs"
         onPress={handleBack}
-        accessibilityLabel={t("common.back", "Back")}
+        accessibilityLabel={t("common.actions.back")}
       />
 
       <Text variant="h1" style={styles.title}>
@@ -200,7 +200,7 @@ export default function VerifyEmail() {
 
         {/* Secondary Action: Manual Check */}
         <Button
-          title={authLoading ? t("common.loading") : t("auth.verifyEmail.continue")}
+          title={authLoading ? t("common.status.loading") : t("auth.verifyEmail.continue")}
           variant="secondary"
           onPress={() => refreshSession()}
           disabled={authLoading || isResending}

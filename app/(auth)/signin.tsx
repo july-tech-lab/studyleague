@@ -108,7 +108,7 @@ export default function SignIn() {
 
       <View style={styles.card}>
         <Input
-            placeholder={t("auth.placeholders.email")}
+            placeholder={t("common.fields.email")}
           leftIcon={Mail}
             autoCapitalize="none"
             autoCorrect={false}
@@ -119,7 +119,7 @@ export default function SignIn() {
           />
 
         <Input
-            placeholder={t("auth.placeholders.password")}
+            placeholder={t("common.fields.password")}
           leftIcon={Lock}
           rightIcon={showPassword ? EyeOff : Eye}
             secureTextEntry={!showPassword}

@@ -1,21 +1,19 @@
 import { TabScreen } from "@/components/layout/TabScreen";
 import { Text } from "@/components/Themed";
 import { SubjectPicker } from "@/components/ui";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ListCard, ListItem } from "@/components/ui/ListCard";
 import { Modal } from "@/components/ui/Modal";
 import { Tabs } from "@/components/ui/Tabs";
+import { TaskCard } from "@/components/ui/TaskCard";
 import Colors from "@/constants/Colors";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useTasks } from "@/hooks/useTasks";
 import { useAuth } from "@/utils/authContext";
-import { createSubjectColorMap } from "@/utils/color";
 import { Task } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { formatDateLabel, getTodayIso } from "@/utils/time";
 import { useFocusEffect } from "expo-router";
-import { Check, Plus, RotateCcw, Trash2 } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -55,7 +53,6 @@ export default function TasksScreen() {
   const {
     subjects, // All subjects (parents + children) - needed for task subject lookup
     parentSubjects, // Only parent subjects - for SubjectPicker
-    subjectTree, // Tree structure for color mapping
     loading: subjectsLoading,
     selectedSubjectId,
     selectedSubject,
@@ -64,15 +61,6 @@ export default function TasksScreen() {
     userId: user?.id ?? null,
     autoLoad: true,
   });
-
-  // Create color map for subjects
-  const subjectColorById = useMemo(() => {
-    return createSubjectColorMap(
-      subjectTree,
-      theme.subjectPalette ?? [],
-      theme.primary
-    );
-  }, [subjectTree, theme.subjectPalette, theme.primary]);
 
   const formatScheduledLabel = useCallback(
     (value?: string | null) => {
@@ -99,7 +87,7 @@ export default function TasksScreen() {
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
     if (!selectedSubject) {
-      Alert.alert(t("timer.errorTitle"), t("timer.subjectMissing"));
+      Alert.alert(t("timer.errorTitle"), t("subjects.select.missing"));
       return;
     }
     const parsedMinutesRaw = newTaskMinutes.trim();
@@ -193,89 +181,19 @@ export default function TasksScreen() {
               </Text>
             </View>
           ) : (
-            <ListCard>
-              {orderedTasks.map((task, index) => {
-                const subject = subjects.find((s) => s.id === task.subjectId);
-                const subjectLabel = task.subjectName || subject?.name || t("tasks.form.subject");
-                const planned = task.plannedMinutes ?? 0;
-                const loggedMinutes = Math.round(task.loggedSeconds / 60);
-                const isLast = index === orderedTasks.length - 1;
-
-                const subjectColor = task.subjectId
-                  ? subjectColorById[task.subjectId] ?? theme.primary
-                  : theme.primary;
-
-                return (
-                  <ListItem key={task.id} isLast={isLast}>
-                    <View style={styles.taskContent}>
-                      <View style={styles.taskHeader}>
-                        {task.subjectId && (
-                          <View
-                            style={[
-                              styles.subjectColorBadge,
-                              { backgroundColor: subjectColor },
-                            ]}
-                          />
-                        )}
-                        <Text variant="subtitle" style={{ fontWeight: "600", flex: 1 }}>
-                          {task.title}
-                        </Text>
-                        <Text variant="micro" colorName="textMuted" style={styles.timeLabel}>
-                          {planned > 0
-                            ? `${loggedMinutes}/${planned} min`
-                            : `${loggedMinutes} min`}
-                        </Text>
-                        <View style={styles.actionButtons}>
-                          {viewMode === "done" ? (
-                            <>
-                              <Button
-                                iconLeft={RotateCcw}
-                                iconOnly
-                                variant="ghost"
-                                size="sm"
-                                onPress={() => handleResumeTask(task)}
-                                accessibilityLabel={t("tasks.resume")}
-                              />
-                              <Button
-                                iconLeft={Trash2}
-                                iconOnly
-                                variant="ghost"
-                                size="sm"
-                                onPress={() => handleDeleteTask(task.id)}
-                                accessibilityLabel={t("tasks.delete", "Delete task")}
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <Button
-                                iconLeft={Check}
-                                iconOnly
-                                variant="ghost"
-                                size="sm"
-                                onPress={() => handleCompleteTask(task)}
-                                accessibilityLabel={t("tasks.completeNow")}
-                              />
-                              <Button
-                                iconLeft={Trash2}
-                                iconOnly
-                                variant="ghost"
-                                size="sm"
-                                onPress={() => handleDeleteTask(task.id)}
-                                accessibilityLabel={t("tasks.delete", "Delete task")}
-                              />
-                            </>
-                          )}
-                        </View>
-                      </View>
-                      <Text variant="micro" colorName="textMuted" style={styles.taskMeta}>
-                        {subjectLabel}
-                        {task.scheduledFor ? ` • ${formatScheduledLabel(task.scheduledFor)}` : ""}
-                      </Text>
-                    </View>
-                  </ListItem>
-                );
-              })}
-            </ListCard>
+            <View style={styles.taskCardsContainer}>
+              {orderedTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  subjects={subjects}
+                  onDelete={handleDeleteTask}
+                  onResume={viewMode === "done" ? handleResumeTask : undefined}
+                  onComplete={viewMode === "active" ? handleCompleteTask : undefined}
+                  formatScheduledLabel={formatScheduledLabel}
+                />
+              ))}
+            </View>
           )}
         </View>
 
@@ -286,7 +204,7 @@ export default function TasksScreen() {
           padding={20}
           actions={{
             cancel: {
-              label: t("common.cancel"),
+              label: t("common.actions.cancel"),
               onPress: () => setCreateModalVisible(false),
               variant: "outline",
             },
@@ -315,15 +233,13 @@ export default function TasksScreen() {
                 selectedSubjectId={selectedSubjectId}
                 onSelect={handleSubjectSelect}
                 loading={subjectsLoading}
-                placeholder={t("tasks.form.selectSubject", {
-                  defaultValue: "Select a subject",
-                })}
+                placeholder={t("subjects.select.placeholder")}
                 containerStyle={{ flex: 1 }}
                 parentsOnly={true}
               />
               {!selectedSubject && (
                 <Text variant="micro" colorName="textMuted" style={styles.helperText}>
-                  {t("tasks.form.subjectRequired")}
+                  {t("subjects.select.required")}
                 </Text>
               )}
             </View>
@@ -360,30 +276,7 @@ const createStyles = (theme: typeof Colors.light) =>
     marginTop: 4,
     marginLeft: 4,
   },
-  taskContent: {
-    flex: 1,
-    gap: 6,
-  },
-  taskHeader: {
-    flexDirection: "row",
-    alignItems: "center",
+  taskCardsContainer: {
     gap: 8,
-  },
-  subjectColorBadge: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  timeLabel: {
-    marginRight: 8,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-    marginRight: -4,
-  },
-  taskMeta: {
-    marginTop: 2,
   },
 });

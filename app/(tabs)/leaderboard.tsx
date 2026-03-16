@@ -1,27 +1,30 @@
 import { TabScreen } from "@/components/layout/TabScreen";
+import { Text } from "@/components/Themed";
 import { Tabs } from "@/components/ui/Tabs";
-import { useTheme } from "@/utils/themeContext";
+import Colors from "@/constants/Colors";
 import { useAuth } from "@/utils/authContext";
 import { fetchLeaderboardByPeriod, LeaderboardEntry } from "@/utils/queries";
+import { useTheme } from "@/utils/themeContext";
 import { formatDurationFromMinutes } from "@/utils/time";
-import Colors from "@/constants/Colors";
-import { Text } from "@/components/Themed";
+import { useRouter } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type Period = "week" | "month" | "year";
 
 const labels = {
-  week: "leaderboard.period.week",
-  month: "leaderboard.period.month",
-  year: "leaderboard.period.year",
+  week: "common.period.week",
+  month: "common.period.month",
+  year: "common.period.year",
 } as const;
 
 const periodOptions: { value: Period; label: keyof typeof labels }[] = [
@@ -33,6 +36,7 @@ const periodOptions: { value: Period; label: keyof typeof labels }[] = [
 export default function LeaderboardScreen() {
   const { user } = useAuth();
   const theme = useTheme();
+  const router = useRouter();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
   const rankPalette = ["#FFD700", "#C0C0C0", "#CD7F32"];
   const [period, setPeriod] = React.useState<Period>("week");
@@ -61,7 +65,7 @@ export default function LeaderboardScreen() {
         setLeaderboard(data);
       } catch (err) {
         console.error("Erreur chargement classement", err);
-        setError(t("leaderboard.errorLoading", "Impossible de charger le classement."));
+        setError(t("leaderboard.errorLoading"));
       } finally {
         if (options?.isRefresh) {
           setRefreshing(false);
@@ -81,92 +85,104 @@ export default function LeaderboardScreen() {
     loadLeaderboard(period, { isRefresh: true });
   }, [loadLeaderboard, period]);
 
+  const handleBack = React.useCallback(() => {
+    router.back();
+  }, [router]);
+
   return (
-    <TabScreen title={t("leaderboard.title", "Classement")}>
-      {/* PERIOD TOGGLE */}
-      <Tabs
-        options={periodOptions.map(option => ({
-          value: option.value,
-          label: t(labels[option.label]),
-        }))}
-        value={period}
-        onChange={setPeriod}
-      />
+    <TabScreen
+      title={t("tabs.leaderboard")}
+      leftAction={
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <ChevronLeft size={24} color={theme.text} />
+        </TouchableOpacity>
+      }
+    >
+      <View style={{ gap: 12 }}>
+        <Tabs
+          options={periodOptions.map(option => ({
+            value: option.value,
+            label: t(labels[option.label]),
+          }))}
+          value={period}
+          onChange={setPeriod}
+        />
 
-      {/* WHITE CARD CONTAINER */}
-      <ScrollView
-        contentContainerStyle={styles.listWrapper}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={theme.primary}
-          />
-        }
-      >
-        <View style={styles.listCard}>
-          {loading ? (
-            <View style={styles.helperBox}>
-              <ActivityIndicator color={theme.primary} />
-            </View>
-          ) : error ? (
-            <Text variant="micro" align="center" colorName="textMuted" style={styles.helperText}>
-              {error}
-            </Text>
-          ) : leaderboard.length === 0 ? (
-            <Text variant="micro" align="center" colorName="textMuted" style={styles.helperText}>
-              {t("leaderboard.empty", "Aucune donnée pour cette période.")}
-            </Text>
-          ) : (
-            leaderboard.map((entry, index) => {
-              const rank = index + 1;
-              const rankColor = rankPalette[index] ?? theme.primary;
-              const isCurrentUser = user?.id === entry.userId;
+        {/* List card container */}
+        <ScrollView
+          contentContainerStyle={styles.listWrapper}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={theme.primary}
+            />
+          }
+        >
+          <View style={styles.listCard}>
+            {loading ? (
+              <View style={styles.helperBox}>
+                <ActivityIndicator color={theme.primary} />
+              </View>
+            ) : error ? (
+              <Text variant="micro" align="center" colorName="textMuted" style={styles.helperText}>
+                {error}
+              </Text>
+            ) : leaderboard.length === 0 ? (
+              <Text variant="micro" align="center" colorName="textMuted" style={styles.helperText}>
+                {t("leaderboard.empty")}
+              </Text>
+            ) : (
+              leaderboard.map((entry, index) => {
+                const rank = index + 1;
+                const rankColor = rankPalette[index] ?? theme.primary;
+                const isCurrentUser = user?.id === entry.userId;
 
-              return (
-                <View
-                  key={entry.userId}
-                  style={[
-                    styles.row,
-                    isCurrentUser && styles.currentUserRow,
-                  ]}
-                >
-                  {/* Rank Circle */}
-                  <View style={[styles.rankCircle, { borderColor: rankColor }]}>
-                    <Text variant="caption" style={[styles.rankCircleText, { color: rankColor }]}>
-                      {rank}
-                    </Text>
-                  </View>
+                return (
+                  <View
+                    key={entry.userId}
+                    style={[
+                      styles.row,
+                      isCurrentUser && styles.currentUserRow,
+                    ]}
+                  >
+                    {/* Rank Circle */}
+                    <View style={[styles.rankCircle, { borderColor: rankColor }]}>
+                      <Text variant="caption" style={[styles.rankCircleText, { color: rankColor }]}>
+                        {rank}
+                      </Text>
+                    </View>
 
-                  {/* Name */}
-                  <View style={styles.nameBox}>
+                    {/* Name */}
+                    <View style={styles.nameBox}>
+                      <Text
+                        variant="body"
+                        style={[
+                          styles.nameText,
+                          isCurrentUser && styles.currentUserText,
+                        ]}
+                      >
+                        {entry.username}
+                      </Text>
+                    </View>
+
+                    {/* Time */}
                     <Text
                       variant="body"
                       style={[
-                        styles.nameText,
-                        isCurrentUser && styles.currentUserText,
+                        styles.timeText,
+                        isCurrentUser && styles.currentUserTimeText,
                       ]}
                     >
-                      {entry.username}
+                      {formatDuration(entry.totalSeconds)}
                     </Text>
                   </View>
-
-                  {/* Time */}
-                  <Text
-                    variant="body"
-                    style={[
-                      styles.timeText,
-                      isCurrentUser && styles.currentUserTimeText,
-                    ]}
-                  >
-                    {formatDuration(entry.totalSeconds)}
-                  </Text>
-                </View>
-              );
-            })
-          )}
-        </View>
-      </ScrollView>
+                );
+              })
+            )}
+          </View>
+        </ScrollView>
+      </View>
     </TabScreen>
   );
 }
@@ -174,6 +190,12 @@ export default function LeaderboardScreen() {
 const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
+    backButton: {
+      padding: 8,
+      marginLeft: -8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
     // List card container
     listWrapper: { padding: 20 },
