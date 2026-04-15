@@ -1,5 +1,5 @@
-import { Slot } from "expo-router";
 import { Screen } from "@/components/layout/Screen";
+import { Slot } from "expo-router";
 
 /**
  * Auth layout provides consistent styling for all authentication screens.

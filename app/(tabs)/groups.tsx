@@ -11,7 +11,7 @@ import { useAuth } from "@/utils/authContext";
 import { Group } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { useRouter } from "expo-router";
-import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Shield, Trophy, UserPlus, Users } from "lucide-react-native";
+import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Shield, Trash2, Trophy, UserPlus, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,6 +35,8 @@ export default function GroupsScreen() {
     createGroup: createGroupHook,
     joinGroup: joinGroupHook,
     updateGroup: updateGroupHook,
+    deleteGroup: deleteGroupHook,
+    leaveGroup: leaveGroupHook,
     searchGroupByCode: searchGroupByCodeHook,
   } = useGroups({
     userId: user?.id ?? null,
@@ -67,6 +69,8 @@ export default function GroupsScreen() {
   const [groupTab, setGroupTab] = useState<"my" | "public">("my");
 
   const [editPasswordChanged, setEditPasswordChanged] = useState(false);
+  const [removingGroupId, setRemovingGroupId] = useState<string | null>(null);
+  const [removeGroupTarget, setRemoveGroupTarget] = useState<Group | null>(null);
 
   const openEditModal = (g: Group) => {
     setEditingGroup(g);
@@ -211,6 +215,30 @@ export default function GroupsScreen() {
     }
   };
 
+  const handleRemoveMyGroup = async (g: Group, isCreator: boolean) => {
+    if (!user?.id) return;
+    setRemovingGroupId(g.id);
+    try {
+      if (isCreator) {
+        await deleteGroupHook(g.id);
+      } else {
+        await leaveGroupHook(g.id);
+      }
+      if (editingGroup?.id === g.id) {
+        closeEditModal();
+      }
+      setRemoveGroupTarget(null);
+    } catch (error: any) {
+      console.error("Error removing group:", error);
+      Alert.alert(
+        isCreator ? t("groups.errors.delete") : t("groups.errors.leave"),
+        error?.message ?? t("groups.errors.unknown")
+      );
+    } finally {
+      setRemovingGroupId(null);
+    }
+  };
+
   const renderBadge = (visibility: Group["visibility"]) => {
     const isPublic = visibility === "public";
     const Icon = isPublic ? Globe : Lock;
@@ -239,6 +267,7 @@ export default function GroupsScreen() {
 
   const renderGroupCard = (g: Group, showJoinButton: boolean) => {
     const isCreator = g.created_by === user?.id;
+    const isRemoving = removingGroupId === g.id;
     return (
     <Card variant="border" style={styles.groupCard}>
       <View style={styles.groupCardContent}>
@@ -291,17 +320,35 @@ export default function GroupsScreen() {
               size="sm"
               style={styles.joinButton}
             />
-          ) : isCreator ? (
-            <Button
-              iconLeft={Pencil}
-              iconOnly
-              variant="ghost"
-              size="xs"
-              onPress={() => openEditModal(g)}
-              accessibilityLabel={t("groups.edit.title")}
-              style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
-            />
-          ) : null}
+          ) : (
+            <View style={styles.groupCardActionRow}>
+              {isCreator ? (
+                <Button
+                  iconLeft={Pencil}
+                  iconOnly
+                  variant="ghost"
+                  size="xs"
+                  onPress={() => openEditModal(g)}
+                  accessibilityLabel={t("groups.edit.title")}
+                  disabled={isRemoving}
+                  style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+                />
+              ) : null}
+              <Button
+                iconLeft={Trash2}
+                iconOnly
+                variant="ghost"
+                size="xs"
+                onPress={() => setRemoveGroupTarget(g)}
+                accessibilityLabel={
+                  isCreator ? t("groups.delete.accessibility") : t("groups.leave.accessibility")
+                }
+                loading={isRemoving}
+                disabled={isRemoving}
+                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+              />
+            </View>
+          )}
         </View>
       </View>
     </Card>
@@ -573,6 +620,50 @@ export default function GroupsScreen() {
       </Modal>
 
       <Modal
+        visible={!!removeGroupTarget}
+        dismissible={removingGroupId !== removeGroupTarget?.id}
+        onClose={() => {
+          if (removingGroupId === removeGroupTarget?.id) return;
+          setRemoveGroupTarget(null);
+        }}
+        title={
+          removeGroupTarget?.created_by === user?.id
+            ? t("groups.delete.confirmTitle")
+            : t("groups.leave.confirmTitle")
+        }
+        padding={20}
+        actions={{
+          cancel: {
+            label: t("common.actions.cancel"),
+            onPress: () => setRemoveGroupTarget(null),
+            variant: "outline",
+            disabled: removingGroupId === removeGroupTarget?.id,
+          },
+          confirm: {
+            label:
+              removeGroupTarget?.created_by === user?.id
+                ? t("groups.delete.confirm")
+                : t("groups.leave.confirm"),
+            onPress: () => {
+              if (!removeGroupTarget || !user?.id) return;
+              const isCreator = removeGroupTarget.created_by === user.id;
+              void handleRemoveMyGroup(removeGroupTarget, isCreator);
+            },
+            variant:
+              removeGroupTarget?.created_by === user?.id ? "destructive" : "primary",
+            loading: removingGroupId === removeGroupTarget?.id,
+            disabled: removingGroupId === removeGroupTarget?.id,
+          },
+        }}
+      >
+        <Text variant="body" colorName="textMuted" style={{ marginTop: 4 }}>
+          {removeGroupTarget?.created_by === user?.id
+            ? t("groups.delete.confirmMessage")
+            : t("groups.leave.confirmMessage")}
+        </Text>
+      </Modal>
+
+      <Modal
         visible={!!selectedGroup}
         onClose={() => {
           setSelectedGroup(null);
@@ -669,6 +760,7 @@ const createStyles = (theme: typeof Colors.light) =>
     groupMetaRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
     groupMeta: {},
     groupCardActions: { alignSelf: "flex-start" },
+    groupCardActionRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     iconButton: { borderRadius: 12 },
     joinButton: {},
     headerActions: {

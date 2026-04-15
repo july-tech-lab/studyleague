@@ -1,7 +1,7 @@
+import Colors from "@/constants/Colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Appearance, ColorSchemeName } from "react-native";
-import Colors from "@/constants/Colors";
 
 type ThemePreference = Exclude<ColorSchemeName, "no-preference"> | null;
 
@@ -12,7 +12,7 @@ type ThemeContextValue = {
   ready: boolean;
 };
 
-const STORAGE_KEY = "studyleague.theme";
+const STORAGE_KEY = "tymii.theme";
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 

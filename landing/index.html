@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tymii — Ton compagnon d'étude</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal:       #4AC9CC;
+      --teal-dark:  #1F8E92;
+      --teal-light: #CCF3F4;
+      --coral:      #F28C8C;
+      --coral-tint: #FEF1F1;
+      --teal-tint:  #F0FBFB;
+      --text:       #1a2a2a;
+      --muted:      #7a9a9a;
+      --border:     #e4eeee;
+      --bg:         #ffffff;
+      --r:          16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Outfit", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.4rem 2.5rem;
+      max-width: 1040px; margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-mark { display: flex; align-items: center; gap: 0.6rem; }
+    .logo-icon {
+      width: 30px; height: 30px; background: var(--teal);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .logo-text {
+      font-family: "Outfit", sans-serif;
+      font-size: 1.25rem; font-weight: 600; letter-spacing: -0.03em;
+    }
+    .lt-t { color: var(--teal); }
+    .lt-c { color: var(--coral); }
+
+    .nav-links { display: flex; align-items: center; gap: 0.5rem; }
+    .nav-links a {
+      font-size: 0.85rem; font-weight: 500; padding: 0.45rem 1rem;
+      border-radius: 99px; text-decoration: none; color: var(--muted);
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.cta {
+      background: var(--teal); color: #fff;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .nav-links a.cta:hover { background: var(--teal-dark); color: #fff; }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 1040px; margin: 0 auto;
+      padding: 6rem 2.5rem 4rem;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 4rem; align-items: center;
+    }
+    @media (max-width: 680px) {
+      .hero { grid-template-columns: 1fr; padding: 4rem 1.5rem 3rem; }
+      .phone-col { display: flex; justify-content: center; }
+    }
+
+    .tagline {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--teal);
+      margin-bottom: 1.25rem;
+    }
+    h1 {
+      font-family: "Fraunces", serif;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-weight: 600; line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.2rem;
+    }
+    h1 em {
+      font-style: italic; font-weight: 300;
+      color: var(--teal-dark);
+    }
+    .lead {
+      font-size: 1rem; line-height: 1.7; color: var(--muted);
+      max-width: 420px; margin-bottom: 2.5rem;
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.8rem 1.4rem; border-radius: var(--r);
+      font-size: 0.9rem; font-weight: 600;
+      text-decoration: none; border: 1.5px solid transparent;
+      transition: all 0.15s; cursor: pointer;
+    }
+    .btn-teal { background: var(--teal); color: #fff; }
+    .btn-teal:hover { background: var(--teal-dark); }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-outline:hover { border-color: var(--teal); color: var(--teal-dark); }
+
+    /* ── PHONE ── */
+    .phone {
+      width: 210px;
+      background: #f8fefe;
+      border: 1.5px solid var(--border);
+      border-radius: 36px; padding: 12px;
+      box-shadow: 0 20px 60px rgba(31,142,146,0.1), 0 4px 16px rgba(0,0,0,0.06);
+      position: relative;
+    }
+    .phone::before {
+      content: "";
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 50px; height: 4px; border-radius: 99px; background: var(--border);
+    }
+    .phone-screen {
+      border-radius: 26px; background: #fff;
+      border: 1px solid var(--border);
+      padding: 1rem 0.8rem 0.85rem;
+      display: flex; flex-direction: column; gap: 0.55rem;
+    }
+
+    .ps-header { display: flex; align-items: center; justify-content: space-between; }
+    .ps-title { font-size: 0.6rem; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .ps-xp {
+      font-size: 0.6rem; font-weight: 600; color: var(--coral);
+      background: var(--coral-tint); border-radius: 99px; padding: 0.12rem 0.45rem;
+    }
+
+    .ps-timer { text-align: center; padding: 0.35rem 0 0.1rem; }
+    .ps-timer-num {
+      font-family: "Fraunces", serif;
+      font-size: 1.8rem; font-weight: 600; color: var(--teal-dark);
+      letter-spacing: -0.03em;
+    }
+    .ps-timer-label { font-size: 0.54rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.05rem; }
+
+    .ps-subject {
+      display: flex; align-items: center; gap: 0.45rem;
+      background: var(--teal-tint); border-radius: 10px; padding: 0.42rem 0.55rem;
+    }
+    .ps-subject.coral-bg { background: var(--coral-tint); }
+    .ps-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .ps-name { font-size: 0.62rem; font-weight: 500; flex: 1; color: var(--text); }
+    .ps-time { font-size: 0.58rem; color: var(--muted); }
+
+    .ps-streak {
+      display: flex; align-items: center; gap: 0.35rem;
+      background: var(--coral-tint); border-radius: 10px; padding: 0.38rem 0.55rem;
+    }
+    .ps-streak-text { font-size: 0.6rem; font-weight: 500; color: var(--coral); }
+    .ps-streak-val { font-size: 0.64rem; font-weight: 700; color: var(--coral); margin-left: auto; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      max-width: 1040px; margin: 0 auto; padding: 0 2.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── STATS ── */
+    .stats {
+      max-width: 1040px; margin: 0 auto;
+      padding: 2.5rem 2.5rem;
+      display: flex; gap: 3rem;
+    }
+    @media (max-width: 480px) { .stats { gap: 1.5rem; } }
+    .stat-num {
+      font-family: "Fraunces", serif;
+      font-size: 1.8rem; font-weight: 600; color: var(--teal-dark);
+      letter-spacing: -0.02em;
+    }
+    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+
+    /* ── FEATURES ── */
+    .features {
+      background: var(--teal-tint);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 4rem 2.5rem;
+    }
+    .features-inner { max-width: 1040px; margin: 0 auto; }
+
+    .section-eyebrow {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--coral);
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.1rem); font-weight: 600;
+      letter-spacing: -0.02em; line-height: 1.2;
+      margin-bottom: 2.5rem;
+    }
+
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px; /* hairline grid */
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .feat-card {
+      background: #fff;
+      padding: 1.6rem 1.4rem;
+    }
+    .feat-dot {
+      width: 10px; height: 10px; border-radius: 50%; margin-bottom: 1rem;
+    }
+    .feat-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .feat-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── GROUP ── */
+    .group-section {
+      max-width: 1040px; margin: 0 auto;
+      padding: 5rem 2.5rem;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center;
+    }
+    @media (max-width: 640px) { .group-section { grid-template-columns: 1fr; gap: 2.5rem; } }
+
+    .group-visual {
+      border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+    }
+    .group-header {
+      background: var(--teal-tint); padding: 0.9rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .member {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.75rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .member:last-child { border-bottom: none; }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.62rem; font-weight: 700; flex-shrink: 0;
+    }
+    .member-name { font-size: 0.82rem; font-weight: 500; flex: 1; }
+    .member-time { font-size: 0.76rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .rank { font-size: 0.68rem; width: 18px; text-align: center; flex-shrink: 0; }
+
+    .group-copy .section-eyebrow { text-align: left; }
+    .group-copy .section-title { margin-bottom: 0.8rem; }
+    .group-copy p { font-size: 0.92rem; color: var(--muted); line-height: 1.7; }
+
+    /* ── DOWNLOAD ── */
+    .download-section {
+      background: var(--teal-tint);
+      border-top: 1px solid var(--border);
+      padding: 5rem 2.5rem;
+      text-align: center;
+    }
+    .download-section .section-title { margin-bottom: 0.6rem; }
+    .download-section > p { font-size: 0.92rem; color: var(--muted); margin-bottom: 2rem; }
+
+    .store-btns {
+      display: flex; flex-direction: column; gap: 0.7rem;
+      max-width: 280px; margin: 0 auto;
+    }
+    .store-btn {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.88rem 1.3rem; border-radius: var(--r);
+      text-decoration: none; background: #fff;
+      border: 1.5px solid var(--border); color: var(--text);
+      font-weight: 600; font-size: 0.88rem;
+      transition: border-color 0.15s;
+    }
+    .store-btn:hover { border-color: var(--teal); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.76rem; color: var(--muted);
+      max-width: 1040px; margin: 0 auto;
+    }
+
+    /* ── REVEAL ── */
+    .reveal { opacity:0; transform:translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity:1; transform:none; }
+    .d1{transition-delay:.08s} .d2{transition-delay:.16s} .d3{transition-delay:.24s}
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+          <rect x="3.5" y="7" width="3.2" height="7.5" rx="1.6" fill="white"/>
+          <circle cx="5.1" cy="4.5" r="1.9" fill="white"/>
+          <rect x="11.3" y="7" width="3.2" height="7.5" rx="1.6" fill="#F28C8C"/>
+          <circle cx="12.9" cy="4.5" r="1.9" fill="#F28C8C"/>
+        </svg>
+      </div>
+      <span class="logo-text">tym<span class="lt-t">i</span><span class="lt-c">i</span></span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#groupes">Groupes</a>
+      <a href="#download" class="cta">Télécharger</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <p class="tagline">Ton compagnon d'étude</p>
+      <h1>Étudie mieux,<br><em>ensemble.</em></h1>
+      <p class="lead">Chronomètre par matière, XP, séries et groupes — pour rester régulier sans se prendre la tête.</p>
+      <div class="hero-actions">
+        <a class="btn btn-teal" href="#download">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          App Store
+        </a>
+        <a class="btn btn-outline" href="#download">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.39 5.943V8.864l10.088 5.843zm.84-11.674L8.576 5.858v12.284l6.762-3.876a.996.996 0 00.564-.852V2.033a1 1 0 00-.564-.852z"/></svg>
+          Google Play
+        </a>
+      </div>
+    </div>
+    <div class="phone-col">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="ps-header">
+            <span class="ps-title">Aujourd'hui</span>
+            <span class="ps-xp">✦ 2 340 XP</span>
+          </div>
+          <div class="ps-timer">
+            <div class="ps-timer-num" id="timer-display">01:24:07</div>
+            <div class="ps-timer-label">Maths · en cours</div>
+          </div>
+          <div class="ps-subject">
+            <span class="ps-dot" style="background:#4AC9CC"></span>
+            <span class="ps-name">Mathématiques</span>
+            <span class="ps-time">1 h 24</span>
+          </div>
+          <div class="ps-subject coral-bg">
+            <span class="ps-dot" style="background:#F28C8C"></span>
+            <span class="ps-name">Histoire</span>
+            <span class="ps-time">45 min</span>
+          </div>
+          <div class="ps-subject">
+            <span class="ps-dot" style="background:#1F8E92"></span>
+            <span class="ps-name">Anglais</span>
+            <span class="ps-time">30 min</span>
+          </div>
+          <div class="ps-streak">
+            <span style="font-size:.85rem">🔥</span>
+            <span class="ps-streak-text">Série en cours</span>
+            <span class="ps-streak-val">12 jours</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="divider"></div>
+  <div class="stats reveal">
+    <div class="stat">
+      <div class="stat-num">10k+</div>
+      <div class="stat-label">Étudiants actifs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">4.8★</div>
+      <div class="stat-label">Note moyenne</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2M h</div>
+      <div class="stat-label">Étudiées ensemble</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <p class="section-eyebrow reveal">Fonctionnalités</p>
+      <h2 class="section-title reveal">Tout ce qu'il te faut<br>pour rester régulier</h2>
+      <div class="feat-grid">
+        <div class="feat-card reveal d1">
+          <div class="feat-dot" style="background:#4AC9CC"></div>
+          <div class="feat-name">Chronomètre par matière</div>
+          <div class="feat-desc">Suis le temps passé sur chaque discipline. Visualise ta répartition en un coup d'œil.</div>
+        </div>
+        <div class="feat-card reveal d2">
+          <div class="feat-dot" style="background:#F28C8C"></div>
+          <div class="feat-name">XP &amp; niveaux</div>
+          <div class="feat-desc">Gagne de l'expérience à chaque session. Monte en niveau et débloque des récompenses.</div>
+        </div>
+        <div class="feat-card reveal d3">
+          <div class="feat-dot" style="background:#F28C8C"></div>
+          <div class="feat-name">Séries &amp; streaks</div>
+          <div class="feat-desc">Construis des habitudes solides. Une journée sans étude brise la chaîne — reste invaincu.</div>
+        </div>
+        <div class="feat-card reveal d1">
+          <div class="feat-dot" style="background:#4AC9CC"></div>
+          <div class="feat-name">Groupes d'étude</div>
+          <div class="feat-desc">Rejoins ou crée des ligues avec tes amis. Progressez ensemble, motivez-vous mutuellement.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GROUP -->
+  <section class="group-section" id="groupes">
+    <div class="group-visual reveal">
+      <div class="group-header">Classement · Cette semaine</div>
+      <div class="member">
+        <span class="rank">🥇</span>
+        <div class="avatar" style="background:#CCF3F4;color:#1F8E92">SA</div>
+        <span class="member-name">Sarah A.</span>
+        <span class="member-time">18 h 42</span>
+      </div>
+      <div class="member">
+        <span class="rank">🥈</span>
+        <div class="avatar" style="background:#FEF1F1;color:#c06060">ML</div>
+        <span class="member-name">Maxime L.</span>
+        <span class="member-time">14 h 15</span>
+      </div>
+      <div class="member">
+        <span class="rank">🥉</span>
+        <div class="avatar" style="background:#CCF3F4;color:#1F8E92">CK</div>
+        <span class="member-name">Camille K.</span>
+        <span class="member-time">11 h 03</span>
+      </div>
+      <div class="member">
+        <span class="rank" style="color:var(--muted)">4</span>
+        <div class="avatar" style="background:var(--teal);color:#fff">YD</div>
+        <span class="member-name" style="color:var(--teal-dark);font-weight:600">Toi</span>
+        <span class="member-time">9 h 30</span>
+      </div>
+    </div>
+
+    <div class="group-copy reveal d2">
+      <p class="section-eyebrow">Groupes</p>
+      <h2 class="section-title">La compétition bienveillante qui booste.</h2>
+      <p>Crée ta ligue, invite tes amis ou ta classe, et vois chaque semaine qui travaille le plus. Pas pour se juger — pour s'encourager.</p>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section class="download-section" id="download">
+    <p class="section-eyebrow reveal">Téléchargement</p>
+    <h2 class="section-title reveal">Prêt à commencer ?</h2>
+    <p class="reveal">Gratuit · iPhone &amp; Android · Aucune carte requise</p>
+    <div class="store-btns reveal">
+      <a class="store-btn" id="link-ios" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Télécharger sur l'App Store
+      </a>
+      <a class="store-btn" id="link-android" href="#">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.39 5.943V8.864l10.088 5.843zm.84-11.674L8.576 5.858v12.284l6.762-3.876a.996.996 0 00.564-.852V2.033a1 1 0 00-.564-.852z"/></svg>
+        Disponible sur Google Play
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2025 Tymii</span>
+    <span>ton compagnon d'étude</span>
+  </footer>
+
+  <script>
+    var APP_STORE_URL  = "https://apps.apple.com/search?term=Tymii";
+    var PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.juliemaitre.tymii";
+    document.getElementById("link-ios").href     = APP_STORE_URL;
+    document.getElementById("link-android").href = PLAY_STORE_URL;
+
+    // Live timer
+    var start = Date.now() - (1*3600+24*60+7)*1000;
+    function tick() {
+      var e=Math.floor((Date.now()-start)/1000);
+      var h=Math.floor(e/3600),m=Math.floor((e%3600)/60),s=e%60;
+      document.getElementById("timer-display").textContent=
+        String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+    }
+    setInterval(tick,1000); tick();
+
+    // Scroll reveal
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add("visible");io.unobserve(e.target);}
+      });
+    },{threshold:0.1});
+    document.querySelectorAll(".reveal").forEach(function(el){io.observe(el);});
+  </script>
+</body>
+</html>

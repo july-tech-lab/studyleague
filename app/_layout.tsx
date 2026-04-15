@@ -92,7 +92,7 @@ function RootLayoutNav() {
 
 function NavigationWithTheme() {
   const colorScheme = useColorScheme();
-  const { user, loadingUser } = useAuth();
+  const { user, loadingUser, profileSetupComplete } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -100,11 +100,27 @@ function NavigationWithTheme() {
     if (loadingUser) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const routeName = segments[1];
+    const onFillProfile = inAuthGroup && routeName === "fill-profile";
 
     if (!user && !inAuthGroup) {
       router.replace("/(auth)/signin");
+      return;
     }
-  }, [loadingUser, user, segments, router]);
+
+    if (!user) return;
+
+    if (profileSetupComplete === null) return;
+
+    if (profileSetupComplete === false && !onFillProfile) {
+      router.replace("/(auth)/fill-profile");
+      return;
+    }
+
+    if (profileSetupComplete === true && onFillProfile) {
+      router.replace("/");
+    }
+  }, [loadingUser, user, segments, router, profileSetupComplete]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

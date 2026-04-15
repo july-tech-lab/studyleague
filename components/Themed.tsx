@@ -3,10 +3,15 @@
  * https://docs.expo.io/guides/color-schemes/
  */
 
-import { Text as DefaultText, View as DefaultView } from "react-native";
+import {
+  StyleSheet,
+  Text as DefaultText,
+  TextStyle,
+  View as DefaultView,
+} from "react-native";
 
 import Colors from "@/constants/Colors";
-import typography from "@/constants/typography";
+import typography, { interFontForWeight } from "@/constants/typography";
 import { useThemePreference } from "@/utils/themeContext";
 
 type ThemeProps = {
@@ -100,13 +105,27 @@ export function Text(props: TextProps) {
     colorName
   );
 
+  const baseTypo = typography[resolvedVariant];
+  const userFlat = StyleSheet.flatten(style ?? {}) as TextStyle;
+  const cascade = StyleSheet.flatten([
+    baseTypo,
+    { color },
+    align ? { textAlign: align } : null,
+    style,
+  ]) as TextStyle;
+  const fontFamily =
+    userFlat?.fontFamily != null && userFlat.fontFamily !== ""
+      ? userFlat.fontFamily
+      : interFontForWeight(cascade.fontWeight ?? baseTypo.fontWeight);
+
   return (
     <DefaultText
       style={[
-        typography[resolvedVariant],
+        baseTypo,
         { color },
         align ? { textAlign: align } : null,
         style,
+        { fontFamily },
       ]}
       {...otherProps}
     />

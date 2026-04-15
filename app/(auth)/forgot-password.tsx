@@ -45,7 +45,7 @@ export default function ForgotPassword() {
     try {
       setLoading(true);
 
-      await resetPasswordForEmail(email.trim(), "studyleague://reset-password-complete");
+      await resetPasswordForEmail(email.trim(), "tymii://reset-password-complete");
 
       setMessage(t("auth.resetRequest.sent"));
     } catch (err) {

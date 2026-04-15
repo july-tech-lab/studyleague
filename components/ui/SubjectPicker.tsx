@@ -1,4 +1,5 @@
 import { Text } from "@/components/Themed";
+import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import { createSubjectColorMap } from "@/utils/color";
 import { Subject } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
@@ -19,8 +20,6 @@ export interface SubjectPickerProps {
   loading?: boolean;
   placeholder?: string;
   containerStyle?: object;
-  /** If true, only shows parent subjects (where parent_subject_id is null). Default: true */
-  parentsOnly?: boolean;
 }
 
 export function SubjectPicker({
@@ -30,18 +29,12 @@ export function SubjectPicker({
   loading = false,
   placeholder,
   containerStyle,
-  parentsOnly = true,
 }: SubjectPickerProps) {
   const theme = useTheme();
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Filter to only parent subjects (where parent_subject_id is null)
-  // Database: parent_subject_id is NULL for parents, UUID for children
-  // Tasks can be assigned to child subjects, but the picker should only show parents
-  const displaySubjects = parentsOnly
-    ? subjects.filter((s) => s.parent_subject_id === null || s.parent_subject_id === undefined)
-    : subjects;
+  const displaySubjects = subjects;
 
   const selectedSubject = displaySubjects.find((s) => s.id === selectedSubjectId) ?? null;
 
@@ -113,7 +106,7 @@ export function SubjectPicker({
           {loading
             ? t("common.status.loading")
             : selectedSubject
-            ? selectedSubject.name
+            ? getSubjectDisplayName(selectedSubject, t)
             : placeholder ?? t("subjects.select.placeholder")}
         </Text>
         <ChevronDown size={18} color={theme.textMuted} />
@@ -169,7 +162,7 @@ export function SubjectPicker({
                       },
                     ]}
                   >
-                    {subj.name}
+                    {getSubjectDisplayName(subj, t)}
                   </Text>
                 </TouchableOpacity>
               );

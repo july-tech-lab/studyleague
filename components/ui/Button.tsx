@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import Colors from "@/constants/Colors";
+import { INTER } from "@/constants/typography";
 import { useTheme } from "@/utils/themeContext";
 
 type ButtonVariant = "primary" | "secondary" | "destructive" | "outline" | "ghost";
@@ -40,7 +41,8 @@ const SIZE: Record<ButtonSize, { pv: number; ph: number; r: number; fs: number; 
   lg: { pv: 14, ph: 22, r: 14, fs: 16, is: 20 },
 };
 
-const ICON_ONLY_DIM: Record<ButtonSize, number> = { xs: 44, sm: 40, md: 48, lg: 52 };
+/** Tap target for icon-only buttons (slightly smaller than default padding-based rows). */
+const ICON_ONLY_DIM: Record<ButtonSize, number> = { xs: 36, sm: 34, md: 40, lg: 44 };
 
 type ColorSet = (typeof Colors)["light"];
 
@@ -61,7 +63,7 @@ function getPalette(colorSet: ColorSet, variant: ButtonVariant) {
     case "destructive":
       return { bg: colorSet.danger, pressedBg: colorSet.dangerDark, text: "#FFFFFF", border: "transparent", borderWidth: 0 };
     case "outline":
-      return { ...base, border: colorSet.primaryDark, borderWidth: 1 };
+      return { bg: "transparent", pressedBg: colorSet.primaryTint, text: colorSet.primaryDark, border: colorSet.primaryDark, borderWidth: 1 };
     case "ghost":
     default:
       return base;
@@ -107,7 +109,7 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}
       accessibilityState={{ disabled: isDisabled, busy: !!loading }}
-      hitSlop={iconOnly ? 10 : undefined}
+      hitSlop={iconOnly ? 12 : undefined}
       style={({ pressed }) => {
         // Compute box style once for cleaner code
         const boxStyle: ViewStyle = {
@@ -155,7 +157,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: { alignItems: "center", justifyContent: "center" },
   content: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  text: { fontWeight: "600" },
+  text: { fontFamily: INTER.semiBold, fontWeight: "600" },
   iconLeft: { marginRight: 8 },
   iconRight: { marginLeft: 8 },
   fullWidth: { width: "100%" },

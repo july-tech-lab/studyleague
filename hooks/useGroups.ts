@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createGroup,
+  deleteGroup as deleteGroupQuery,
   fetchPublicGroups,
   fetchUserGroups,
   findGroupByInviteCode,
   Group,
   GroupVisibility,
+  leaveGroup as leaveGroupQuery,
   MembershipStatus,
   requestJoinGroup,
   updateGroup as updateGroupQuery,
@@ -37,6 +39,8 @@ export interface UseGroupsReturn {
     requires_admin_approval?: boolean;
     join_password?: string | null;
   }) => Promise<Group>;
+  deleteGroup: (groupId: string) => Promise<void>;
+  leaveGroup: (groupId: string) => Promise<void>;
   searchGroupByCode: (code: string) => Promise<Group | null>;
   refetch: () => Promise<void>;
 }
@@ -173,6 +177,25 @@ export function useGroups({
     [loadGroups]
   );
 
+  const handleDeleteGroup = useCallback(
+    async (groupId: string): Promise<void> => {
+      await deleteGroupQuery(groupId);
+      await loadGroups();
+    },
+    [loadGroups]
+  );
+
+  const handleLeaveGroup = useCallback(
+    async (groupId: string): Promise<void> => {
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      await leaveGroupQuery(userId, groupId);
+      await loadGroups();
+    },
+    [userId, loadGroups]
+  );
+
   const handleSearchGroupByCode = useCallback(
     async (code: string): Promise<Group | null> => {
       try {
@@ -201,6 +224,8 @@ export function useGroups({
     createGroup: handleCreateGroup,
     joinGroup: handleJoinGroup,
     updateGroup: handleUpdateGroup,
+    deleteGroup: handleDeleteGroup,
+    leaveGroup: handleLeaveGroup,
     searchGroupByCode: handleSearchGroupByCode,
     refetch: loadGroups,
   };

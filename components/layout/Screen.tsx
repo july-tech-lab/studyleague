@@ -53,7 +53,7 @@ type ViewModeProps = ViewProps &
     scroll: false;
   };
 
-type ScreenProps = ScrollModeProps | ViewModeProps;
+export type ScreenProps = ScrollModeProps | ViewModeProps;
 
 /**
  * Base layout component with consistent padding, safe area handling, and theme background.

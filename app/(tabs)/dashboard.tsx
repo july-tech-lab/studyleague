@@ -4,7 +4,9 @@ import { Card } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
+import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import { useDashboard } from "@/hooks/useDashboard";
+import { createSubjectColorMap } from "@/utils/color";
 import { useAuth } from "@/utils/authContext";
 import { useTheme } from "@/utils/themeContext";
 import { formatDurationCompact, formatMinutesCompact, getWeekRangeForDate } from "@/utils/time";
@@ -12,24 +14,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Flame,
   Target,
+  Timer,
   TrendingUp,
-  Zap,
 } from "lucide-react-native";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
-
-// --- MOCK DATA (subject distribution - can be wired to real data later) ---
-const subjectData = [
-  { name: "Programmation", value: 35 },
-  { name: "Mathématiques", value: 25 },
-  { name: "Physique", value: 20 },
-  { name: "Anglais", value: 12 },
-  { name: "Histoire", value: 8 },
-];
-
 
 const dayNumToKey: Record<number, string> = {
   1: "mon",
@@ -43,9 +34,14 @@ const dayNumToKey: Record<number, string> = {
 
 const HISTOGRAM_BAR_HEIGHT = 100;
 
-type Period = "week" | "month" | "year";
+type Period = "day" | "week" | "month" | "year";
 
-const periodOptions: Period[] = ["week", "month", "year"];
+const periodOptions: Period[] = ["day", "week", "month", "year"];
+
+function formatStatMinutes(minutes: number): string {
+  if (minutes <= 0) return "0m";
+  return formatMinutesCompact(minutes);
+}
 
 export default function DashboardScreen() {
   const { user } = useAuth();
@@ -60,15 +56,35 @@ export default function DashboardScreen() {
   const iconColor = theme.primary;
 
   const {
-    profile,
     weeklyTotalSeconds,
-    weeklyGoalMinutes,
-    sessionTotals,
+    longestSessionSeconds,
     subjectNameById,
+    subjectGoalVsActual,
+    distributionBySubject,
     histogramData,
     histogramSubjects,
     parentSubjects,
   } = useDashboard(user?.id ?? null, period, focusDate);
+
+  const subjectColorById = React.useMemo(
+    () =>
+      createSubjectColorMap(
+        parentSubjects.map((s) => ({
+          ...s,
+          children: [] as { id: string; custom_color?: string | null; color?: string | null }[],
+        })),
+        subjectPalette,
+        theme.primary
+      ),
+    [parentSubjects, subjectPalette, theme.primary]
+  );
+
+  const goalVsActualTotals = React.useMemo(() => {
+    if (!subjectGoalVsActual.length) return null;
+    const actual = subjectGoalVsActual.reduce((s, r) => s + r.actualMinutes, 0);
+    const goal = subjectGoalVsActual.reduce((s, r) => s + r.goalMinutes, 0);
+    return { actual, goal };
+  }, [subjectGoalVsActual]);
 
   const histogramBuckets = histogramData(selectedSubjectId);
   const maxHistogramMinutes = Math.max(
@@ -89,6 +105,14 @@ export default function DashboardScreen() {
   };
 
   const formatNavLabel = () => {
+    if (period === "day") {
+      return focusDate.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
     if (period === "week") {
       const d = new Date(focusDate);
       const day = d.getDay();
@@ -110,7 +134,8 @@ export default function DashboardScreen() {
 
   const goPrev = () => {
     const d = new Date(focusDate);
-    if (period === "week") d.setDate(d.getDate() - 7);
+    if (period === "day") d.setDate(d.getDate() - 1);
+    else if (period === "week") d.setDate(d.getDate() - 7);
     else if (period === "month") d.setMonth(d.getMonth() - 1);
     else d.setFullYear(d.getFullYear() - 1);
     setFocusDate(d);
@@ -118,7 +143,8 @@ export default function DashboardScreen() {
 
   const goNext = () => {
     const d = new Date(focusDate);
-    if (period === "week") d.setDate(d.getDate() + 7);
+    if (period === "day") d.setDate(d.getDate() + 1);
+    else if (period === "week") d.setDate(d.getDate() + 7);
     else if (period === "month") d.setMonth(d.getMonth() + 1);
     else d.setFullYear(d.getFullYear() + 1);
     setFocusDate(d);
@@ -126,6 +152,13 @@ export default function DashboardScreen() {
 
   const isCurrentPeriod = React.useMemo(() => {
     const now = new Date();
+    if (period === "day") {
+      return (
+        focusDate.getFullYear() === now.getFullYear() &&
+        focusDate.getMonth() === now.getMonth() &&
+        focusDate.getDate() === now.getDate()
+      );
+    }
     if (period === "week") {
       const focusWeek = getWeekRangeForDate(focusDate);
       const nowWeek = getWeekRangeForDate(now);
@@ -138,10 +171,11 @@ export default function DashboardScreen() {
   }, [period, focusDate]);
 
   return (
-    <TabScreen title={t("dashboard.title")}>
+    <TabScreen title={t("dashboard.title")} gap={8}>
 
         {/* TABS */}
         <Tabs
+          style={styles.periodTabs}
           options={periodOptions.map(option => ({
             value: option,
             label: t(`common.period.${option}`),
@@ -168,50 +202,7 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
-        {/* WEEKLY OBJECTIVE (planned vs real) - week only */}
-        {period === "week" && (
-          <Card variant="border" style={styles.weeklyObjectiveCard}>
-            <View style={styles.weeklyObjectiveHeader}>
-              <Text variant="subtitle" colorName="textMuted" style={styles.weeklyObjectiveTitle}>
-                {t("dashboard.weeklyObjective")}
-              </Text>
-              <Text variant="subtitle" style={styles.weeklyObjectiveValue}>
-                {formatDurationCompact(weeklyTotalSeconds)} / {formatMinutesCompact(weeklyGoalMinutes)}
-              </Text>
-            </View>
-            <View style={styles.progressBg}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.min(
-                      100,
-                      weeklyGoalMinutes > 0
-                        ? (weeklyTotalSeconds / 60 / weeklyGoalMinutes) * 100
-                        : 0
-                    )}%`,
-                  },
-                ]}
-              />
-            </View>
-            <View style={styles.weeklyObjectiveFooter}>
-              <Text variant="micro" colorName="textMuted">
-                {t("dashboard.percentComplete", {
-                  percent: Math.min(
-                    100,
-                    Math.round(
-                      weeklyGoalMinutes > 0
-                        ? (weeklyTotalSeconds / 60 / weeklyGoalMinutes) * 100
-                        : 0
-                    )
-                  ),
-                })}
-              </Text>
-            </View>
-          </Card>
-        )}
-
-        {/* METRIC CARDS: Total time | Streak | Sessions */}
+        {/* METRIC CARDS: Total time | Longest session */}
         <View style={styles.metricsRow}>
           <StatCard
             icon={Clock}
@@ -220,67 +211,188 @@ export default function DashboardScreen() {
             iconColor={iconColor}
           />
           <StatCard
-            icon={Flame}
-            value={(profile?.current_streak ?? 0) > 0
-              ? t("dashboard.streakDays_other", { count: profile?.current_streak })
-              : t("dashboard.streakDays_zero")}
-            label={t("profile.stats.streak")}
-            iconColor={theme.secondary}
-          />
-          <StatCard
-            icon={Zap}
-            value={String(sessionTotals?.count ?? 0)}
-            label={t("profile.stats.sessions")}
+            icon={Timer}
+            value={formatDurationCompact(longestSessionSeconds)}
+            label={t("dashboard.longestSession")}
             iconColor={iconColor}
           />
         </View>
 
-        {/* DISTRIBUTION (Répartition) */}
-        <Card variant="border" style={styles.distributionCard}>
-          <View style={styles.distributionHeader}>
-            <Target size={20} color={iconColor} />
-            <Text variant="h2" style={styles.distributionTitle}>
-              {t("dashboard.distribution")}
-            </Text>
-          </View>
-          <Text variant="caption" colorName="textMuted" style={styles.distributionSubtitle}>
-            {formatNavLabel()}
-          </Text>
-          {subjectData.length > 0 && weeklyTotalSeconds > 0 ? (
-            <View style={styles.distributionBars}>
-              {subjectData.map((s, i) => (
-                <View key={i} style={styles.barRow}>
-                  <View style={styles.barHeader}>
-                    <Text variant="subtitle" colorName="textMuted" style={styles.barLabel}>
-                      {s.name}
-                    </Text>
-                    <Text variant="subtitle" style={styles.barValue}>
-                      {s.value}%
-                    </Text>
-                  </View>
-                  <View style={styles.barBg}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        { width: `${s.value}%`, backgroundColor: subjectPalette[i % subjectPalette.length] },
-                      ]}
-                    />
-                  </View>
-                </View>
-              ))}
+        {(period === "day" || period === "week") && (
+          <Card variant="border" style={styles.distributionCard}>
+            <View style={styles.distributionHeader}>
+              <Target size={18} color={iconColor} />
+              <View style={styles.goalVsActualHeaderTitleRow}>
+                <Text
+                  variant="subtitle"
+                  style={[styles.dashboardSectionTitle, styles.distributionTitle]}
+                >
+                  {t("dashboard.goalVsActual.title")}
+                </Text>
+                {goalVsActualTotals ? (
+                  <Text variant="micro" colorName="textMuted" style={styles.goalVsActualTime}>
+                    {formatStatMinutes(goalVsActualTotals.actual)} /{" "}
+                    {formatStatMinutes(goalVsActualTotals.goal)}
+                  </Text>
+                ) : null}
+              </View>
             </View>
-          ) : (
-            <Text variant="body" colorName="textMuted" style={styles.emptyStateText}>
-              {t("dashboard.noSessionsForPeriod")}
-            </Text>
-          )}
-        </Card>
 
-        {/* DAILY PROGRESS (Histogram) */}
+            {subjectGoalVsActual.length === 0 ? (
+              <Text variant="body" colorName="textMuted" style={styles.emptyStateText}>
+                {t("dashboard.goalVsActual.empty")}
+              </Text>
+            ) : (
+              <View style={[styles.distributionBars, styles.goalVsActualBars]}>
+                {subjectGoalVsActual.map((row) => {
+                  const dotColor = subjectColorById[row.subjectId] ?? theme.primary;
+                  const pctFill =
+                    row.goalMinutes > 0
+                      ? Math.min(100, (row.actualMinutes / row.goalMinutes) * 100)
+                      : 0;
+                  return (
+                    <View key={row.subjectId} style={styles.barRow}>
+                      <View style={styles.barHeader}>
+                        <View style={styles.goalVsActualLabelWithDot}>
+                          <View style={[styles.goalVsActualDot, { backgroundColor: dotColor }]} />
+                          <Text variant="caption" colorName="textMuted" style={styles.barLabel}>
+                            {row.subjectName}
+                          </Text>
+                        </View>
+                        <Text variant="caption" colorName="textMuted">
+                          {formatStatMinutes(row.actualMinutes)} /{" "}
+                          {formatStatMinutes(row.goalMinutes)}
+                        </Text>
+                      </View>
+                      <View style={styles.barBg}>
+                        <View
+                          style={[
+                            styles.barFill,
+                            {
+                              width: `${pctFill}%`,
+                              backgroundColor: dotColor,
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </Card>
+        )}
+
+        {/* Mois / année : chart type Objectif vs réel, temps réel uniquement */}
+        {(period === "month" || period === "year") && (
+          <Card variant="border" style={styles.distributionCard}>
+            <View style={styles.distributionHeader}>
+              <Target size={18} color={iconColor} />
+              <View style={styles.goalVsActualHeaderTitleRow}>
+                <Text variant="subtitle" style={[styles.dashboardSectionTitle, styles.distributionTitle]}>
+                  {t("dashboard.timeBySubject")}
+                </Text>
+                {weeklyTotalSeconds > 0 ? (
+                  <Text variant="micro" colorName="textMuted" style={styles.goalVsActualTime}>
+                    {formatDurationCompact(weeklyTotalSeconds)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            {distributionBySubject.length > 0 ? (
+              <View style={[styles.distributionBars, styles.goalVsActualBars]}>
+                {distributionBySubject.map((s, i) => {
+                  const dotColor = subjectColorById[s.subjectId] ?? subjectPalette[i % subjectPalette.length];
+                  return (
+                    <View key={s.subjectId} style={styles.barRow}>
+                      <View style={styles.barHeader}>
+                        <View style={styles.goalVsActualLabelWithDot}>
+                          <View style={[styles.goalVsActualDot, { backgroundColor: dotColor }]} />
+                          <Text variant="caption" colorName="textMuted" style={styles.barLabel}>
+                            {s.name}
+                          </Text>
+                        </View>
+                        <Text variant="caption" colorName="textMuted">
+                          {formatDurationCompact(s.seconds)}
+                        </Text>
+                      </View>
+                      <View style={styles.barBg}>
+                        <View
+                          style={[
+                            styles.barFill,
+                            { width: `${s.percent}%`, backgroundColor: dotColor },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text variant="body" colorName="textMuted" style={styles.emptyStateText}>
+                {t("dashboard.noSessionsForPeriod")}
+              </Text>
+            )}
+          </Card>
+        )}
+
+        {/* Répartition (%) — jour & semaine uniquement */}
+        {(period === "day" || period === "week") && (
+          <Card variant="border" style={styles.distributionCard}>
+            <View style={styles.distributionHeader}>
+              <Target size={18} color={iconColor} />
+              <View style={styles.goalVsActualHeaderTitleRow}>
+                <Text variant="subtitle" style={[styles.dashboardSectionTitle, styles.distributionTitle]}>
+                  {t("dashboard.distribution")}
+                </Text>
+                <Text variant="micro" colorName="textMuted">
+                  {formatNavLabel()}
+                </Text>
+              </View>
+            </View>
+            {distributionBySubject.length > 0 ? (
+              <View style={[styles.distributionBars, styles.goalVsActualBars]}>
+                {distributionBySubject.map((s, i) => {
+                  const dotColor = subjectColorById[s.subjectId] ?? subjectPalette[i % subjectPalette.length];
+                  return (
+                    <View key={s.subjectId} style={styles.barRow}>
+                      <View style={styles.barHeader}>
+                        <View style={styles.goalVsActualLabelWithDot}>
+                          <View style={[styles.goalVsActualDot, { backgroundColor: dotColor }]} />
+                          <Text variant="micro" colorName="textMuted" style={styles.barLabel}>
+                            {s.name}
+                          </Text>
+                        </View>
+                        <Text variant="micro" colorName="textMuted" style={styles.goalVsActualTime}>
+                          {s.percent}%
+                        </Text>
+                      </View>
+                      <View style={styles.barBg}>
+                        <View
+                          style={[
+                            styles.barFill,
+                            { width: `${s.percent}%`, backgroundColor: dotColor },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text variant="body" colorName="textMuted" style={styles.emptyStateText}>
+                {t("dashboard.noSessionsForPeriod")}
+              </Text>
+            )}
+          </Card>
+        )}
+
+        {/* Progression (histogramme inutile pour la vue « Jour » : un seul jour) */}
+        {period !== "day" && (
         <Card variant="border" style={styles.histogramCard}>
           <View style={styles.histogramCardHeader}>
             <TrendingUp size={18} color={iconColor} />
-            <Text variant="h2" style={styles.histogramCardTitle}>
+            <Text variant="subtitle" style={[styles.dashboardSectionTitle, styles.histogramCardTitle]}>
               {t("dashboard.dailyProgress")}
             </Text>
           </View>
@@ -355,7 +467,7 @@ export default function DashboardScreen() {
                         selectedSubjectId === subject.id && styles.dropdownOptionTextActive,
                       ]}
                     >
-                      {subject.name}
+                      {subjectNameById[subject.id] ?? getSubjectDisplayName(subject, t)}
                     </Text>
                   </Pressable>
                 ))}
@@ -430,22 +542,21 @@ export default function DashboardScreen() {
                           ]}
                         />
                       </View>
-                      <Text variant="micro" colorName="textMuted" style={styles.histogramColumnLabel}>
+                      <Text
+                        variant="micro"
+                        colorName="textMuted"
+                        style={[styles.histogramColumnLabel, styles.histogramAxisLabel]}
+                      >
                         {axisLabel}
                       </Text>
                     </View>
                   );
                 })}
               </View>
-              {period === "month" && histogramBuckets.length > 0 && (
-                <View style={styles.histogramMonthLabels}>
-                  <Text variant="micro" colorName="textMuted">1</Text>
-                  <Text variant="micro" colorName="textMuted">{histogramBuckets.length}</Text>
-                </View>
-              )}
             </View>
           )}
         </Card>
+        )}
 
     </TabScreen>
   );
@@ -458,47 +569,64 @@ const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
 
+    periodTabs: { marginBottom: 6 },
 
-    // Weekly objective card (planned vs real)
-    weeklyObjectiveCard: { marginBottom: 12, padding: 16 },
-    weeklyObjectiveHeader: {
+    dashboardSectionTitle: {
+      fontSize: 15,
+      fontWeight: "600",
+      flexShrink: 1,
+    },
+
+    goalVsActualHeaderTitleRow: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: 10,
+      gap: 8,
+      minWidth: 0,
     },
-    weeklyObjectiveTitle: { fontWeight: "600" },
-    weeklyObjectiveValue: { fontWeight: "700" },
-    weeklyObjectiveFooter: { marginTop: 6, alignItems: "flex-end" },
+    goalVsActualBars: { marginTop: 8 },
+    goalVsActualTime: { fontWeight: "700" },
+    goalVsActualLabelWithDot: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      minWidth: 0,
+    },
+    goalVsActualDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
 
     // Metric cards row
     metricsRow: {
       flexDirection: "row",
       gap: 10,
-      marginBottom: 16,
+      marginBottom: 8,
     },
 
     // Distribution card
-    distributionCard: { marginBottom: 16, padding: 16 },
+    distributionCard: { marginBottom: 8, padding: 12 },
     distributionHeader: {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
     },
     distributionTitle: { fontWeight: "600" },
-    distributionSubtitle: { marginTop: 4, marginBottom: 12 },
-    distributionBars: { marginTop: 8 },
-    emptyStateText: { textAlign: "center", marginTop: 12, marginBottom: 8 },
+    distributionBars: { marginTop: 6 },
+    emptyStateText: { textAlign: "center", marginTop: 8, marginBottom: 6 },
 
     // Histogram card
-    histogramCard: { padding: 12, marginBottom: 16 },
+    histogramCard: { padding: 12, marginBottom: 8 },
     histogramCardHeader: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      marginBottom: 10,
+      marginBottom: 8,
     },
-    histogramCardTitle: { fontWeight: "600" },
+    histogramCardTitle: {},
 
     weeklyHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
     weeklyLabel: { fontWeight: "600" },
@@ -515,24 +643,13 @@ const createStyles = (theme: typeof Colors.light) =>
     progressContainer: { marginTop: 8 },
     progressLabels: { flexDirection: "row", justifyContent: "space-between" },
     progressLabel: {},
-    progressBg: {
-      height: 10,
-      backgroundColor: theme.border,
-      borderRadius: 5,
-      marginTop: 6,
-    },
-    progressFill: {
-      height: "100%",
-      backgroundColor: theme.primary,
-      borderRadius: 5,
-    },
 
     // Date navigation
     dateNav: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: 16,
+      marginBottom: 10,
       paddingHorizontal: 4,
     },
     dateNavButton: {
@@ -563,10 +680,9 @@ const createStyles = (theme: typeof Colors.light) =>
     },
 
     // Bars
-    barRow: { marginBottom: 12 },
+    barRow: { marginBottom: 8 },
     barHeader: { flexDirection: "row", justifyContent: "space-between" },
     barLabel: {},
-    barValue: { fontWeight: "600" },
     barBg: {
       height: 8,
       backgroundColor: theme.border,
@@ -631,17 +747,11 @@ const createStyles = (theme: typeof Colors.light) =>
     dropdownOptionText: { color: theme.text, fontWeight: "500" },
     dropdownOptionTextActive: { color: theme.primary, fontWeight: "700" },
     histogramMonthYearWrap: { marginTop: 10 },
-    histogramMonthLabels: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      marginTop: 4,
-      paddingHorizontal: 4,
-    },
     // Vertical bar chart (Lovable-style: side-by-side planned/actual per column)
     histogramChartArea: {
       flexDirection: "row",
       alignItems: "flex-end",
-      gap: 4,
+      gap: 2,
       marginTop: 10,
     },
     histogramColumn: {
@@ -682,5 +792,10 @@ const createStyles = (theme: typeof Colors.light) =>
     },
     histogramColumnLabel: {
       marginTop: 2,
+    },
+    /** Compteur sous les barres (jour du mois, mois, jour de la semaine) — plus compact. */
+    histogramAxisLabel: {
+      fontSize: 7,
+      lineHeight: 11,
     },
   });

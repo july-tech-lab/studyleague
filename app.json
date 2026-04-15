@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "studyleague",
-    "slug": "studyleague",
+    "name": "tymii",
+    "slug": "tymii",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "studyleague",
+    "scheme": "tymii",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.juliemaitre.studyleague",
+      "bundleIdentifier": "com.juliemaitre.tymii",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -27,7 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.juliemaitre.studyleague"
+      "package": "com.juliemaitre.tymii"
     },
     "web": {
       "bundler": "metro",
@@ -38,8 +38,7 @@
       "expo-router",
       "expo-font",
       "expo-localization",
-      "expo-system-ui",
-      "./plugins/withFocusMode"
+      "expo-system-ui"
     ],
     "experiments": {
       "typedRoutes": true

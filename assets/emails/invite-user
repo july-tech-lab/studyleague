@@ -38,9 +38,9 @@
       <img src="https://xyuriwchmebrwhfndoeo.supabase.co/storage/v1/object/public/images/logo150x50.png" alt="StudyLeague" width="150" style="width: 150px; max-width: 100%; height: auto;">
     </div>
     <div class="content">
-      <h2 style="color: #1F2A2C; margin-top: 0; text-align: center; font-weight: 700;">You're invited to StudyLeague</h2>
+      <h2 style="color: #1F2A2C; margin-top: 0; text-align: center; font-weight: 700;">You're invited to Tymii</h2>
       <p style="color: #5F7772; margin-bottom: 24px; text-align: center;">
-        You've been invited to join {{ .SiteURL }} on StudyLeague. Create your account by accepting the invitation below.
+        You've been invited to join {{ .SiteURL }} on Tymii. Create your account by accepting the invitation below.
       </p>
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
         <tr>
@@ -60,7 +60,7 @@
       </p>
     </div>
     <div style="text-align: center; margin-top: 20px; color: #5F7772; font-size: 12px;">
-      <p>&copy; 2025 StudyLeague. All rights reserved.</p>
+      <p>&copy; 2026 Tymii. All rights reserved.</p>
     </div>
   </div>
 </body>

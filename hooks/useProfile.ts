@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  applyStreakExpiryForCurrentUser,
   fetchProfileOverview,
   Profile,
   SessionTotals,
@@ -15,7 +16,8 @@ export interface UseProfileOptions {
 export interface UseProfileReturn {
   profile: Profile | null;
   subjects: Subject[]; // Visible subjects
-  allSubjects: Subject[]; // All available subjects (visible + hidden)
+  allSubjects: Subject[]; // Catalog + user custom (enriched with colors/order)
+  hiddenSubjects: Subject[]; // user_subjects with is_hidden
   subjectTotals: SubjectAggregate[];
   sessionTotals: SessionTotals;
   leaderboardRank: string | null;
@@ -31,6 +33,7 @@ export function useProfile({
   const [profile, setProfile] = useState<Profile | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const [hiddenSubjects, setHiddenSubjects] = useState<Subject[]>([]);
   const [subjectTotals, setSubjectTotals] = useState<SubjectAggregate[]>([]);
   const [sessionTotals, setSessionTotals] = useState<SessionTotals>({
     totalSeconds: 0,
@@ -47,6 +50,7 @@ export function useProfile({
       setProfile(null);
       setSubjects([]);
       setAllSubjects([]);
+      setHiddenSubjects([]);
       setSubjectTotals([]);
       setSessionTotals({
         totalSeconds: 0,
@@ -62,10 +66,12 @@ export function useProfile({
     setLoading(true);
     setError(null);
     try {
+      await applyStreakExpiryForCurrentUser();
       const overview = await fetchProfileOverview(userId);
       setProfile(overview.profile);
       setSubjects(overview.subjects);
       setAllSubjects(overview.allSubjects);
+      setHiddenSubjects(overview.hiddenSubjects);
       setSubjectTotals(overview.subjectTotals);
       setSessionTotals(overview.sessionTotals);
       setLeaderboardRank(overview.leaderboardRank);
@@ -77,6 +83,7 @@ export function useProfile({
       setProfile(null);
       setSubjects([]);
       setAllSubjects([]);
+      setHiddenSubjects([]);
       setSubjectTotals([]);
       setSessionTotals({
         totalSeconds: 0,
@@ -100,6 +107,7 @@ export function useProfile({
     profile,
     subjects,
     allSubjects,
+    hiddenSubjects,
     subjectTotals,
     sessionTotals,
     leaderboardRank,

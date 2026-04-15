@@ -1,17 +1,19 @@
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/Themed";
-import { Task } from "@/utils/queries";
+import { getSubjectDisplayName } from "@/constants/subjectCatalog";
+import { Subject, Task } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { formatDateLabel, getTodayIso } from "@/utils/time";
-import { Check, RotateCcw, Trash2 } from "lucide-react-native";
+import { Check, Pencil, RotateCcw, Trash2 } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
 export interface TaskCardProps {
   task: Task;
-  subjects: { id: string; name: string }[];
+  subjects: Pick<Subject, "id" | "name" | "bank_key">[];
+  onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
   onResume?: (task: Task) => void;
   onComplete?: (task: Task) => void;
@@ -22,6 +24,7 @@ export interface TaskCardProps {
 export function TaskCard({
   task,
   subjects,
+  onEdit,
   onDelete,
   onResume,
   onComplete,
@@ -38,18 +41,15 @@ export function TaskCard({
     [planned, task.loggedSeconds]
   );
 
-  // Priority: task.subjectName (from query) > subjects array lookup > fallback
-  // Note: Tasks can be assigned to child subjects, so we need the full subjects array
+  // Prefer resolved subject (bank_key → i18n); else string from API/query (no catalog key).
   const subjectLabel = useMemo(() => {
-    // First, prefer subjectName if it's already on the task (from Supabase query)
-    if (task.subjectName) return task.subjectName;
-    
-    // Fallback to lookup by ID (supports both parent and child subjects)
     if (task.subjectId) {
       const found = subjects.find((s) => s.id === task.subjectId);
-      if (found) return found.name;
+      if (found) return getSubjectDisplayName(found, t);
     }
-    
+    if (task.subjectName?.trim()) {
+      return getSubjectDisplayName({ name: task.subjectName }, t);
+    }
     return t("tasks.form.subject");
   }, [task.subjectName, task.subjectId, subjects, t]);
 
@@ -113,8 +113,19 @@ export function TaskCard({
             {task.scheduledFor ? ` • ${formatLabel(task.scheduledFor)}` : ""}
           </Text>
         </View>
-        {(onDelete || onResume || onComplete) && (
+        {(onEdit || onDelete || onResume || onComplete) && (
           <View style={[styles.actionRow, styles.actionRowWrapper]}>
+            {onEdit ? (
+              <Button
+                iconLeft={Pencil}
+                iconOnly
+                variant="ghost"
+                size="xs"
+                onPress={() => onEdit(task)}
+                accessibilityLabel={t("tasks.edit")}
+                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+              />
+            ) : null}
             {task.status === "done" && onResume ? (
               <Button
                 iconLeft={RotateCcw}

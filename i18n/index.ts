@@ -6,7 +6,7 @@ import { initReactI18next } from "react-i18next";
 import en from "./locales/en.json";
 import fr from "./locales/fr.json";
 
-const STORAGE_KEY = "studyleague.lang";
+const STORAGE_KEY = "tymii.lang";
 const canUseAsyncStorage = typeof window !== "undefined";
 
 export const supportedLanguages = ["en", "fr"] as const;

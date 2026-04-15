@@ -1,15 +1,26 @@
+import { isProfileOnboardingComplete } from "@/utils/queries";
 import { supabase } from "@/utils/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Platform } from "react-native";
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   loadingUser: boolean;
+  /** null = not loaded yet; false = must complete fill-profile */
+  profileSetupComplete: boolean | null;
+  refreshProfileSetup: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (
     email: string,
@@ -42,7 +53,7 @@ const ProfileStoreContext = createContext<ProfileStoreValue | null>(null);
 
 export const buildRedirectUrl = () =>
   makeRedirectUri({
-    scheme: "studyleague",
+    scheme: "tymii",
   });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -50,6 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
   const [profileStore, setProfileStore] = useState<ProfileSummary | null>(null);
+  const [profileSetupComplete, setProfileSetupComplete] = useState<
+    boolean | null
+  >(null);
 
   // Ensures the browser session is properly finished after redirect
   WebBrowser.maybeCompleteAuthSession();
@@ -104,6 +118,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  const refreshProfileSetup = useCallback(async () => {
+    if (!user?.id) {
+      setProfileSetupComplete(null);
+      return;
+    }
+    try {
+      const ok = await isProfileOnboardingComplete(user.id);
+      setProfileSetupComplete(ok);
+    } catch {
+      setProfileSetupComplete(true);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
+      setProfileSetupComplete(null);
+      return;
+    }
+    (async () => {
+      try {
+        const ok = await isProfileOnboardingComplete(user.id);
+        if (!cancelled) setProfileSetupComplete(ok);
+      } catch {
+        if (!cancelled) setProfileSetupComplete(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
@@ -282,6 +328,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user,
           isLoading,
           loadingUser,
+          profileSetupComplete,
+          refreshProfileSetup,
           signIn,
           signUp,
           signOut,

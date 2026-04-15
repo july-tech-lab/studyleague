@@ -1,11 +1,51 @@
 /**
  * Native typography scales for iOS and Android.
- * 
+ *
  * IMPORTANT: When using these styles with <Text /> components,
  * ensure allowFontScaling remains enabled (default: true) to support
  * user accessibility preferences for text size.
+ *
+ * Use `interFontForWeight` (or themed Text) so each weight maps to a real
+ * Inter face from @expo-google-fonts/inter instead of faux-bold.
  */
-import { Platform } from "react-native";
+import { Platform, TextStyle } from "react-native";
+
+/** PostScript names from @expo-google-fonts/inter (see app/_layout.tsx useFonts). */
+export const INTER = {
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semiBold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
+  extraBold: "Inter_800ExtraBold",
+} as const;
+
+export function interFontForWeight(
+  fontWeight: TextStyle["fontWeight"] | undefined
+): string {
+  if (fontWeight == null) return INTER.regular;
+
+  if (typeof fontWeight === "string") {
+    const norm = fontWeight.toLowerCase().trim();
+    if (norm === "normal") return INTER.regular;
+    if (norm === "bold") return INTER.bold;
+    const n = parseInt(fontWeight, 10);
+    if (!Number.isNaN(n)) return interFontForNumericWeight(n);
+  }
+
+  if (typeof fontWeight === "number") {
+    return interFontForNumericWeight(fontWeight);
+  }
+
+  return INTER.regular;
+}
+
+function interFontForNumericWeight(n: number): string {
+  if (n < 500) return INTER.regular;
+  if (n < 600) return INTER.medium;
+  if (n < 700) return INTER.semiBold;
+  if (n < 800) return INTER.bold;
+  return INTER.extraBold;
+}
 
 const ios = {
   display: { fontSize: 34, lineHeight: 42, fontWeight: "700" as const },

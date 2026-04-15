@@ -124,8 +124,6 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.body,
     paddingVertical: 10,
-    outlineStyle: 'none',
-    outlineWidth: 0,
   },
   helper: {
     marginTop: 6,

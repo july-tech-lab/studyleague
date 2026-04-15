@@ -1,10 +1,11 @@
+import { INTER } from "@/constants/typography";
 import { useTheme } from "@/utils/themeContext";
 import * as Haptics from "expo-haptics";
 import { Tabs } from "expo-router";
 import { BarChart2, Clock, ListChecks, User, UsersRound } from "lucide-react-native";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
@@ -32,7 +33,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
+        tabBarShowLabel: false,
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
@@ -44,21 +45,26 @@ export default function TabsLayout() {
           borderTopWidth: 1,
         },
         tabBarLabelStyle: {
+          fontFamily: INTER.medium,
           fontSize: 12,
           fontWeight: "500",
         },
         tabBarButton: (props) => {
           const focused = props.accessibilityState?.selected;
+          const { pointerEvents, style, ...rest } = props as typeof props & {
+            pointerEvents?: ViewStyle["pointerEvents"];
+          };
           return (
             <TouchableOpacity
-              {...(props as React.ComponentProps<typeof TouchableOpacity>)}
+              {...(rest as React.ComponentProps<typeof TouchableOpacity>)}
               onPress={(e) => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 props.onPress?.(e);
               }}
               activeOpacity={0.7}
               style={[
-                props.style,
+                style,
+                pointerEvents != null ? { pointerEvents } : null,
                 focused && {
                   backgroundColor: theme.primaryTint,
                   borderRadius: 20,
@@ -93,14 +99,6 @@ export default function TabsLayout() {
         options={{
           href: null, // Hide from tab bar - access via Groups tab
           title: t("tabs.leaderboard"),
-        }}
-      />
-
-      <Tabs.Screen
-        name="goals"
-        options={{
-          href: null, // Hide from tab bar - accessed via Focus tab
-          title: t("goals.title"),
         }}
       />
 

@@ -9,7 +9,8 @@
       "delete": "Delete",
       "join": "Join",
       "search": "Search",
-      "add": "Add"
+      "add": "Add",
+      "done": "Done"
     },
     "status": {
       "loading": "Loading...",
@@ -46,10 +47,10 @@
       "sun": "Sun"
     },
     "period": {
-      "day": "Daily",
-      "week": "Weekly",
-      "month": "Monthly",
-      "year": "Yearly"
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
     }
   },
   "subjects": {
@@ -132,16 +133,39 @@
   "onboarding": {
     "fillProfile": {
       "title": "Complete your profile",
+      "pathTitle": "Your school path",
       "displayNameLabel": "Display name",
       "displayNamePlaceholder": "Username",
-      "categoryLabel": "Category · Pick your level",
+      "categoryLabel": "Category",
+      "yearLabel": "Year / level",
+      "specialtiesLabel": "Specialties (pick {{count}})",
+      "nextStep": "Continue",
       "errorDisplayName": "Display name must have at least 3 characters.",
       "errorCategory": "Please pick a category.",
+      "errorYear": "Please pick your year.",
+      "errorSpecialties": "Please pick exactly {{count}} specialties.",
       "avatarPermission": "Photo permission is required to choose an avatar.",
       "avatarError": "Unable to upload the photo."
     },
-    "continue": "Continue",
-    "userMissing": "User session missing. Please sign in again."
+    "continue": "Finish",
+    "userMissing": "User session missing. Please sign in again.",
+    "years": {
+      "cp": "CP",
+      "ce": "CE1–CE2",
+      "cm": "CM1–CM2",
+      "sixieme": "6th grade",
+      "cinquieme": "7th grade",
+      "quatrieme": "8th grade",
+      "troisieme": "9th grade",
+      "seconde": "Year 10 (Seconde)",
+      "premiere": "Year 11 (Première)",
+      "terminale": "Year 12 (Terminale)",
+      "prepa": "Preparatory class",
+      "l1": "Undergraduate — Year 1",
+      "l2": "Undergraduate — Year 2",
+      "l3_plus": "Year 3+ / Master",
+      "all": "All levels"
+    },
   },
   "tabs": {
     "focus": "Focus",
@@ -157,6 +181,7 @@
     "stop": "Stop",
     "sessionFinishedTitle": "Session finished!",
     "sessionFinishedMessage": "Great! {{minutes}} minutes of {{subject}} saved.",
+    "sessionFinishedWithDailyGoal": "Great! {{minutes}} minutes of {{subject}} saved. Today's goal for this subject: {{doneToday}} / {{dayGoal}} min.",
     "errorTitle": "Error",
     "errorSave": "Unable to save.",
     "addSubjectPlaceholder": "Subject name",
@@ -176,7 +201,14 @@
     "permissionRequestMessage": "To track study time, we need permission to enable focus mode. This helps you stay focused by blocking distracting apps.",
     "permissionRequestIOS": "On iOS, you'll also need to select which apps to block.",
     "openSettings": "Open settings",
-    "focusSimulated": "Focus mode simulated on web"
+    "focusSimulated": "Focus mode simulated on web",
+    "focusActive": "Strict focus on — shields / DND active",
+    "badges": {
+      "xpA11y": "Experience: {{formatted}} XP",
+      "streakShort_zero": "0 d.",
+      "streakShort_one": "{{count}} d.",
+      "streakShort_other": "{{count}} d."
+    }
   },
   "groups": {
     "title": "Groups",
@@ -215,6 +247,18 @@
       "noPasswordRequired": "This group does not require a password.",
       "joining": "..."
     },
+    "delete": {
+      "accessibility": "Delete group",
+      "confirmTitle": "Delete this group?",
+      "confirmMessage": "All members will lose access. This cannot be undone.",
+      "confirm": "Delete group"
+    },
+    "leave": {
+      "accessibility": "Leave group",
+      "confirmTitle": "Leave this group?",
+      "confirmMessage": "You can join again later with an invite code if the group allows it.",
+      "confirm": "Leave"
+    },
     "errors": {
       "load": "Error loading groups",
       "loadPublic": "Error loading public groups",
@@ -227,7 +271,9 @@
       "notPublic": "This group is not public",
       "join": "Error joining group",
       "search": "Search failed",
-      "notFound": "No group found for this code"
+      "notFound": "No group found for this code",
+      "delete": "Could not delete group",
+      "leave": "Could not leave group"
     },
     "success": {
       "requestSent": "Request sent",
@@ -244,19 +290,34 @@
     "bestSubject": "Best subject",
     "filterAll": "All subjects",
     "distribution": "Distribution",
+    "timeBySubject": "Study time by subject",
     "dailyProgress": "Daily progress",
     "noSessionsForPeriod": "No session recorded for this period.",
     "streakDays_one": "{{count}} day",
     "streakDays_other": "{{count}} days",
     "streakDays_zero": "-- days",
+    "dailyObjective": "Daily objective",
     "weeklyObjective": "Weekly objective",
     "totalTime": "Total time",
-    "percentComplete": "{{percent}}% complete"
+    "percentComplete": "{{percent}}% complete",
+    "goalVsActual": {
+      "title": "Goal vs Actual",
+      "subtitle": "This week",
+      "subtitleDay": "This day",
+      "actualFooter": "{{time}} actual",
+      "plannedFooter": "{{time}} planned",
+      "behind": "{{time}} behind",
+      "ahead": "{{time}} ahead",
+      "onTrack": "On track",
+      "empty": "Add weekly targets per subject in planning to compare with your study time."
+    }
   },
   "profile": {
     "userFallback": "User",
     "error": "Unable to load data.",
     "stats": {
+      "level": "Level",
+      "xp": "XP",
       "streak": "Current streak",
       "streakValue_one": "{{count}} day",
       "streakValue_other": "{{count}} days",
@@ -277,15 +338,42 @@
       "settings": "Settings"
     },
     "displayName": {
-      "hint": "Your display name can be updated below as required.",
+      "label": "Display name",
+      "hint": "Shown on your profile across the app.",
       "placeholder": "Your name",
       "success": "Display name updated.",
       "error": "Name must be at least 3 characters.",
       "errorSave": "Unable to update name."
     },
+    "academicPath": {
+      "label": "School path",
+      "notSet": "Not set — tap to configure",
+      "change": "Change",
+      "modalTitle": "Path and subjects",
+      "modalHint": "Catalog subjects for your path are added to your list. Hide any you don't need in the Subjects tab.",
+      "success": "Path updated.",
+      "errorSave": "Could not save your path."
+    },
     "subjects": {
       "title": "My subjects",
       "empty": "No subjects yet",
+      "addSubjectAction": "Add subject",
+      "popularLabel": "Popular subjects",
+      "selectSubjectPlaceholder": "Select a subject to add...",
+      "customCreateLabel": "Or create your own",
+      "addIntro": "Pick a subject from the catalog or create your own. Use Edit to change the name (if it’s yours) and color, or hide a subject from the list.",
+      "editTitle": "Edit subject",
+      "editNamePlaceholder": "Subject name",
+      "editSubject": "Edit subject",
+      "hideSubject": "Hide subject",
+      "hideConfirm": "Hide",
+      "inactiveTitle": "Inactive subjects",
+      "inactiveHint": "Hidden from your list: they no longer appear in the timer or focus mode subject list. Your study time is still saved.",
+      "inactiveEmpty": "No inactive subjects right now.",
+      "restoreSubject": "Show subject again",
+      "restoreError": "Could not restore the subject.",
+      "renameError": "Could not rename the subject.",
+      "removeOwned": "Remove custom subject",
       "breakdownTitle": "Total time by subject",
       "available": "Available subjects",
       "moreAvailable": "+ more available subjects",
@@ -296,8 +384,8 @@
       "createHint": "Press \"Create\" to create a new subject named \"{{name}}\"",
       "addError": "Unable to add the subject",
       "delete": "Delete subject",
-      "deleteTitle": "Remove the subject?",
-      "deleteMessage": "This subject will be removed from your profile.",
+      "deleteTitle": "Hide this subject?",
+      "deleteMessage": "It will disappear from your list. Your recorded study time is kept.",
       "deleteErrorTitle": "Unable to remove",
       "deleteError": "Please try again later.",
       "customizeColor": "Customize color",
@@ -340,9 +428,61 @@
     "planBlock": "Plan a study block",
     "progress": "{{current}} / {{target}} min",
     "resume": "Resume",
+    "edit": "Edit task",
+    "editBlock": "Edit task",
     "delete": "Delete task",
     "completeNow": "Mark as done",
-    "emptyState": "No tasks yet. Add one to plan your focus."
+    "emptyState": "No tasks yet. Add one to plan your focus.",
+    "planningTabs": {
+      "weeklyGoals": "Weekly goals",
+      "tasks": "Tasks"
+    }
+  },
+  "categories": {
+    "primaire": "Primary School",
+    "college": "Middle School",
+    "lycee": "High School",
+    "prepa": "Preparatory Classes",
+    "universite": "University",
+    "autres": "Other"
+  },
+  "subjectCatalog": {
+    "reading": "Reading",
+    "writing": "Writing",
+    "mathematics": "Mathematics",
+    "science": "Science",
+    "history": "History",
+    "geography": "Geography",
+    "art": "Art",
+    "music": "Music",
+    "french": "French",
+    "physics_chemistry": "Physics & Chemistry",
+    "biology": "Biology",
+    "history_geography": "History & Geography",
+    "english": "English",
+    "spanish": "Spanish",
+    "technology": "Technology",
+    "economics": "Economics",
+    "philosophy": "Philosophy",
+    "analysis": "Analysis",
+    "algebra": "Algebra",
+    "physics": "Physics",
+    "chemistry": "Chemistry",
+    "computer_science": "Computer Science",
+    "engineering": "Engineering",
+    "german": "German",
+    "geopolitics": "Geopolitics",
+    "sport": "Sport",
+    "calculus": "Calculus",
+    "algorithms": "Algorithms",
+    "data_structures": "Data Structures",
+    "marketing": "Marketing",
+    "law": "Law",
+    "productivity": "Productivity",
+    "languages": "Languages",
+    "design": "Design",
+    "management": "Management",
+    "health": "Health"
   },
   "goals": {
     "title": "Goals",
@@ -356,6 +496,7 @@
     "allSubjectsAdded": "All available subjects have been added.",
     "errorLoad": "Unable to load subjects.",
     "errorAdd": "Unable to add subject.",
-    "errorSave": "Unable to save goals."
+    "errorSave": "Unable to save goals.",
+    "loadErrorHint": "Weekly goals could not be loaded. Check your connection or apply the latest database migration (subject_weekly_goals)."
   }
 }

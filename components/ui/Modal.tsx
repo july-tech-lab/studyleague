@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react-native";
 import React from "react";
 import { Modal as RNModal, ModalProps as RNModalProps, Pressable, StyleSheet, View } from "react-native";
 
@@ -11,7 +12,7 @@ type ModalAction = {
   variant?: "primary" | "secondary" | "destructive" | "outline" | "ghost";
   loading?: boolean;
   disabled?: boolean;
-  iconLeft?: React.ComponentType<any>;
+  iconLeft?: LucideIcon;
 };
 
 type ModalProps = Omit<RNModalProps, "children"> & {

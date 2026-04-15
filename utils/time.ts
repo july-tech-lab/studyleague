@@ -112,6 +112,18 @@ export const getCurrentWeekRange = (): { mondayIso: string; sundayIso: string } 
 
 const toIso = (d: Date) => d.toISOString().slice(0, 10);
 
+/** Single calendar day in the user's local timezone (YYYY-MM-DD). */
+export const getDayRangeForDate = (
+  date: Date
+): { fromIso: string; toIso: string } => {
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const iso = `${y}-${pad(m)}-${pad(d)}`;
+  return { fromIso: iso, toIso: iso };
+};
+
 /** Gets Monday–Sunday range for a given date. */
 export const getWeekRangeForDate = (
   date: Date

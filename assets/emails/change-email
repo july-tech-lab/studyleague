@@ -35,12 +35,12 @@
 <body style="background-color: #F6FAF8;">
   <div class="container">
     <div style="text-align: center; margin-bottom: 24px;">
-      <img src="https://xyuriwchmebrwhfndoeo.supabase.co/storage/v1/object/public/images/logo150x50.png" alt="StudyLeague" width="150" style="width: 150px; max-width: 100%; height: auto;">
+      <img src="https://xyuriwchmebrwhfndoeo.supabase.co/storage/v1/object/public/images/logo150x50.png" alt="Tymii" width="150" style="width: 150px; max-width: 100%; height: auto;">
     </div>
     <div class="content">
       <h2 style="color: #1F2A2C; margin-top: 0; text-align: center; font-weight: 700;">Confirm email change</h2>
       <p style="color: #5F7772; margin-bottom: 24px; text-align: center;">
-        You requested to update your StudyLeague account email from <strong>{{ .Email }}</strong> to <strong>{{ .NewEmail }}</strong>.
+        You requested to update your Tymii account email from <strong>{{ .Email }}</strong> to <strong>{{ .NewEmail }}</strong>.
       </p>
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
         <tr>
@@ -60,7 +60,7 @@
       </p>
     </div>
     <div style="text-align: center; margin-top: 20px; color: #5F7772; font-size: 12px;">
-      <p>&copy; 2025 StudyLeague. All rights reserved.</p>
+      <p>&copy; 2025 Tymii. All rights reserved.</p>
     </div>
   </div>
 </body>

@@ -14,6 +14,10 @@ export interface Profile {
   show_in_leaderboard: boolean;
   language_preference?: string | null; // 'en' | 'fr' | null
   theme_preference?: string | null; // 'light' | 'dark' | null
+  onboarding_completed?: boolean | null;
+  academic_category?: string | null;
+  academic_year_key?: string | null;
+  specialty_keys?: string[] | null;
 }
 
 export interface Subject {
@@ -21,11 +25,14 @@ export interface Subject {
   name: string;
   icon: string | null;
   color: string | null;
+  bank_key?: string | null;
   parent_subject_id?: string | null;
   owner_id: string | null; // null = Global, string = Custom
   // User-specific customization (from user_subjects)
   display_order?: number | null;
   custom_color?: string | null;
+  /** Present on rows from `fetchAllUserSubjects` when joined with user_subjects */
+  is_hidden?: boolean;
 }
 
 export interface UserSubject {
@@ -94,6 +101,8 @@ export interface ProfileOverview {
   profile: Profile | null;
   subjects: Subject[];
   allSubjects: Subject[];
+  /** Subjects the user hid from their list (`user_subjects.is_hidden`); restores via `attachSubjectToUser`. */
+  hiddenSubjects: Subject[];
   subjectTotals: SubjectAggregate[];
   sessionTotals: SessionTotals;
   leaderboardRank: string | null;
@@ -171,6 +180,7 @@ export const fetchAllUserSubjects = async (userId: string) => {
       subject_id,
       display_order,
       custom_color,
+      is_hidden,
       subjects (*)
     `
     )
@@ -184,6 +194,7 @@ export const fetchAllUserSubjects = async (userId: string) => {
     ...(row.subjects as Subject),
     display_order: row.display_order,
     custom_color: row.custom_color,
+    is_hidden: Boolean(row.is_hidden),
   })) as Subject[];
 };
 
@@ -332,6 +343,21 @@ export const aggregateGoalsByDayAndSubject = (
   return byDay;
 };
 
+/**
+ * Planned minutes for a root subject on a calendar day (local timezone).
+ * `day_of_week` in DB: 0 = Sunday … 6 = Saturday (same as Date#getDay()).
+ */
+export const getGoalMinutesForSubjectOnLocalDate = (
+  goals: SubjectWeeklyGoal[],
+  parentSubjectId: string,
+  date: Date = new Date()
+): number => {
+  const dow = date.getDay();
+  return goals
+    .filter((g) => g.subject_id === parentSubjectId && g.day_of_week === dow)
+    .reduce((sum, g) => sum + g.minutes, 0);
+};
+
 export const upsertSubjectWeeklyGoals = async (
   userId: string,
   goals: { subject_id: string; day_of_week: number; minutes: number }[]
@@ -341,12 +367,13 @@ export const upsertSubjectWeeklyGoals = async (
   const toDelete = goals.filter((g) => g.minutes === 0);
 
   for (const g of toDelete) {
-    await supabase
+    const { error: delErr } = await supabase
       .from("subject_weekly_goals")
       .delete()
       .eq("user_id", userId)
       .eq("subject_id", g.subject_id)
       .eq("day_of_week", g.day_of_week);
+    if (delErr) throw delErr;
   }
 
   if (toUpsert.length === 0) return;
@@ -415,19 +442,30 @@ export const buildSubjectTree = (subjects: Subject[]): SubjectNode[] => {
   return roots;
 };
 
+/** Same ordering as roots in `buildSubjectTree` (display_order, then name). */
+export const sortSubjectsForDisplay = (subjects: Subject[]): Subject[] => {
+  return [...subjects].sort((a, b) => {
+    const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
+    const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.name.localeCompare(b.name);
+  });
+};
+
 export const createSubject = async (
   userId: string,
   name: string,
-  parentSubjectId?: string | null
+  options?: { bankKey?: string; color?: string; icon?: string }
 ) => {
   const { data, error } = await supabase
     .from("subjects")
     .insert({
       name,
       owner_id: userId,
-      icon: "bookmark",
-      color: "#9C27B0",
-      parent_subject_id: parentSubjectId ?? null,
+      icon: options?.icon ?? "bookmark",
+      color: options?.color ?? "#9C27B0",
+      parent_subject_id: null,
+      ...(options?.bankKey ? { bank_key: options.bankKey } : {}),
     })
     .select()
     .single();
@@ -439,11 +477,28 @@ export const createSubject = async (
 export const createAndAttachSubject = async (
   userId: string,
   name: string,
-  parentSubjectId?: string | null
+  options?: { bankKey?: string; color?: string; icon?: string }
 ) => {
-  const created = await createSubject(userId, name, parentSubjectId);
+  const created = await createSubject(userId, name, options);
   await upsertUserSubject(userId, created.id);
   return created;
+};
+
+/** Rename a user-owned custom subject (catalog subjects have `owner_id` null). */
+export const updateOwnedSubjectName = async (
+  subjectId: string,
+  userId: string,
+  name: string
+) => {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Name required");
+  const { error } = await supabase
+    .from("subjects")
+    .update({ name: trimmed })
+    .eq("id", subjectId)
+    .eq("owner_id", userId);
+
+  if (error) throw error;
 };
 
 export const deleteSubject = async (subjectId: string) => {
@@ -679,6 +734,24 @@ export const fetchSessionsInRange = async (
   return (data ?? []) as WeeklySessionRow[];
 };
 
+/** Sum session minutes on a given calendar day (YYYY-MM-DD) attributed to a root subject (rolls up children). */
+export const fetchSessionMinutesForDayAndParentSubject = async (
+  userId: string,
+  dayIso: string,
+  parentSubjectId: string,
+  subjectIdToParentId: Record<string, string>
+): Promise<number> => {
+  const rows = await fetchSessionsInRange(userId, dayIso, dayIso);
+  let total = 0;
+  for (const row of rows) {
+    const pid = subjectIdToParentId[row.subject_id] ?? row.subject_id;
+    if (pid === parentSubjectId) {
+      total += Math.round((row.duration_seconds ?? 0) / 60);
+    }
+  }
+  return total;
+};
+
 /** Get the longest single session duration in seconds for a user. */
 export const fetchLongestSessionSeconds = async (
   userId: string
@@ -749,16 +822,38 @@ export const fetchUserProfile = async (userId: string) => {
 
 export const updateUserProfile = async (
   userId: string,
-  updates: { 
-    username?: string; 
+  updates: {
+    username?: string;
     avatar_url?: string | null;
     language_preference?: string | null;
     theme_preference?: string | null;
+    academic_category?: string | null;
+    academic_year_key?: string | null;
+    specialty_keys?: string[] | null;
   }
 ) => {
+  const row: Record<string, unknown> = {};
+  if (updates.username !== undefined) row.username = updates.username;
+  if (updates.avatar_url !== undefined) row.avatar_url = updates.avatar_url;
+  if (updates.language_preference !== undefined) {
+    row.language_preference = updates.language_preference;
+  }
+  if (updates.theme_preference !== undefined) {
+    row.theme_preference = updates.theme_preference;
+  }
+  if (updates.academic_category !== undefined) {
+    row.academic_category = updates.academic_category;
+  }
+  if (updates.academic_year_key !== undefined) {
+    row.academic_year_key = updates.academic_year_key;
+  }
+  if (updates.specialty_keys !== undefined) {
+    row.specialty_keys = updates.specialty_keys ?? [];
+  }
+
   const { data, error } = await supabase
     .from("profiles")
-    .update(updates)
+    .update(row)
     .eq("id", userId)
     .select()
     .single();
@@ -774,25 +869,62 @@ export const upsertUserProfile = async (
     avatar_url?: string | null;
     language_preference?: string | null;
     theme_preference?: string | null;
+    onboarding_completed?: boolean;
+    academic_category?: string | null;
+    academic_year_key?: string | null;
+    specialty_keys?: string[] | null;
   }
 ) => {
+  const row: Record<string, unknown> = {
+    id: userId,
+    username: profile.username,
+    avatar_url: profile.avatar_url ?? null,
+    language_preference: profile.language_preference ?? null,
+    theme_preference: profile.theme_preference ?? null,
+  };
+  if (profile.onboarding_completed !== undefined) {
+    row.onboarding_completed = profile.onboarding_completed;
+  }
+  if (profile.academic_category !== undefined) {
+    row.academic_category = profile.academic_category;
+  }
+  if (profile.academic_year_key !== undefined) {
+    row.academic_year_key = profile.academic_year_key;
+  }
+  if (profile.specialty_keys !== undefined) {
+    row.specialty_keys = profile.specialty_keys ?? [];
+  }
+
   const { data, error } = await supabase
     .from("profiles")
-    .upsert(
-      { 
-        id: userId, 
-        username: profile.username, 
-        avatar_url: profile.avatar_url ?? null,
-        language_preference: profile.language_preference ?? null,
-        theme_preference: profile.theme_preference ?? null,
-      },
-      { onConflict: "id" }
-    )
+    .upsert(row, { onConflict: "id" })
     .select()
     .single();
 
   if (error) throw error;
   return data as Profile;
+};
+
+/** True if user finished in-app onboarding (column missing / error → true to avoid blocking). */
+export const isProfileOnboardingComplete = async (userId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("onboarding_completed")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("isProfileOnboardingComplete", error.message);
+    return true;
+  }
+  if (!data || data.onboarding_completed == null) return true;
+  return data.onboarding_completed === true;
+};
+
+/** Reset streak when user had no study yesterday or today (UTC). Best-effort; ignore errors. */
+export const applyStreakExpiryForCurrentUser = async (): Promise<void> => {
+  const { error } = await supabase.rpc("apply_streak_expiry_for_me");
+  if (error) console.warn("apply_streak_expiry_for_me", error.message);
 };
 
 export const fetchDailyStats = async (userId: string) => {
@@ -902,10 +1034,13 @@ export const fetchProfileOverview = async (
   const idx = leaderboard.findIndex((entry) => entry.userId === userId);
   const leaderboardRank = idx >= 0 ? `#${idx + 1}` : "-";
 
+  const hiddenSubjects = (allUserSubjects ?? []).filter((s) => s.is_hidden === true);
+
   return {
     profile: userProfile ?? null,
     subjects: visibleList,
     allSubjects: enrichedAllList,
+    hiddenSubjects,
     subjectTotals,
     sessionTotals,
     leaderboardRank,
@@ -1054,6 +1189,20 @@ export const updateGroup = async (
   return data as Group;
 };
 
+export const deleteGroup = async (groupId: string): Promise<void> => {
+  const { error } = await supabase.from("groups").delete().eq("id", groupId);
+  if (error) throw error;
+};
+
+export const leaveGroup = async (userId: string, groupId: string): Promise<void> => {
+  const { error } = await supabase
+    .from("group_members")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", userId);
+  if (error) throw error;
+};
+
 export const findGroupByInviteCode = async (code: string): Promise<Group | null> => {
   const { data, error } = await supabase.rpc("find_group_by_invite_code", {
     p_code: code,
@@ -1097,7 +1246,7 @@ export const regenerateInviteCode = async (groupId: string): Promise<string> => 
 // Centralized auth operations (password reset, email verification, etc.)
 export const resetPasswordForEmail = async (email: string, redirectTo?: string) => {
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-    redirectTo: redirectTo ?? "studyleague://reset-password-complete",
+    redirectTo: redirectTo ?? "tymii://reset-password-complete",
   });
   if (error) throw error;
 };

@@ -1,13 +1,13 @@
+import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Text } from "@/components/Themed";
 import Colors from "@/constants/Colors";
+import { useAuth } from "@/utils/authContext";
 import { hexToRgba } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
-import { useAuth } from "@/utils/authContext";
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ViewStyle } from "react-native";
@@ -29,7 +29,7 @@ export default function SignUp() {
   const theme = useTheme();
   const styles = createStyles(theme);
   const { t } = useTranslation();
-  const showSocialLogin = false;
+  const showSocialLogin = true;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

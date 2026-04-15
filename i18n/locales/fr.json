@@ -9,7 +9,8 @@
       "delete": "Supprimer",
       "join": "Rejoindre",
       "search": "Chercher",
-      "add": "Ajouter"
+      "add": "Ajouter",
+      "done": "Terminé"
     },
     "status": {
       "loading": "Chargement...",
@@ -46,10 +47,10 @@
       "sun": "Dim"
     },
     "period": {
-      "day": "Quotidien",
-      "week": "Hebdomadaire",
-      "month": "Mensuel",
-      "year": "Annuel"
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "year": "Année"
     }
   },
   "subjects": {
@@ -132,16 +133,39 @@
   "onboarding": {
     "fillProfile": {
       "title": "Complète ton profil",
+      "pathTitle": "Ton parcours scolaire",
       "displayNameLabel": "Choisis ton pseudo",
       "displayNamePlaceholder": "Nom d'utilisateur",
-      "categoryLabel": "Choisis ton niveau",
+      "categoryLabel": "Catégorie",
+      "yearLabel": "Niveau / classe",
+      "specialtiesLabel": "Spécialités (en choisir {{count}})",
+      "nextStep": "Continuer",
       "errorDisplayName": "Le pseudo doit faire au moins 3 caractères.",
       "errorCategory": "Merci de choisir une catégorie.",
+      "errorYear": "Merci de choisir ton niveau.",
+      "errorSpecialties": "Merci de choisir exactement {{count}} spécialités.",
       "avatarPermission": "Autorise l'accès aux photos pour choisir un avatar.",
       "avatarError": "Impossible de téléverser la photo."
     },
-    "continue": "Continuer",
-    "userMissing": "Session utilisateur manquante. Reconnecte-toi."
+    "continue": "Terminer",
+    "userMissing": "Session utilisateur manquante. Reconnecte-toi.",
+    "years": {
+      "cp": "CP",
+      "ce": "CE1–CE2",
+      "cm": "CM1–CM2",
+      "sixieme": "Sixième",
+      "cinquieme": "Cinquième",
+      "quatrieme": "Quatrième",
+      "troisieme": "Troisième",
+      "seconde": "Seconde",
+      "premiere": "Première",
+      "terminale": "Terminale",
+      "prepa": "Classe prépa",
+      "l1": "Licence 1",
+      "l2": "Licence 2",
+      "l3_plus": "L3 / Master",
+      "all": "Tous niveaux"
+    },
   },
   "tabs": {
     "focus": "Focus",
@@ -157,6 +181,7 @@
     "stop": "Arrêter",
     "sessionFinishedTitle": "Session terminée !",
     "sessionFinishedMessage": "Bravo ! {{minutes}} minutes de {{subject}} enregistrées.",
+    "sessionFinishedWithDailyGoal": "Bravo ! {{minutes}} minutes de {{subject}} enregistrées. Objectif du jour pour cette matière : {{doneToday}} / {{dayGoal}} min.",
     "errorTitle": "Erreur",
     "errorSave": "Impossible de sauvegarder.",
     "addSubjectPlaceholder": "Nom de la matière",
@@ -176,7 +201,14 @@
     "permissionRequestMessage": "Pour suivre le temps d'étude, nous avons besoin de la permission d'activer le mode focus. Cela vous aide à rester concentré en bloquant les applications distrayantes.",
     "permissionRequestIOS": "Sur iOS, vous devrez également sélectionner les applications à bloquer.",
     "openSettings": "Ouvrir les paramètres",
-    "focusSimulated": "Mode focus simulé sur le web"
+    "focusSimulated": "Mode focus simulé sur le web",
+    "focusActive": "Focus strict actif — apps / notifications filtrées",
+    "badges": {
+      "xpA11y": "Expérience : {{formatted}} XP",
+      "streakShort_zero": "0 j.",
+      "streakShort_one": "{{count}} j.",
+      "streakShort_other": "{{count}} j."
+    }
   },
   "groups": {
     "title": "Groupes",
@@ -215,6 +247,18 @@
       "noPasswordRequired": "Ce groupe n'exige pas de mot de passe.",
       "joining": "..."
     },
+    "delete": {
+      "accessibility": "Supprimer le groupe",
+      "confirmTitle": "Supprimer ce groupe ?",
+      "confirmMessage": "Tous les membres perdront l'accès. Cette action est irréversible.",
+      "confirm": "Supprimer le groupe"
+    },
+    "leave": {
+      "accessibility": "Quitter le groupe",
+      "confirmTitle": "Quitter ce groupe ?",
+      "confirmMessage": "Tu pourras rejoindre plus tard avec un code d'invitation si le groupe le permet.",
+      "confirm": "Quitter"
+    },
     "errors": {
       "load": "Erreur chargement groupes",
       "loadPublic": "Erreur chargement groupes publics",
@@ -227,7 +271,9 @@
       "notPublic": "Ce groupe n'est pas public",
       "join": "Erreur lors de la demande d'adhésion",
       "search": "Recherche impossible",
-      "notFound": "Aucun groupe trouvé pour ce code"
+      "notFound": "Aucun groupe trouvé pour ce code",
+      "delete": "Impossible de supprimer le groupe",
+      "leave": "Impossible de quitter le groupe"
     },
     "success": {
       "requestSent": "Demande envoyée",
@@ -244,19 +290,34 @@
     "bestSubject": "Meilleure matière",
     "filterAll": "Toutes les matières",
     "distribution": "Répartition",
+    "timeBySubject": "Temps par matière",
     "dailyProgress": "Progression quotidienne",
     "noSessionsForPeriod": "Aucune session enregistrée pour cette période.",
     "streakDays_one": "{{count}} jour",
     "streakDays_other": "{{count}} jours",
     "streakDays_zero": "-- jours",
+    "dailyObjective": "Objectif du jour",
     "weeklyObjective": "Objectif hebdo",
     "totalTime": "Temps total",
-    "percentComplete": "{{percent}}% terminé"
+    "percentComplete": "{{percent}}% terminé",
+    "goalVsActual": {
+      "title": "Objectif vs réel",
+      "subtitle": "Cette semaine",
+      "subtitleDay": "Ce jour",
+      "actualFooter": "{{time}} réel",
+      "plannedFooter": "{{time}} prévu",
+      "behind": "{{time}} de retard",
+      "ahead": "{{time}} d'avance",
+      "onTrack": "Dans les temps",
+      "empty": "Ajoute des objectifs par matière dans la planification pour comparer avec ton temps d'étude."
+    }
   },
   "profile": {
     "userFallback": "Utilisateur",
     "error": "Impossible de charger les données.",
     "stats": {
+      "level": "Niveau",
+      "xp": "XP",
       "streak": "Série actuelle",
       "streakValue_one": "{{count}} jour",
       "streakValue_other": "{{count}} jours",
@@ -277,15 +338,42 @@
       "settings": "Réglages"
     },
     "displayName": {
-      "hint": "Votre nom affiché peut être modifié ci-dessous :",
+      "label": "Nom affiché",
+      "hint": "Visible sur ton profil et dans l’app.",
       "placeholder": "Votre nom",
       "success": "Nom mis à jour.",
       "error": "Le nom doit faire au moins 3 caractères.",
       "errorSave": "Impossible de mettre à jour le nom."
     },
+    "academicPath": {
+      "label": "Parcours scolaire",
+      "notSet": "Non défini — touche pour configurer",
+      "change": "Modifier",
+      "modalTitle": "Parcours et matières",
+      "modalHint": "Les matières du catalogue correspondant à ton parcours sont ajoutées à ta liste. Tu peux masquer celles dont tu n’as pas besoin dans l’onglet Matières.",
+      "success": "Parcours mis à jour.",
+      "errorSave": "Impossible d’enregistrer le parcours."
+    },
     "subjects": {
       "title": "Mes matières",
       "empty": "Aucune matière pour l'instant",
+      "addSubjectAction": "Ajouter une matière",
+      "popularLabel": "Matières populaires",
+      "selectSubjectPlaceholder": "Choisir une matière à ajouter...",
+      "customCreateLabel": "Ou crée la tienne",
+      "addIntro": "Ajoute une matière du catalogue ou crée la tienne. Utilise « Modifier » pour le nom (si la matière est perso) et la couleur, ou masque une matière depuis la liste.",
+      "editTitle": "Modifier la matière",
+      "editNamePlaceholder": "Nom de la matière",
+      "editSubject": "Modifier la matière",
+      "hideSubject": "Masquer la matière",
+      "hideConfirm": "Masquer",
+      "inactiveTitle": "Matières inactives",
+      "inactiveHint": "Masquées de ta liste : elles n'apparaissent plus dans le choix du chronomètre ni du mode focus. Ton temps d'étude reste enregistré.",
+      "inactiveEmpty": "Aucune matière inactive pour l'instant.",
+      "restoreSubject": "Réafficher la matière",
+      "restoreError": "Impossible de réactiver la matière.",
+      "renameError": "Impossible de renommer la matière.",
+      "removeOwned": "Supprimer la matière personnalisée",
       "breakdownTitle": "Temps total par matière",
       "available": "Matières disponibles",
       "moreAvailable": "+ de matières disponibles",
@@ -296,8 +384,8 @@
       "createHint": "Appuyez sur \"Créer\" pour créer une nouvelle matière nommée \"{{name}}\"",
       "addError": "Impossible d'ajouter la matière",
       "delete": "Supprimer la matière",
-      "deleteTitle": "Retirer la matière ?",
-      "deleteMessage": "Cette matière sera retirée de votre profil.",
+      "deleteTitle": "Masquer cette matière ?",
+      "deleteMessage": "Elle disparaîtra de ta liste. Ton temps d'étude enregistré est conservé.",
       "deleteErrorTitle": "Impossible de retirer",
       "deleteError": "Réessayez plus tard.",
       "customizeColor": "Personnaliser la couleur",
@@ -341,9 +429,61 @@
     "planBlock": "Ajouter une tâche",
     "progress": "{{current}} / {{target}} min",
     "resume": "Reprendre",
+    "edit": "Modifier la tâche",
+    "editBlock": "Modifier la tâche",
     "delete": "Supprimer la tâche",
     "completeNow": "Marquer terminé",
-    "emptyState": "Pas encore de tâches. Ajoutez-en pour planifier votre focus."
+    "emptyState": "Pas encore de tâches. Ajoutez-en pour planifier votre focus.",
+    "planningTabs": {
+      "weeklyGoals": "Objectifs hebdo",
+      "tasks": "Tâches"
+    }
+  },
+  "categories": {
+    "primaire": "Primaire",
+    "college": "Collège",
+    "lycee": "Lycée",
+    "prepa": "Classes Préparatoires",
+    "universite": "Université",
+    "autres": "Autres"
+  },
+  "subjectCatalog": {
+    "reading": "Lecture",
+    "writing": "Écriture",
+    "mathematics": "Mathématiques",
+    "science": "Sciences",
+    "history": "Histoire",
+    "geography": "Géographie",
+    "art": "Arts plastiques",
+    "music": "Musique",
+    "french": "Français",
+    "physics_chemistry": "Physique-Chimie",
+    "biology": "SVT",
+    "history_geography": "Histoire-Géo",
+    "english": "Anglais",
+    "spanish": "Espagnol",
+    "technology": "Technologie",
+    "economics": "SES",
+    "philosophy": "Philosophie",
+    "analysis": "Analyse",
+    "algebra": "Algèbre",
+    "physics": "Physique",
+    "chemistry": "Chimie",
+    "computer_science": "Informatique",
+    "engineering": "Sciences de l'ingénieur",
+    "german": "Allemand",
+    "geopolitics": "HGGSP",
+    "sport": "Sport",
+    "calculus": "Calcul",
+    "algorithms": "Algorithmique",
+    "data_structures": "Structures de données",
+    "marketing": "Marketing",
+    "law": "Droit",
+    "productivity": "Productivité",
+    "languages": "Langues",
+    "design": "Design",
+    "management": "Management",
+    "health": "Santé"
   },
   "goals": {
     "title": "Objectifs",
@@ -357,6 +497,7 @@
     "allSubjectsAdded": "Toutes les matières disponibles ont été ajoutées.",
     "errorLoad": "Impossible de charger les matières.",
     "errorAdd": "Impossible d'ajouter la matière.",
-    "errorSave": "Impossible d'enregistrer les objectifs."
+    "errorSave": "Impossible d'enregistrer les objectifs.",
+    "loadErrorHint": "Les objectifs hebdomadaires n'ont pas pu être chargés. Vérifiez la connexion ou appliquez la dernière migration (subject_weekly_goals)."
   }
 }

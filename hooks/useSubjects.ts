@@ -1,14 +1,17 @@
+import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import {
     attachSubjectToUser,
     buildSubjectTree,
     createSubject,
     fetchUserSubjects,
     hideUserSubject,
+    sortSubjectsForDisplay,
     Subject,
     SubjectNode,
     upsertUserSubject,
 } from "@/utils/queries";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface UseSubjectsOptions {
   userId: string | null;
@@ -19,23 +22,23 @@ export interface UseSubjectsOptions {
 export interface UseSubjectsReturn {
   subjects: Subject[];
   subjectTree: SubjectNode[];
-  parentSubjects: Subject[]; // Only parent subjects (where parent_subject_id is null)
+  parentSubjects: Subject[];
   loading: boolean;
   error: Error | null;
   selectedSubjectId: string | null;
   selectedSubject: Subject | null;
-  subjectNameById: Record<string, string>; // Quick lookup map (includes all subjects)
+  subjectNameById: Record<string, string>; // Quick lookup map — uses translated names when available
+  getDisplayName: (subject: { name: string; bank_key?: string | null }) => string;
   setSelectedSubjectId: (id: string | null) => void;
-  createSubject: (name: string, parentSubjectId?: string | null) => Promise<Subject>;
+  createSubject: (name: string) => Promise<Subject>;
   hideSubject: (subjectId: string) => Promise<void>;
   attachSubject: (subjectId: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
-function pickDefaultSubjectId(tree: SubjectNode[]): string | null {
-  if (!tree.length) return null;
-  const first = tree[0];
-  return first.children[0]?.id ?? first.id;
+function pickDefaultSubjectId(subjects: Subject[]): string | null {
+  const ordered = sortSubjectsForDisplay(subjects);
+  return ordered[0]?.id ?? null;
 }
 
 export function useSubjects({
@@ -43,6 +46,7 @@ export function useSubjects({
   autoLoad = true,
   autoSelectFirst = false,
 }: UseSubjectsOptions): UseSubjectsReturn {
+  const { t } = useTranslation();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [subjectTree, setSubjectTree] = useState<SubjectNode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,7 +79,7 @@ export function useSubjects({
             return current;
           }
           // Otherwise pick default
-          return pickDefaultSubjectId(tree);
+          return pickDefaultSubjectId(flat);
         });
       }
     } catch (err) {
@@ -96,13 +100,13 @@ export function useSubjects({
   }, [loadSubjects, autoLoad]);
 
   const handleCreateSubject = useCallback(
-    async (name: string, parentSubjectId?: string | null): Promise<Subject> => {
+    async (name: string): Promise<Subject> => {
       if (!userId) {
         throw new Error("User not authenticated");
       }
 
       try {
-        const created = await createSubject(userId, name, parentSubjectId);
+        const created = await createSubject(userId, name);
         // Make it visible for this user
         await upsertUserSubject(userId, created.id);
         
@@ -171,21 +175,22 @@ export function useSubjects({
     return subjects.find((s) => s.id === selectedSubjectId) ?? null;
   }, [subjects, selectedSubjectId]);
 
-  // Create name mapping for quick lookups (includes all subjects - parents and children)
+  const getDisplayName = useCallback(
+    (subject: { name: string; bank_key?: string | null }) =>
+      getSubjectDisplayName(subject, t),
+    [t]
+  );
+
+  // Create name mapping for quick lookups — translated when bank_key is available
   const subjectNameById = useMemo(() => {
     const map: Record<string, string> = {};
     subjects.forEach((subj) => {
-      map[subj.id] = subj.name;
+      map[subj.id] = getDisplayName(subj);
     });
     return map;
-  }, [subjects]);
+  }, [subjects, getDisplayName]);
 
-  // Filter to only parent subjects (where parent_subject_id is null)
-  // Database: parent_subject_id is NULL for parents, UUID for children
-  // Tasks can be assigned to child subjects, but SubjectPicker should only show parents
-  const parentSubjects = useMemo(() => {
-    return subjects.filter((s) => s.parent_subject_id === null || s.parent_subject_id === undefined);
-  }, [subjects]);
+  const parentSubjects = useMemo(() => subjects, [subjects]);
 
   return {
     subjects,
@@ -196,6 +201,7 @@ export function useSubjects({
     selectedSubjectId,
     selectedSubject,
     subjectNameById,
+    getDisplayName,
     setSelectedSubjectId,
     createSubject: handleCreateSubject,
     hideSubject: handleHideSubject,

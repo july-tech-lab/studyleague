@@ -1,0 +1,379 @@
+category,severity,check_name,object_type,object_name,details,recommendation
+security,high,broad table grant,table grant,daily_summaries,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,daily_summaries,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,daily_summaries,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,daily_summaries,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,daily_summaries,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,daily_summaries,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,group_members,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,group_members,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,group_members,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,group_members,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,group_members,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,group_members,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,groups,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,groups,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,groups,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,groups,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,groups,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,groups,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,profiles,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,profiles,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,profiles,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,profiles,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,profiles,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,profiles,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_overview,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_overview,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_overview,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_overview,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_overview,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_overview,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_subject_totals,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_subject_totals,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_subject_totals,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_subject_totals,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_subject_totals,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,session_subject_totals,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,study_sessions,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,study_sessions,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,study_sessions,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,study_sessions,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,study_sessions,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,study_sessions,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subject_weekly_goals,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subject_weekly_goals,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subject_weekly_goals,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subject_weekly_goals,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subject_weekly_goals,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subject_weekly_goals,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subjects,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subjects,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subjects,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subjects,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subjects,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subjects,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subscriptions,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subscriptions,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subscriptions,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subscriptions,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subscriptions,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,subscriptions,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,tasks,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,tasks,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,tasks,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,tasks,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,tasks,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,tasks,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,user_subjects,Granted UPDATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,user_subjects,Granted INSERT to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,user_subjects,Granted DELETE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,user_subjects,Granted TRUNCATE to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,user_subjects,Granted REFERENCES to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,broad table grant,table grant,user_subjects,Granted TRIGGER to anon,Confirm this is intentional; prefer RLS + least privilege
+security,high,function executable by anon,function grant,add_group_creator_as_admin,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,apply_streak_expiry_for_me,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,cleanup_deleted_tasks,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,create_group_with_creator,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,delete_current_user,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,find_group_by_invite_code,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,get_user_groups,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,handle_new_user,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,handle_session_completed,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,handle_task_completed_xp,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,refresh_leaderboards,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,regenerate_invite_code,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,request_join_group,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,set_updated_at,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,function executable by anon,function grant,update_group_member_count,anon has EXECUTE privilege,Confirm the function is safe for public access
+security,high,security definer function,function,"add_group_creator_as_admin(p_group_id uuid, p_user_id uuid)",Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,apply_streak_expiry_for_me(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,cleanup_deleted_tasks(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,"create_group_with_creator(p_name text, p_description text, p_visibility group_visibility, p_requires_admin_approval boolean, p_join_password text)",Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,delete_current_user(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,find_group_by_invite_code(p_code text),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,get_user_groups(p_user_id uuid),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,handle_new_user(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,handle_session_completed(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,handle_task_completed_xp(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,refresh_leaderboards(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,regenerate_invite_code(p_group_id uuid),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,"request_join_group(p_group_id uuid, p_password text)",Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+security,high,security definer function,function,update_group_member_count(),Function runs with elevated privileges,"Review carefully: validate auth checks, search_path, and least-privilege behavior"
+summary,high,count by severity,summary,high,101,Use this to prioritize remediation
+data quality,medium,updated_at without trigger,table,daily_summaries,Table has updated_at column but no trigger found,Consider a BEFORE UPDATE trigger to maintain updated_at automatically
+performance,medium,low usage index,index,idx_group_members_group,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_group_members_status,"idx_scan=0, size=8192 bytes",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_groups_created_by,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_groups_invite_code,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_groups_member_count,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_profiles_username_unique,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_study_sessions_date_range,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_study_sessions_started_at,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_study_sessions_task,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_study_sessions_user_date,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_subject_weekly_goals_subject,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_subjects_deleted_at,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_subjects_global_deleted_at,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_subjects_owner_active,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_active,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_completed,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_deleted_at,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_status,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_status_filter,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_subject,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,idx_tasks_user_status_date,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,monthly_leaderboard_user_id_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,profiles_level_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,subjects_owner_id_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,subjects_owner_name_unique,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,subjects_parent_subject_id_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,user_subjects_subject_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,weekly_leaderboard_user_id_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+performance,medium,low usage index,index,yearly_leaderboard_user_id_idx,"idx_scan=0, size=16 kB",Review whether this index is useful or removable
+security,medium,broad table grant,table grant,daily_summaries,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,daily_summaries,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,daily_summaries,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,daily_summaries,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,daily_summaries,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,daily_summaries,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,group_members,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,group_members,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,group_members,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,group_members,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,group_members,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,group_members,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,groups,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,groups,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,groups,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,groups,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,groups,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,groups,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,profiles,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,profiles,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,profiles,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,profiles,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,profiles,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,profiles,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_overview,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_overview,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_overview,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_overview,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_overview,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_overview,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_subject_totals,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_subject_totals,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_subject_totals,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_subject_totals,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_subject_totals,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,session_subject_totals,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,study_sessions,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,study_sessions,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,study_sessions,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,study_sessions,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,study_sessions,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,study_sessions,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subject_weekly_goals,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subject_weekly_goals,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subject_weekly_goals,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subject_weekly_goals,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subject_weekly_goals,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subject_weekly_goals,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subjects,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subjects,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subjects,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subjects,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subjects,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subjects,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subscriptions,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subscriptions,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subscriptions,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subscriptions,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subscriptions,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,subscriptions,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,tasks,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,tasks,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,tasks,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,tasks,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,tasks,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,tasks,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,user_subjects,Granted TRIGGER to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,user_subjects,Granted INSERT to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,user_subjects,Granted UPDATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,user_subjects,Granted DELETE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,user_subjects,Granted TRUNCATE to authenticated,Confirm this is intentional; prefer RLS + least privilege
+security,medium,broad table grant,table grant,user_subjects,Granted REFERENCES to authenticated,Confirm this is intentional; prefer RLS + least privilege
+summary,medium,count by severity,summary,medium,102,Use this to prioritize remediation
+performance,low,low usage index,index,daily_summaries_covering_idx,"idx_scan=398, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,daily_summaries_pkey,"idx_scan=69, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,daily_summaries_user_id_date_idx,"idx_scan=39, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,group_members_pkey,"idx_scan=2, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,group_members_unique,"idx_scan=8, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,groups_pkey,"idx_scan=88, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,idx_group_members_group_status_approved,"idx_scan=146, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,idx_group_members_user,"idx_scan=75, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,idx_subject_weekly_goals_user,"idx_scan=245, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,idx_tasks_user,"idx_scan=558, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,profiles_pkey,"idx_scan=425, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,study_sessions_ended_at_idx,"idx_scan=1286, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,study_sessions_pkey,"idx_scan=15, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,study_sessions_subject_id_idx,"idx_scan=2644, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,subject_weekly_goals_pkey,"idx_scan=6, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,subject_weekly_goals_user_id_subject_id_day_of_week_key,"idx_scan=216, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,subjects_pkey,"idx_scan=1972, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,subscriptions_pkey,"idx_scan=38, size=8192 bytes",Review whether this index is useful or removable
+performance,low,low usage index,index,tasks_pkey,"idx_scan=43, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,user_subjects_display_order_idx,"idx_scan=82, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,user_subjects_pkey,"idx_scan=76, size=16 kB",Review whether this index is useful or removable
+performance,low,low usage index,index,user_subjects_user_idx,"idx_scan=1892, size=16 kB",Review whether this index is useful or removable
+summary,low,count by severity,summary,low,22,Use this to prioritize remediation
+operations,info,high row count,table,daily_summaries,Estimated rows=13,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,group_members,Estimated rows=7,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,groups,Estimated rows=7,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,monthly_leaderboard,Estimated rows=2,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,profiles,Estimated rows=2,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,study_sessions,Estimated rows=69,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,subject_weekly_goals,Estimated rows=20,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,subjects,Estimated rows=53,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,subscriptions,Estimated rows=0,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,tasks,Estimated rows=9,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,user_subjects,Estimated rows=38,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,weekly_leaderboard,Estimated rows=2,Validate vacuum/analyze cadence and query patterns
+operations,info,high row count,table,yearly_leaderboard,Estimated rows=2,Validate vacuum/analyze cadence and query patterns
+operations,info,large table,table,daily_summaries,Total size=88 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,group_members,Total size=96 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,groups,Total size=80 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,monthly_leaderboard,Total size=40 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,profiles,Total size=64 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,study_sessions,Total size=128 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,subject_weekly_goals,Total size=104 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,subjects,Total size=128 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,subscriptions,Total size=16 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,tasks,Total size=160 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,user_subjects,Total size=80 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,weekly_leaderboard,Total size=40 kB,"Review growth, archival strategy, and indexing"
+operations,info,large table,table,yearly_leaderboard,Total size=40 kB,"Review growth, archival strategy, and indexing"
+operations,info,materialized view inventory,materialized view,monthly_leaderboard,Materialized view exists,Confirm refresh strategy and index coverage
+operations,info,materialized view inventory,materialized view,weekly_leaderboard,Materialized view exists,Confirm refresh strategy and index coverage
+operations,info,materialized view inventory,materialized view,yearly_leaderboard,Materialized view exists,Confirm refresh strategy and index coverage
+performance,info,index inventory,index,daily_summaries_covering_idx,"CREATE INDEX daily_summaries_covering_idx ON public.daily_summaries USING btree (date, user_id) INCLUDE (total_seconds)",Review index usefulness and redundancy
+performance,info,index inventory,index,daily_summaries_pkey,"CREATE UNIQUE INDEX daily_summaries_pkey ON public.daily_summaries USING btree (user_id, date)",Review index usefulness and redundancy
+performance,info,index inventory,index,daily_summaries_user_id_date_idx,"CREATE INDEX daily_summaries_user_id_date_idx ON public.daily_summaries USING btree (user_id, date)",Review index usefulness and redundancy
+performance,info,index inventory,index,group_members_pkey,CREATE UNIQUE INDEX group_members_pkey ON public.group_members USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,group_members_unique,"CREATE UNIQUE INDEX group_members_unique ON public.group_members USING btree (group_id, user_id)",Review index usefulness and redundancy
+performance,info,index inventory,index,groups_pkey,CREATE UNIQUE INDEX groups_pkey ON public.groups USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_group_members_group,CREATE INDEX idx_group_members_group ON public.group_members USING btree (group_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_group_members_group_status_approved,"CREATE INDEX idx_group_members_group_status_approved ON public.group_members USING btree (group_id, user_id, status) WHERE (status = 'approved'::membership_status)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_group_members_status,"CREATE INDEX idx_group_members_status ON public.group_members USING btree (group_id, status) WHERE (status = 'pending'::membership_status)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_group_members_user,CREATE INDEX idx_group_members_user ON public.group_members USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_groups_created_by,CREATE INDEX idx_groups_created_by ON public.groups USING btree (created_by),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_groups_invite_code,CREATE UNIQUE INDEX idx_groups_invite_code ON public.groups USING btree (invite_code),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_groups_member_count,"CREATE INDEX idx_groups_member_count ON public.groups USING btree (member_count DESC, created_at DESC)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_profiles_username_unique,CREATE UNIQUE INDEX idx_profiles_username_unique ON public.profiles USING btree (lower(username)) WHERE (username IS NOT NULL),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_study_sessions_date_range,"CREATE INDEX idx_study_sessions_date_range ON public.study_sessions USING btree (ended_at DESC, user_id) WHERE (ended_at IS NOT NULL)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_study_sessions_started_at,CREATE INDEX idx_study_sessions_started_at ON public.study_sessions USING btree (started_at DESC),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_study_sessions_task,CREATE INDEX idx_study_sessions_task ON public.study_sessions USING btree (task_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_study_sessions_user_date,"CREATE INDEX idx_study_sessions_user_date ON public.study_sessions USING btree (user_id, started_at DESC)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_subject_weekly_goals_subject,CREATE INDEX idx_subject_weekly_goals_subject ON public.subject_weekly_goals USING btree (subject_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_subject_weekly_goals_user,CREATE INDEX idx_subject_weekly_goals_user ON public.subject_weekly_goals USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_subjects_deleted_at,"CREATE INDEX idx_subjects_deleted_at ON public.subjects USING btree (owner_id, deleted_at) WHERE (deleted_at IS NULL)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_subjects_global_deleted_at,CREATE INDEX idx_subjects_global_deleted_at ON public.subjects USING btree (deleted_at) WHERE ((owner_id IS NULL) AND (deleted_at IS NULL)),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_subjects_owner_active,"CREATE INDEX idx_subjects_owner_active ON public.subjects USING btree (owner_id, is_active) WHERE (owner_id IS NOT NULL)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_active,"CREATE INDEX idx_tasks_active ON public.tasks USING btree (user_id, scheduled_for) WHERE ((status = ANY (ARRAY['planned'::task_status, 'in-progress'::task_status])) AND (scheduled_for IS NOT NULL))",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_completed,"CREATE INDEX idx_tasks_completed ON public.tasks USING btree (user_id, updated_at DESC) WHERE (status = 'done'::task_status)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_deleted_at,"CREATE INDEX idx_tasks_deleted_at ON public.tasks USING btree (user_id, deleted_at) WHERE (deleted_at IS NULL)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_status,CREATE INDEX idx_tasks_status ON public.tasks USING btree (status),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_status_filter,"CREATE INDEX idx_tasks_status_filter ON public.tasks USING btree (user_id, status)",Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_subject,CREATE INDEX idx_tasks_subject ON public.tasks USING btree (subject_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_user,CREATE INDEX idx_tasks_user ON public.tasks USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,idx_tasks_user_status_date,"CREATE INDEX idx_tasks_user_status_date ON public.tasks USING btree (user_id, status, scheduled_for) WHERE (scheduled_for IS NOT NULL)",Review index usefulness and redundancy
+performance,info,index inventory,index,monthly_leaderboard_user_id_idx,CREATE UNIQUE INDEX monthly_leaderboard_user_id_idx ON public.monthly_leaderboard USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,profiles_level_idx,CREATE INDEX profiles_level_idx ON public.profiles USING btree (level),Review index usefulness and redundancy
+performance,info,index inventory,index,profiles_pkey,CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,study_sessions_ended_at_idx,CREATE INDEX study_sessions_ended_at_idx ON public.study_sessions USING btree (ended_at),Review index usefulness and redundancy
+performance,info,index inventory,index,study_sessions_pkey,CREATE UNIQUE INDEX study_sessions_pkey ON public.study_sessions USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,study_sessions_subject_id_idx,CREATE INDEX study_sessions_subject_id_idx ON public.study_sessions USING btree (subject_id),Review index usefulness and redundancy
+performance,info,index inventory,index,subject_weekly_goals_pkey,CREATE UNIQUE INDEX subject_weekly_goals_pkey ON public.subject_weekly_goals USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,subject_weekly_goals_user_id_subject_id_day_of_week_key,"CREATE UNIQUE INDEX subject_weekly_goals_user_id_subject_id_day_of_week_key ON public.subject_weekly_goals USING btree (user_id, subject_id, day_of_week)",Review index usefulness and redundancy
+performance,info,index inventory,index,subjects_owner_id_idx,CREATE INDEX subjects_owner_id_idx ON public.subjects USING btree (owner_id),Review index usefulness and redundancy
+performance,info,index inventory,index,subjects_owner_name_unique,"CREATE UNIQUE INDEX subjects_owner_name_unique ON public.subjects USING btree (owner_id, lower(name)) WHERE (name IS NOT NULL)",Review index usefulness and redundancy
+performance,info,index inventory,index,subjects_parent_subject_id_idx,CREATE INDEX subjects_parent_subject_id_idx ON public.subjects USING btree (parent_subject_id),Review index usefulness and redundancy
+performance,info,index inventory,index,subjects_pkey,CREATE UNIQUE INDEX subjects_pkey ON public.subjects USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,subscriptions_pkey,CREATE UNIQUE INDEX subscriptions_pkey ON public.subscriptions USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,tasks_pkey,CREATE UNIQUE INDEX tasks_pkey ON public.tasks USING btree (id),Review index usefulness and redundancy
+performance,info,index inventory,index,user_subjects_display_order_idx,"CREATE INDEX user_subjects_display_order_idx ON public.user_subjects USING btree (user_id, display_order)",Review index usefulness and redundancy
+performance,info,index inventory,index,user_subjects_pkey,"CREATE UNIQUE INDEX user_subjects_pkey ON public.user_subjects USING btree (user_id, subject_id)",Review index usefulness and redundancy
+performance,info,index inventory,index,user_subjects_subject_idx,CREATE INDEX user_subjects_subject_idx ON public.user_subjects USING btree (subject_id),Review index usefulness and redundancy
+performance,info,index inventory,index,user_subjects_user_idx,CREATE INDEX user_subjects_user_idx ON public.user_subjects USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,weekly_leaderboard_user_id_idx,CREATE UNIQUE INDEX weekly_leaderboard_user_id_idx ON public.weekly_leaderboard USING btree (user_id),Review index usefulness and redundancy
+performance,info,index inventory,index,yearly_leaderboard_user_id_idx,CREATE UNIQUE INDEX yearly_leaderboard_user_id_idx ON public.yearly_leaderboard USING btree (user_id),Review index usefulness and redundancy
+schema,info,foreign key inventory,foreign key,daily_summaries_user_id_fkey,daily_summaries.user_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,group_members_group_id_fkey,group_members.group_id -> groups.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,group_members_user_id_fkey,group_members.user_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,groups_created_by_fkey,groups.created_by -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,study_sessions_subject_id_fkey,study_sessions.subject_id -> subjects.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,study_sessions_task_id_fkey,study_sessions.task_id -> tasks.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,study_sessions_user_id_fkey,study_sessions.user_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,subject_weekly_goals_subject_id_fkey,subject_weekly_goals.subject_id -> subjects.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,subjects_owner_id_fkey,subjects.owner_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,subjects_parent_subject_id_fkey,subjects.parent_subject_id -> subjects.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,subscriptions_user_id_fkey,subscriptions.user_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,tasks_subject_id_fkey,tasks.subject_id -> subjects.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,tasks_user_id_fkey,tasks.user_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,user_subjects_subject_id_fkey,user_subjects.subject_id -> subjects.id,Review cascading behavior and delete semantics
+schema,info,foreign key inventory,foreign key,user_subjects_user_id_fkey,user_subjects.user_id -> profiles.id,Review cascading behavior and delete semantics
+schema,info,public tables inventory,table,daily_summaries,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,group_members,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,groups,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,profiles,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,study_sessions,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,subject_weekly_goals,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,subjects,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,subscriptions,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,tasks,Table exists in public schema,Review table purpose and ownership
+schema,info,public tables inventory,table,user_subjects,Table exists in public schema,Review table purpose and ownership
+schema,info,trigger inventory,trigger,on_session_completed,study_sessions [AFTER INSERT],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,on_task_completed_xp,tasks [AFTER UPDATE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,trg_subject_weekly_goals_updated,subject_weekly_goals [BEFORE UPDATE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,trg_tasks_updated,tasks [BEFORE UPDATE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,trg_update_group_member_count,group_members [AFTER DELETE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,trg_update_group_member_count,group_members [AFTER INSERT],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,trg_update_group_member_count,group_members [AFTER UPDATE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,update_groups_timestamp,groups [BEFORE UPDATE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,update_profiles_timestamp,profiles [BEFORE UPDATE],Review trigger logic for hidden writes or performance cost
+schema,info,trigger inventory,trigger,update_subjects_timestamp,subjects [BEFORE UPDATE],Review trigger logic for hidden writes or performance cost
+security,info,policy inventory,policy,Admins can update groups,groups [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Group admins can update memberships,group_members [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Group creators and admins can delete groups,groups [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,Group members delete self,group_members [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,Group members insert self,group_members [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,Read all subjects,subjects [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Subjects: owners can delete,subjects [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,Subjects: owners can update,subjects [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Update own profile,profiles [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,User can read their own subscription,subscriptions [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,User creates personal subjects,subjects [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,User inserts own sessions,study_sessions [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,user_subjects_delete_own,user_subjects [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,user_subjects_insert_own,user_subjects [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,user_subjects_select_own,user_subjects [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,user_subjects_update_own,user_subjects [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Users can create groups,groups [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,Users can delete own sessions,study_sessions [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,Users can delete own tasks,tasks [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,Users can delete own weekly goals,subject_weekly_goals [DELETE],Review policy scope and logic
+security,info,policy inventory,policy,Users can insert own tasks,tasks [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,Users can insert own weekly goals,subject_weekly_goals [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,Users can read groups they belong to or public,groups [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Users can read own daily summaries,daily_summaries [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Users can read own sessions,study_sessions [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Users can update own sessions,study_sessions [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Users can update own tasks,tasks [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Users can update own weekly goals,subject_weekly_goals [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,Users can view active tasks,tasks [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Users can view own profile or public profiles,profiles [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Users can view own weekly goals,subject_weekly_goals [SELECT],Review policy scope and logic
+security,info,policy inventory,policy,Users cannot insert own subscription directly,subscriptions [INSERT],Review policy scope and logic
+security,info,policy inventory,policy,Users cannot update own subscription directly,subscriptions [UPDATE],Review policy scope and logic
+security,info,policy inventory,policy,View members of visible groups,group_members [SELECT],Review policy scope and logic
+summary,info,count by severity,summary,info,149,Use this to prioritize remediation
