@@ -50,7 +50,7 @@ function interFontForNumericWeight(n: number): string {
 const ios = {
   display: { fontSize: 34, lineHeight: 42, fontWeight: "700" as const },
   h1: { fontSize: 28, lineHeight: 36, fontWeight: "700" as const },
-  h2: { fontSize: 22, lineHeight: 28, fontWeight: "700" as const },
+  h2: { fontSize: 20, lineHeight: 26, fontWeight: "700" as const },
   subtitle: { fontSize: 15, lineHeight: 20, fontWeight: "400" as const },
   body: { fontSize: 17, lineHeight: 22, fontWeight: "400" as const },
   bodyStrong: { fontSize: 17, lineHeight: 22, fontWeight: "600" as const },
@@ -63,7 +63,7 @@ type TypographyScale = typeof ios;
 const android: TypographyScale = {
   display: { fontSize: 32, lineHeight: 40, fontWeight: "700" as const },
   h1: { fontSize: 24, lineHeight: 32, fontWeight: "700" as const },
-  h2: { fontSize: 20, lineHeight: 26, fontWeight: "700" as const },
+  h2: { fontSize: 18, lineHeight: 24, fontWeight: "700" as const },
   subtitle: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const },
   body: { fontSize: 16, lineHeight: 22, fontWeight: "400" as const },
   bodyStrong: { fontSize: 16, lineHeight: 22, fontWeight: "600" as const },

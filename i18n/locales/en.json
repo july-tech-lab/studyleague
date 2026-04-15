@@ -62,8 +62,10 @@
     }
   },
   "auth": {
+    "branding": {
+      "eyebrow": "The app that gets you working"
+    },
     "signin": {
-      "eyebrow": "Your study companion",
       "title": "Sign in",
       "errorMissing": "Email and password are required.",
       "button": "Sign in",
@@ -166,7 +168,7 @@
       "l2": "Undergraduate — Year 2",
       "l3_plus": "Year 3+ / Master",
       "all": "All levels"
-    },
+    }
   },
   "tabs": {
     "focus": "Focus",
@@ -189,21 +191,9 @@
     "tabSubjects": "Subjects",
     "tabTasks": "Tasks",
     "tasksEmpty": "No active tasks",
-    "focusModeRequired": "Focus mode required",
-    "focusModeRequiredDescription": "Study time is only recorded when focus mode is active. This blocks distracting apps and notifications.",
     "sessionNotRecorded": "Session not recorded — focus mode was required",
-    "sessionRecorded": "{{minutes}} minutes recorded with focus mode",
     "permissionDenied": "Permission denied — cannot track time",
-    "noAppsSelected": "Select apps to block first",
-    "noAppsSelectedDescription": "Please select apps to block during study sessions (e.g., WhatsApp, Snapchat, Instagram).",
-    "focusModeLost": "Focus mode disabled — timer paused",
-    "resumeRequiresFocus": "Re-enable focus mode to resume",
-    "permissionRequestTitle": "Focus Mode Permission",
-    "permissionRequestMessage": "To track study time, we need permission to enable focus mode. This helps you stay focused by blocking distracting apps.",
-    "permissionRequestIOS": "On iOS, you'll also need to select which apps to block.",
-    "openSettings": "Open settings",
     "focusSimulated": "Focus mode simulated on web",
-    "focusActive": "Strict focus on — shields / DND active",
     "badges": {
       "xpA11y": "Experience: {{formatted}} XP",
       "streakShort_zero": "0 d.",
@@ -353,7 +343,12 @@
       "modalTitle": "Path and subjects",
       "modalHint": "Catalog subjects for your path are added to your list. Hide any you don't need in the Subjects tab.",
       "success": "Path updated.",
-      "errorSave": "Could not save your path."
+      "errorSave": "Could not save your path.",
+      "wizardStepOf": "Step {{current}} of {{total}}",
+      "confirmTitle": "Confirm subjects",
+      "confirmIntro": "Same as specialties: all selected by default. Tap a subject to skip adding it to your list.",
+      "confirmEmpty": "No new subjects. Your path will still be updated.",
+      "confirmApply": "Confirm"
     },
     "subjects": {
       "title": "My subjects",

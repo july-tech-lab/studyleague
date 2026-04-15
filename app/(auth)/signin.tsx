@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/utils/authContext";
+import {
+  authEyebrow,
+  authFormCard,
+  authLogoImage,
+  authLogoRow,
+  authTitle,
+} from "./_layout";
 import { hexToRgba } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 import { FontAwesome } from "@expo/vector-icons";
@@ -104,7 +111,7 @@ export default function SignIn() {
       </View>
 
       <Text variant="micro" style={styles.eyebrow}>
-        {t("auth.signin.eyebrow")}
+        {t("auth.branding.eyebrow")}
       </Text>
       <Text variant="h2" align="center" style={styles.title}>
         {t("auth.signin.title")}
@@ -151,14 +158,13 @@ export default function SignIn() {
 
         <Button
           title={loading ? t("auth.signin.buttonLoading") : t("auth.signin.button")}
-          variant="cta"
+          variant="primary"
           size="md"
           iconRight={ArrowRight}
           onPress={handleSignIn}
           disabled={loading || !email.trim() || !password.trim()}
           loading={loading}
           fullWidth
-          style={styles.ctaButton}
         />
       </View>
 
@@ -234,32 +240,11 @@ const createStyles = (theme: typeof Colors.light) => {
     }) || {};
 
   return StyleSheet.create({
-    logoRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      alignSelf: "center",
-      gap: 8,
-      marginBottom: 4,
-    },
-    logoImage: { width: 120, height: 120 },
-    eyebrow: {
-      alignSelf: "center",
-      color: theme.primary,
-      fontWeight: "600",
-      letterSpacing: 1.8,
-      textTransform: "uppercase",
-      marginBottom: 2,
-    },
-    title: {
-      fontWeight: "600",
-      letterSpacing: -0.3,
-      marginBottom: 4,
-    },
-    ctaButton: {
-      borderRadius: 16,
-    },
-    card: { gap: 12, marginTop: 4 },
+    logoRow: authLogoRow(),
+    logoImage: authLogoImage(),
+    eyebrow: authEyebrow(theme),
+    title: authTitle(),
+    card: authFormCard(),
 
     // Keeping socialButtonCircle for FontAwesome icons (not compatible with Button's LucideIcon type)
     inlineActions: {

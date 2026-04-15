@@ -228,6 +228,11 @@ export default function ProfileScreen() {
     return `${catLabel} · ${t(`onboarding.years.${y.labelKey}`)}`;
   }, [profile?.academic_category, profile?.academic_year_key, t]);
 
+  const openAcademicPathEditor = () => {
+    setAcademicPathMessage(null);
+    setAcademicPathModalVisible(true);
+  };
+
   const xpFormatted = useMemo(
     () =>
       new Intl.NumberFormat(i18n.language?.startsWith("fr") ? "fr-FR" : "en-US").format(
@@ -756,33 +761,36 @@ export default function ProfileScreen() {
             </View>
 
             <View>
-              <Pressable
-                onPress={() => {
-                  setAcademicPathMessage(null);
-                  setAcademicPathModalVisible(true);
-                }}
-                style={({ pressed }) => [
-                  styles.settingsCard,
-                  styles.settingsCardPressable,
-                  pressed && styles.settingsCardPressed,
-                ]}
-              >
+              <View style={styles.settingsCard}>
                 <View style={styles.settingsCardRow}>
-                  <GraduationCap size={22} color={theme.text} strokeWidth={2} />
-                  <View style={styles.academicPathTextCol}>
-                    <Text variant="subtitle">{t("profile.academicPath.label")}</Text>
-                    <Text variant="caption" colorName="textMuted" numberOfLines={2}>
-                      {academicPathSummary}
-                    </Text>
-                  </View>
-                  <Text
-                    variant="caption"
-                    style={[styles.academicPathChange, { color: theme.primaryDark }]}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("profile.academicPath.label")}, ${academicPathSummary}`}
+                    accessibilityHint={t("profile.academicPath.change")}
+                    onPress={openAcademicPathEditor}
+                    style={({ pressed }) => [
+                      styles.academicPathTapMain,
+                      pressed && styles.settingsCardPressed,
+                    ]}
                   >
-                    {t("profile.academicPath.change")}
-                  </Text>
+                    <GraduationCap size={22} color={theme.text} strokeWidth={2} />
+                    <View style={styles.academicPathTextCol}>
+                      <Text variant="subtitle">{t("profile.academicPath.label")}</Text>
+                      <Text variant="caption" colorName="textMuted" numberOfLines={2}>
+                        {academicPathSummary}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <Button
+                    iconLeft={Pencil}
+                    iconOnly
+                    variant="primary"
+                    size="sm"
+                    onPress={openAcademicPathEditor}
+                    accessibilityLabel={t("profile.academicPath.change")}
+                  />
                 </View>
-              </Pressable>
+              </View>
               {academicPathMessage ? (
                 <Text
                   variant="micro"
@@ -1820,14 +1828,17 @@ const createStyles = (theme: typeof Colors.light) =>
       alignItems: "center",
       gap: 12,
     },
+    academicPathTapMain: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
     academicPathTextCol: {
       flex: 1,
       minWidth: 0,
       gap: 4,
-    },
-    academicPathChange: {
-      fontWeight: "600",
-      flexShrink: 0,
     },
     settingsCardLabel: {
       flex: 1,

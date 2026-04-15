@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Colors from "@/constants/Colors";
 import { exchangeCodeForSession, getSession, updateUserPassword } from "@/utils/queries";
+import {
+  authEyebrow,
+  authFormCard,
+  authLogoImage,
+  authLogoRow,
+  authTitle,
+} from "./_layout";
 import { useTheme } from "@/utils/themeContext";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
@@ -11,9 +18,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
+  Image,
   StyleSheet,
   View,
 } from "react-native";
+
+const logo = require("@/assets/images/logo.png");
 
 export default function ResetPasswordComplete() {
   const router = useRouter();
@@ -144,10 +154,17 @@ export default function ResetPasswordComplete() {
         accessibilityLabel={t("common.actions.back")}
       />
 
-      <Text variant="h1" style={styles.title}>
+      <View style={styles.logoRow}>
+        <Image source={logo} style={styles.logoImage} resizeMode="contain" />
+      </View>
+
+      <Text variant="micro" style={styles.eyebrow}>
+        {t("auth.branding.eyebrow")}
+      </Text>
+      <Text variant="h2" align="center" style={styles.title}>
         {t("auth.resetComplete.title")}
       </Text>
-      <Text variant="body" colorName="textMuted" style={styles.subtitle}>
+      <Text variant="body" colorName="textMuted" align="center" style={styles.subtitle}>
         {t("auth.resetComplete.subtitle")}
       </Text>
 
@@ -203,7 +220,7 @@ export default function ResetPasswordComplete() {
           <Button
             title={saving ? t("auth.resetComplete.buttonLoading") : t("auth.resetComplete.button")}
             variant="primary"
-            size="lg"
+            size="md"
             iconRight={ArrowRight}
             onPress={handleUpdate}
             disabled={isPrimaryDisabled}
@@ -218,9 +235,12 @@ export default function ResetPasswordComplete() {
 
 const createStyles = (theme: typeof Colors.light) => {
   return StyleSheet.create({
-    title: {},
+    logoRow: authLogoRow(),
+    logoImage: authLogoImage(),
+    eyebrow: authEyebrow(theme),
+    title: authTitle(),
     subtitle: { marginTop: 4 },
-    card: { gap: 12, marginTop: 8 },
+    card: authFormCard(),
     success: { color: theme.success, marginTop: 2 },
     // NOTE: primaryButton styles removed - now using Button component
     loader: { marginTop: 10 },

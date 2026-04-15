@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Colors from "@/constants/Colors";
 import { useAuth } from "@/utils/authContext";
+import {
+  authEyebrow,
+  authFormCard,
+  authLogoImage,
+  authLogoRow,
+  authTitle,
+} from "./_layout";
 import { hexToRgba } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 import { Feather, FontAwesome } from "@expo/vector-icons";
@@ -123,7 +130,10 @@ export default function SignUp() {
         <Image source={logo} style={styles.logoImage} resizeMode="contain" />
       </View>
 
-      <Text variant="h1" style={styles.title}>
+      <Text variant="micro" style={styles.eyebrow}>
+        {t("auth.branding.eyebrow")}
+      </Text>
+      <Text variant="h2" align="center" style={styles.title}>
         {t("auth.signup.title")}
       </Text>
 
@@ -161,7 +171,7 @@ export default function SignUp() {
             ]}
           >
             {acceptTerms ? (
-              <Feather name="check" size={14} color={theme.text} />
+              <Feather name="check" size={14} color={theme.onPrimaryDark} />
             ) : null}
           </View>
           <Text variant="micro" colorName="textMuted" style={styles.termsText}>
@@ -183,17 +193,13 @@ export default function SignUp() {
         <Button
           title={loading ? t("auth.signup.buttonLoading") : t("auth.signup.button")}
           variant="primary"
-          size="lg"
+          size="md"
           iconRight={ArrowRight}
           onPress={handleSignUp}
           disabled={isPrimaryDisabled}
           loading={loading}
           fullWidth
         />
-
-        {!loading && isLoading && (
-          <ActivityIndicator style={styles.loader} color={theme.primary} />
-        )}
       </View>
 
       {showSocialLogin && (
@@ -242,6 +248,10 @@ export default function SignUp() {
           </Pressable>
         </Link>
       </View>
+
+      {!loading && isLoading && (
+        <ActivityIndicator style={styles.loader} color={theme.primary} />
+      )}
     </>
   );
 }
@@ -264,17 +274,11 @@ const createStyles = (theme: typeof Colors.light) => {
     }) || {};
 
   return StyleSheet.create({
-    logoRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      alignSelf: "center",
-      gap: 8,
-      marginBottom: 8, // Compensate for title marginTop change to maintain visual alignment
-    },
-    logoImage: { width: 250, height: 250 },
-    title: {},
-    card: { gap: 12, marginTop: 8 },
+    logoRow: authLogoRow(),
+    logoImage: authLogoImage(),
+    eyebrow: authEyebrow(theme),
+    title: authTitle(),
+    card: authFormCard(),
     termsRow: {
       flexDirection: "row",
       alignItems: "center",

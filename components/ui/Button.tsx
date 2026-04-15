@@ -15,13 +15,7 @@ import Colors from "@/constants/Colors";
 import { INTER } from "@/constants/typography";
 import { useTheme } from "@/utils/themeContext";
 
-type ButtonVariant =
-  | "primary"
-  | "cta"
-  | "secondary"
-  | "destructive"
-  | "outline"
-  | "ghost";
+type ButtonVariant = "primary" | "secondary" | "destructive" | "outline" | "ghost";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 type ButtonShape = "default" | "pill";
 
@@ -62,10 +56,8 @@ function getPalette(colorSet: ColorSet, variant: ButtonVariant) {
   };
 
   switch (variant) {
-    case "primary":
-      return { bg: colorSet.primaryDark, pressedBg: colorSet.primary, text: colorSet.onPrimaryDark, border: "transparent", borderWidth: 0 };
     /** Landing-style: bright teal, white label; pressed → teal-dark */
-    case "cta":
+    case "primary":
       return {
         bg: colorSet.primary,
         pressedBg: colorSet.primaryDark,
@@ -111,7 +103,8 @@ export function Button({
   const p = getPalette(colorSet, variant);
   const isDisabled = !!disabled || !!loading;
 
-  const radius = shape === "pill" ? 999 : s.r;
+  const radius =
+    shape === "pill" ? 999 : variant === "primary" ? 16 : s.r;
   const iconOnlySize = iconOnly ? ICON_ONLY_DIM[size] : undefined;
 
   const a11yLabel = accessibilityLabel ?? title ?? "Button";

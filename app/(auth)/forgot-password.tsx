@@ -3,16 +3,26 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import Colors from "@/constants/Colors";
 import { resetPasswordForEmail } from "@/utils/queries";
+import {
+  authEyebrow,
+  authFormCard,
+  authLogoImage,
+  authLogoRow,
+  authTitle,
+} from "./_layout";
 import { useTheme } from "@/utils/themeContext";
 import { Link, useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, Mail } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  Image,
   Pressable,
   StyleSheet,
   View,
 } from "react-native";
+
+const logo = require("@/assets/images/logo.png");
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -71,7 +81,16 @@ export default function ForgotPassword() {
         accessibilityLabel={t("common.actions.back")}
       />
 
-      <Text variant="h1" style={styles.title}>{t("auth.resetRequest.title")}</Text>
+      <View style={styles.logoRow}>
+        <Image source={logo} style={styles.logoImage} resizeMode="contain" />
+      </View>
+
+      <Text variant="micro" style={styles.eyebrow}>
+        {t("auth.branding.eyebrow")}
+      </Text>
+      <Text variant="h2" align="center" style={styles.title}>
+        {t("auth.resetRequest.title")}
+      </Text>
 
       <View style={styles.card}>
         <Input
@@ -117,8 +136,11 @@ export default function ForgotPassword() {
 
 const createStyles = (theme: typeof Colors.light) => {
   return StyleSheet.create({
-    title: {},
-    card: { gap: 12, marginTop: 8 },
+    logoRow: authLogoRow(),
+    logoImage: authLogoImage(),
+    eyebrow: authEyebrow(theme),
+    title: authTitle(),
+    card: authFormCard(),
     success: { color: theme.success, marginTop: 2 },
     footerPressable: {
       marginTop: 18,

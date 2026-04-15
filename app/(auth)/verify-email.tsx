@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button";
 import Colors from "@/constants/Colors";
 import { buildRedirectUrl, useAuth } from "@/utils/authContext";
 import { getCurrentUser, resendVerificationEmail } from "@/utils/queries";
+import { authEyebrow, authFormCard, authTitle } from "./_layout";
 import { useTheme } from "@/utils/themeContext";
 import * as Linking from "expo-linking";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
@@ -163,10 +164,13 @@ export default function VerifyEmail() {
         accessibilityLabel={t("common.actions.back")}
       />
 
-      <Text variant="h1" style={styles.title}>
+      <Text variant="micro" style={styles.eyebrow}>
+        {t("auth.branding.eyebrow")}
+      </Text>
+      <Text variant="h2" align="center" style={styles.title}>
         {t("auth.verifyEmail.title")}
       </Text>
-      <Text variant="body" colorName="textMuted" style={styles.subtitle}>
+      <Text variant="body" colorName="textMuted" align="center" style={styles.subtitle}>
         {t("auth.verifyEmail.subtitle")}
       </Text>
 
@@ -191,7 +195,7 @@ export default function VerifyEmail() {
         <Button
           title={t("auth.verifyEmail.openMailApp", "Open Mail App")}
           variant="primary"
-          size="lg"
+          size="md"
           iconRight={ExternalLink}
           onPress={handleOpenMailApp}
           disabled={isResending}
@@ -236,7 +240,6 @@ export default function VerifyEmail() {
         </Pressable>
       </View>
 
-      <View style={{ flex: 1 }} />
       <Link href="/(auth)/signin" asChild>
         <Pressable style={styles.footerPressable}>
           <Text variant="micro" align="center" style={styles.footerLinkText}>
@@ -250,9 +253,10 @@ export default function VerifyEmail() {
 
 const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
-    title: { marginTop: 26 },
+    eyebrow: authEyebrow(theme),
+    title: authTitle(),
     subtitle: { marginTop: 4 },
-    card: { gap: 12, marginTop: 8 },
+    card: authFormCard(),
     illustration: {
       width: 80,
       height: 80,
@@ -279,6 +283,7 @@ const createStyles = (theme: typeof Colors.light) =>
 
     footerPressable: {
       alignSelf: "center",
+      marginTop: 20,
     },
     footerLinkText: {
       color: theme.primaryDark,

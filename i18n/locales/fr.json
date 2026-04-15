@@ -62,8 +62,10 @@
     }
   },
   "auth": {
+    "branding": {
+      "eyebrow": "L'app qui te fait bosser"
+    },
     "signin": {
-      "eyebrow": "Ton compagnon d'étude",
       "title": "Connexion",
       "errorMissing": "Email et mot de passe sont requis.",
       "button": "Se connecter",
@@ -166,7 +168,7 @@
       "l2": "Licence 2",
       "l3_plus": "L3 / Master",
       "all": "Tous niveaux"
-    },
+    }
   },
   "tabs": {
     "focus": "Focus",
@@ -189,21 +191,9 @@
     "tabSubjects": "Matières",
     "tabTasks": "Tâches",
     "tasksEmpty": "Aucune tâche active",
-    "focusModeRequired": "Mode focus requis",
-    "focusModeRequiredDescription": "Le temps d'étude n'est enregistré que lorsque le mode focus est actif. Cela bloque les applications et notifications distrayantes.",
     "sessionNotRecorded": "Session non enregistrée — le mode focus était requis",
-    "sessionRecorded": "{{minutes}} minutes enregistrées avec le mode focus",
     "permissionDenied": "Permission refusée — impossible de suivre le temps",
-    "noAppsSelected": "Sélectionnez d'abord les applications à bloquer",
-    "noAppsSelectedDescription": "Veuillez sélectionner les applications à bloquer pendant les sessions d'étude (par ex. WhatsApp, Snapchat, Instagram).",
-    "focusModeLost": "Mode focus désactivé — timer en pause",
-    "resumeRequiresFocus": "Réactiver le mode focus pour reprendre",
-    "permissionRequestTitle": "Permission Mode Focus",
-    "permissionRequestMessage": "Pour suivre le temps d'étude, nous avons besoin de la permission d'activer le mode focus. Cela vous aide à rester concentré en bloquant les applications distrayantes.",
-    "permissionRequestIOS": "Sur iOS, vous devrez également sélectionner les applications à bloquer.",
-    "openSettings": "Ouvrir les paramètres",
     "focusSimulated": "Mode focus simulé sur le web",
-    "focusActive": "Focus strict actif — apps / notifications filtrées",
     "badges": {
       "xpA11y": "Expérience : {{formatted}} XP",
       "streakShort_zero": "0 j.",
@@ -353,7 +343,12 @@
       "modalTitle": "Parcours et matières",
       "modalHint": "Les matières du catalogue correspondant à ton parcours sont ajoutées à ta liste. Tu peux masquer celles dont tu n’as pas besoin dans l’onglet Matières.",
       "success": "Parcours mis à jour.",
-      "errorSave": "Impossible d’enregistrer le parcours."
+      "errorSave": "Impossible d’enregistrer le parcours.",
+      "wizardStepOf": "Étape {{current}} sur {{total}}",
+      "confirmTitle": "Confirmer les matières",
+      "confirmIntro": "Comme pour les spécialités : tout est sélectionné. Touche une matière pour ne pas l’ajouter à ta liste.",
+      "confirmEmpty": "Aucune nouvelle matière. Ton parcours sera quand même mis à jour.",
+      "confirmApply": "Confirmer"
     },
     "subjects": {
       "title": "Mes matières",
