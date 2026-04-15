@@ -15,7 +15,13 @@ import Colors from "@/constants/Colors";
 import { INTER } from "@/constants/typography";
 import { useTheme } from "@/utils/themeContext";
 
-type ButtonVariant = "primary" | "secondary" | "destructive" | "outline" | "ghost";
+type ButtonVariant =
+  | "primary"
+  | "cta"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "ghost";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 type ButtonShape = "default" | "pill";
 
@@ -58,6 +64,15 @@ function getPalette(colorSet: ColorSet, variant: ButtonVariant) {
   switch (variant) {
     case "primary":
       return { bg: colorSet.primaryDark, pressedBg: colorSet.primary, text: colorSet.onPrimaryDark, border: "transparent", borderWidth: 0 };
+    /** Landing-style: bright teal, white label; pressed → teal-dark */
+    case "cta":
+      return {
+        bg: colorSet.primary,
+        pressedBg: colorSet.primaryDark,
+        text: "#FFFFFF",
+        border: "transparent",
+        borderWidth: 0,
+      };
     case "secondary":
       return { bg: colorSet.surfaceElevated, pressedBg: colorSet.secondaryTint, text: colorSet.text, border: colorSet.divider, borderWidth: 1 };
     case "destructive":

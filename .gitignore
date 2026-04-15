@@ -26,11 +26,6 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-.cursor/
-
-# never commit local credentials
-assets/other/supabase_pswd.txt
-
 # macOS
 .DS_Store
 *.pem
@@ -39,6 +34,16 @@ assets/other/supabase_pswd.txt
 .env
 .env*.local
 # .env.example should be committed as a template
+
+# Editor / local-only
+.cursor/
+
+# Never commit secrets (local passwords / exports)
+assets/other/supabase_pswd.txt
+assets/other/supabase_database_psswd.docx
+
+# Reference exports from external tools — keep local only
+assets/lovable equivalent/
 
 # typescript
 *.tsbuildinfo

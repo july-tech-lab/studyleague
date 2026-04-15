@@ -63,6 +63,7 @@
   },
   "auth": {
     "signin": {
+      "eyebrow": "Ton compagnon d'étude",
       "title": "Connexion",
       "errorMissing": "Email et mot de passe sont requis.",
       "button": "Se connecter",

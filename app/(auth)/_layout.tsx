@@ -1,4 +1,5 @@
 import { Screen } from "@/components/layout/Screen";
+import { useTheme } from "@/utils/themeContext";
 import { Slot } from "expo-router";
 
 /**
@@ -15,8 +16,10 @@ import { Slot } from "expo-router";
  * Individual auth screens should NOT add their own ScrollView - scrolling is handled here.
  */
 export default function AuthLayout() {
+  const theme = useTheme();
+
   return (
-    <Screen variant="auth">
+    <Screen variant="auth" style={{ backgroundColor: theme.surface }}>
       <Slot />
     </Screen>
   );

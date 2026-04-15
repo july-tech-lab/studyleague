@@ -63,6 +63,7 @@
   },
   "auth": {
     "signin": {
+      "eyebrow": "Your study companion",
       "title": "Sign in",
       "errorMissing": "Email and password are required.",
       "button": "Sign in",

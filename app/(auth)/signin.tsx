@@ -103,7 +103,10 @@ export default function SignIn() {
         <Image source={logo} style={styles.logoImage} resizeMode="contain" />
       </View>
 
-      <Text variant="h1" style={styles.title}>
+      <Text variant="micro" style={styles.eyebrow}>
+        {t("auth.signin.eyebrow")}
+      </Text>
+      <Text variant="h2" align="center" style={styles.title}>
         {t("auth.signin.title")}
       </Text>
 
@@ -148,13 +151,14 @@ export default function SignIn() {
 
         <Button
           title={loading ? t("auth.signin.buttonLoading") : t("auth.signin.button")}
-          variant="primary"
-          size="lg"
+          variant="cta"
+          size="md"
           iconRight={ArrowRight}
           onPress={handleSignIn}
           disabled={loading || !email.trim() || !password.trim()}
           loading={loading}
           fullWidth
+          style={styles.ctaButton}
         />
       </View>
 
@@ -236,11 +240,26 @@ const createStyles = (theme: typeof Colors.light) => {
       justifyContent: "center",
       alignSelf: "center",
       gap: 8,
-      marginBottom: 8, // Compensate for title marginTop change to maintain visual alignment
+      marginBottom: 4,
     },
-    logoImage: { width: 250, height: 250 },
-    title: {},
-    card: { gap: 12, marginTop: 8 },
+    logoImage: { width: 120, height: 120 },
+    eyebrow: {
+      alignSelf: "center",
+      color: theme.primary,
+      fontWeight: "600",
+      letterSpacing: 1.8,
+      textTransform: "uppercase",
+      marginBottom: 2,
+    },
+    title: {
+      fontWeight: "600",
+      letterSpacing: -0.3,
+      marginBottom: 4,
+    },
+    ctaButton: {
+      borderRadius: 16,
+    },
+    card: { gap: 12, marginTop: 4 },
 
     // Keeping socialButtonCircle for FontAwesome icons (not compatible with Button's LucideIcon type)
     inlineActions: {
