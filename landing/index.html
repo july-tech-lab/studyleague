@@ -3,7 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" id="seo-meta-desc" content="Tymii est l'app d'étude sur iPhone et Android : chronomètre par matière, XP, séries et groupes pour rester régulier et motivé, seul ou entre amis." />
+  <meta property="og:title" id="seo-og-title" content="Tymii — L'app qui te fait bosser" />
+  <meta property="og:description" id="seo-og-desc" content="Tymii est l'app d'étude sur iPhone et Android : chronomètre par matière, XP, séries et groupes pour rester régulier et motivé, seul ou entre amis." />
+  <meta property="og:image" id="seo-og-image" content="" />
+  <meta property="og:url" id="seo-og-url" content="" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" id="seo-tw-title" content="Tymii — L'app qui te fait bosser" />
+  <meta name="twitter:description" id="seo-tw-desc" content="Tymii est l'app d'étude sur iPhone et Android : chronomètre par matière, XP, séries et groupes pour rester régulier et motivé, seul ou entre amis." />
+  <meta name="twitter:image" id="seo-tw-image" content="" />
+  <link rel="canonical" id="seo-canonical" href="" />
+  <script type="application/ld+json" id="seo-schema-app">{"@context":"https://schema.org","@type":"MobileApplication","name":"Tymii","description":"Tymii est l'app d'étude sur iPhone et Android : chronomètre par matière, XP, séries et groupes pour rester régulier et motivé, seul ou entre amis.","operatingSystem":"iOS, Android","applicationCategory":"EducationApplication"}</script>
   <title>Tymii — L'app qui te fait bosser</title>
+  <link rel="icon" href="../assets/images/favicon.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -50,6 +63,23 @@
     .lt-t { color: var(--teal); }
     .lt-c { color: var(--coral); }
 
+    .nav-right {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    .lang-switch {
+      display: inline-flex; border: 1px solid var(--border);
+      border-radius: 99px; overflow: hidden; margin-right: 0.25rem;
+    }
+    .lang-btn {
+      border: none; background: transparent;
+      padding: 0.38rem 0.7rem; font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; color: var(--muted); font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+    }
+    .lang-btn:hover:not(.active) { color: var(--text); }
+    .lang-btn.active { background: var(--teal-tint); color: var(--teal-dark); }
+
     .nav-links { display: flex; align-items: center; gap: 0.5rem; }
     .nav-links a {
       font-size: 0.85rem; font-weight: 500; padding: 0.45rem 1rem;
@@ -74,6 +104,7 @@
     @media (max-width: 680px) {
       .hero { grid-template-columns: 1fr; padding: 4rem 1.5rem 3rem; }
       .phone-col { display: flex; justify-content: center; }
+      nav { flex-wrap: wrap; gap: 1rem; }
     }
 
     .tagline {
@@ -165,25 +196,92 @@
     .ps-streak-text { font-size: 0.6rem; font-weight: 500; color: var(--coral); }
     .ps-streak-val { font-size: 0.64rem; font-weight: 700; color: var(--coral); margin-left: auto; }
 
-    /* ── DIVIDER ── */
-    .divider {
-      max-width: 1040px; margin: 0 auto; padding: 0 2.5rem;
+    /* ── TESTIMONIALS ── */
+    .testimonials {
+      background: #f6faf9;
       border-top: 1px solid var(--border);
+      padding: 4.5rem 2.5rem;
     }
-
-    /* ── STATS ── */
-    .stats {
-      max-width: 1040px; margin: 0 auto;
-      padding: 2.5rem 2.5rem;
-      display: flex; gap: 3rem;
+    .testimonials-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      text-align: center;
     }
-    @media (max-width: 480px) { .stats { gap: 1.5rem; } }
-    .stat-num {
+    .testimonials-eyebrow {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--teal-dark);
+      margin-bottom: 0.75rem;
+    }
+    .testimonials-title {
       font-family: "Fraunces", serif;
-      font-size: 1.8rem; font-weight: 600; color: var(--teal-dark);
+      font-size: clamp(1.65rem, 3.5vw, 2rem);
+      font-weight: 600;
+      color: var(--text);
       letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 2.75rem;
     }
-    .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+    .testimonial-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+    }
+    .testimonial-card {
+      background: #fff;
+      border-radius: var(--r);
+      padding: 2rem 1.75rem;
+      flex: 1 1 260px;
+      max-width: 300px;
+      text-align: left;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border);
+    }
+    .testimonial-mark {
+      color: var(--teal);
+      font-size: 1.75rem;
+      line-height: 1;
+      margin: 0 0 0.75rem;
+    }
+    .testimonial-text {
+      color: var(--text);
+      font-size: 0.94rem;
+      line-height: 1.7;
+      margin: 0 0 1.5rem;
+      opacity: 0.92;
+    }
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .testimonial-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--teal-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teal-dark);
+      font-weight: 700;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .testimonial-name {
+      margin: 0;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .testimonial-role {
+      margin: 0.1rem 0 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
 
     /* ── FEATURES ── */
     .features {
@@ -315,27 +413,33 @@
       </div>
       <span class="logo-text">tym<span class="lt-t">i</span><span class="lt-c">i</span></span>
     </div>
-    <div class="nav-links">
-      <a href="#features">Fonctionnalités</a>
-      <a href="#groupes">Groupes</a>
-      <a href="#download" class="cta">Télécharger</a>
+    <div class="nav-right">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" class="lang-btn" data-set-lang="fr" id="lang-btn-fr">FR</button>
+        <button type="button" class="lang-btn" data-set-lang="en" id="lang-btn-en">EN</button>
+      </div>
+      <div class="nav-links">
+        <a href="#features" data-i18n="nav_features">Fonctionnalités</a>
+        <a href="#groupes" data-i18n="nav_groups">Groupes</a>
+        <a href="#download" class="cta" data-i18n="nav_download">Télécharger</a>
+      </div>
     </div>
   </nav>
 
   <!-- HERO -->
   <section class="hero">
     <div class="hero-text">
-      <p class="tagline">L'app qui te fait bosser</p>
-      <h1>Étudie mieux,<br><em>ensemble.</em></h1>
-      <p class="lead">Chronomètre par matière, XP, séries et groupes — pour rester régulier sans se prendre la tête.</p>
+      <p class="tagline" data-i18n="tagline">L'app qui te fait bosser</p>
+      <h1 data-i18n-html="hero_title">Le travail régulier,<br><em>enfin addictif.</em></h1>
+      <p class="lead" data-i18n="hero_lead">Lance le chrono, gagne des XP, défie tes amis — et regarde tes habitudes se construire, session après session.</p>
       <div class="hero-actions">
         <a class="btn btn-teal" href="#download">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          App Store
+          <span data-i18n="btn_app_store">App Store</span>
         </a>
         <a class="btn btn-outline" href="#download">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.39 5.943V8.864l10.088 5.843zm.84-11.674L8.576 5.858v12.284l6.762-3.876a.996.996 0 00.564-.852V2.033a1 1 0 00-.564-.852z"/></svg>
-          Google Play
+          <span data-i18n="btn_google_play">Google Play</span>
         </a>
       </div>
     </div>
@@ -343,80 +447,106 @@
       <div class="phone">
         <div class="phone-screen">
           <div class="ps-header">
-            <span class="ps-title">Aujourd'hui</span>
-            <span class="ps-xp">✦ 2 340 XP</span>
+            <span class="ps-title" data-i18n="ps_today">Aujourd'hui</span>
+            <span class="ps-xp" data-i18n="ps_xp">✦ 2 340 XP</span>
           </div>
           <div class="ps-timer">
             <div class="ps-timer-num" id="timer-display">01:24:07</div>
-            <div class="ps-timer-label">Maths · en cours</div>
+            <div class="ps-timer-label" data-i18n="ps_timer_label">Maths · en cours</div>
           </div>
           <div class="ps-subject">
             <span class="ps-dot" style="background:#4AC9CC"></span>
-            <span class="ps-name">Mathématiques</span>
-            <span class="ps-time">1 h 24</span>
+            <span class="ps-name" data-i18n="ps_subject_math">Mathématiques</span>
+            <span class="ps-time" data-i18n="ps_time_math">1 h 24</span>
           </div>
           <div class="ps-subject coral-bg">
             <span class="ps-dot" style="background:#F28C8C"></span>
-            <span class="ps-name">Histoire</span>
-            <span class="ps-time">45 min</span>
+            <span class="ps-name" data-i18n="ps_subject_hist">Histoire</span>
+            <span class="ps-time" data-i18n="ps_time_hist">45 min</span>
           </div>
           <div class="ps-subject">
             <span class="ps-dot" style="background:#1F8E92"></span>
-            <span class="ps-name">Anglais</span>
-            <span class="ps-time">30 min</span>
+            <span class="ps-name" data-i18n="ps_subject_en">Anglais</span>
+            <span class="ps-time" data-i18n="ps_time_en">30 min</span>
           </div>
           <div class="ps-streak">
             <span style="font-size:.85rem">🔥</span>
-            <span class="ps-streak-text">Série en cours</span>
-            <span class="ps-streak-val">12 jours</span>
+            <span class="ps-streak-text" data-i18n="ps_streak_label">Série en cours</span>
+            <span class="ps-streak-val" data-i18n="ps_streak_val">12 jours</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- STATS -->
-  <div class="divider"></div>
-  <div class="stats reveal">
-    <div class="stat">
-      <div class="stat-num">10k+</div>
-      <div class="stat-label">Étudiants actifs</div>
+  <!-- TESTIMONIALS -->
+  <section class="testimonials" id="temoignages">
+    <div class="testimonials-inner">
+      <p class="testimonials-eyebrow reveal" data-i18n="testim_eyebrow">ILS UTILISENT TYMII</p>
+      <h2 class="testimonials-title reveal" data-i18n="testim_title">Ce qu'ils en pensent</h2>
+      <div class="testimonial-grid">
+        <div class="testimonial-card reveal d1">
+          <p class="testimonial-mark" aria-hidden="true">❝</p>
+          <p class="testimonial-text" data-i18n="testim1_body">Je vois mes heures monter, mes séries s'allonger — ça devient addictif de rester régulier. J'aurais jamais cru qu'un tableau de bord pouvait autant me motiver.</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" aria-hidden="true">T</div>
+            <div>
+              <p class="testimonial-name">Théo R.</p>
+              <p class="testimonial-role" data-i18n="testim1_role">4ème</p>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card reveal d2">
+          <p class="testimonial-mark" aria-hidden="true">❝</p>
+          <p class="testimonial-text" data-i18n="testim2_body">J'avais du mal à m'organiser entre toutes mes matières. Avec les objectifs Tymii, je sais exactement quoi faire chaque jour. Plus de panique la veille.</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" aria-hidden="true">L</div>
+            <div>
+              <p class="testimonial-name">Léa M.</p>
+              <p class="testimonial-role" data-i18n="testim2_role">Terminale</p>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card reveal d3">
+          <p class="testimonial-mark" aria-hidden="true">❝</p>
+          <p class="testimonial-text" data-i18n="testim3_body">On se challenge avec mes amis de prépa sur qui bosse le plus. Voir les stats des autres me motive à ouvrir l'app même quand je n'ai pas envie.</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" aria-hidden="true">C</div>
+            <div>
+              <p class="testimonial-name">Camille D.</p>
+              <p class="testimonial-role" data-i18n="testim3_role">Classe Prépa</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="stat-num">4.8★</div>
-      <div class="stat-label">Note moyenne</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">2M h</div>
-      <div class="stat-label">Étudiées ensemble</div>
-    </div>
-  </div>
+  </section>
 
   <!-- FEATURES -->
   <section class="features" id="features">
     <div class="features-inner">
-      <p class="section-eyebrow reveal">Fonctionnalités</p>
-      <h2 class="section-title reveal">Tout ce qu'il te faut<br>pour rester régulier</h2>
+      <p class="section-eyebrow reveal" data-i18n="feat_eyebrow">Fonctionnalités</p>
+      <h2 class="section-title reveal" data-i18n-html="feat_title">Tout ce qu'il te faut<br>pour rester régulier</h2>
       <div class="feat-grid">
         <div class="feat-card reveal d1">
           <div class="feat-dot" style="background:#4AC9CC"></div>
-          <div class="feat-name">Chronomètre par matière</div>
-          <div class="feat-desc">Suis le temps passé sur chaque discipline. Visualise ta répartition en un coup d'œil.</div>
+          <div class="feat-name" data-i18n="feat1_name">Chronomètre par matière</div>
+          <div class="feat-desc" data-i18n="feat1_desc">Suis le temps passé sur chaque discipline. Visualise ta répartition en un coup d'œil.</div>
         </div>
         <div class="feat-card reveal d2">
           <div class="feat-dot" style="background:#F28C8C"></div>
-          <div class="feat-name">XP &amp; niveaux</div>
-          <div class="feat-desc">Gagne de l'expérience à chaque session. Monte en niveau et débloque des récompenses.</div>
+          <div class="feat-name" data-i18n="feat2_name">XP &amp; niveaux</div>
+          <div class="feat-desc" data-i18n="feat2_desc">Gagne de l'expérience à chaque session. Monte en niveau et débloque des récompenses.</div>
         </div>
         <div class="feat-card reveal d3">
           <div class="feat-dot" style="background:#F28C8C"></div>
-          <div class="feat-name">Séries &amp; streaks</div>
-          <div class="feat-desc">Construis des habitudes solides. Une journée sans étude brise la chaîne — reste invaincu.</div>
+          <div class="feat-name" data-i18n="feat3_name">Séries &amp; streaks</div>
+          <div class="feat-desc" data-i18n="feat3_desc">Construis des habitudes solides. Une journée sans étude brise la chaîne — reste invaincu.</div>
         </div>
         <div class="feat-card reveal d1">
           <div class="feat-dot" style="background:#4AC9CC"></div>
-          <div class="feat-name">Groupes d'étude</div>
-          <div class="feat-desc">Rejoins ou crée des ligues avec tes amis. Progressez ensemble, motivez-vous mutuellement.</div>
+          <div class="feat-name" data-i18n="feat4_name">Groupes d'étude</div>
+          <div class="feat-desc" data-i18n="feat4_desc">Rejoins ou crée des ligues avec tes amis. Progressez ensemble, motivez-vous mutuellement.</div>
         </div>
       </div>
     </div>
@@ -425,7 +555,7 @@
   <!-- GROUP -->
   <section class="group-section" id="groupes">
     <div class="group-visual reveal">
-      <div class="group-header">Classement · Cette semaine</div>
+      <div class="group-header" data-i18n="group_header">Classement · Cette semaine</div>
       <div class="member">
         <span class="rank">🥇</span>
         <div class="avatar" style="background:#CCF3F4;color:#1F8E92">SA</div>
@@ -447,38 +577,38 @@
       <div class="member">
         <span class="rank" style="color:var(--muted)">4</span>
         <div class="avatar" style="background:var(--teal);color:#fff">YD</div>
-        <span class="member-name" style="color:var(--teal-dark);font-weight:600">Toi</span>
+        <span class="member-name" style="color:var(--teal-dark);font-weight:600" data-i18n="member_you">Toi</span>
         <span class="member-time">9 h 30</span>
       </div>
     </div>
 
     <div class="group-copy reveal d2">
-      <p class="section-eyebrow">Groupes</p>
-      <h2 class="section-title">La compétition bienveillante qui booste.</h2>
-      <p>Crée ta ligue, invite tes amis ou ta classe, et vois chaque semaine qui travaille le plus. Pas pour se juger — pour s'encourager.</p>
+      <p class="section-eyebrow" data-i18n="group_eyebrow">Groupes</p>
+      <h2 class="section-title" data-i18n="group_title">La compétition bienveillante qui booste.</h2>
+      <p data-i18n="group_body">Crée ta ligue, invite tes amis ou ta classe, et vois chaque semaine qui travaille le plus. Pas pour se juger — pour s'encourager.</p>
     </div>
   </section>
 
   <!-- DOWNLOAD -->
   <section class="download-section" id="download">
-    <p class="section-eyebrow reveal">Téléchargement</p>
-    <h2 class="section-title reveal">Prêt à commencer ?</h2>
-    <p class="reveal">Gratuit · iPhone &amp; Android · Aucune carte requise</p>
+    <p class="section-eyebrow reveal" data-i18n="dl_eyebrow">Téléchargement</p>
+    <h2 class="section-title reveal" data-i18n="dl_title">Prêt à commencer ?</h2>
+    <p class="reveal" data-i18n="dl_sub">Gratuit · iPhone &amp; Android · Aucune carte requise</p>
     <div class="store-btns reveal">
       <a class="store-btn" id="link-ios" href="#">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-        Télécharger sur l'App Store
+        <span data-i18n="store_ios">Télécharger sur l'App Store</span>
       </a>
       <a class="store-btn" id="link-android" href="#">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.39 5.943V8.864l10.088 5.843zm.84-11.674L8.576 5.858v12.284l6.762-3.876a.996.996 0 00.564-.852V2.033a1 1 0 00-.564-.852z"/></svg>
-        Disponible sur Google Play
+        <span data-i18n="store_android">Disponible sur Google Play</span>
       </a>
     </div>
   </section>
 
   <footer>
-    <span>© 2025 Tymii</span>
-    <span>L'app qui te fait bosser</span>
+    <span id="footer-copy">© 2026 Tymii</span>
+    <span data-i18n="footer_tagline">L'app qui te fait bosser</span>
   </footer>
 
   <script>
@@ -486,6 +616,206 @@
     var PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.juliemaitre.tymii";
     document.getElementById("link-ios").href     = APP_STORE_URL;
     document.getElementById("link-android").href = PLAY_STORE_URL;
+
+    var LANG_KEY = "tymii_landing_lang";
+    var STR = {
+      fr: {
+        doc_title: "Tymii — L'app qui te fait bosser",
+        meta_description: "Tymii est l'app d'étude sur iPhone et Android : chronomètre par matière, XP, séries et groupes pour rester régulier et motivé, seul ou entre amis.",
+        nav_features: "Fonctionnalités",
+        nav_groups: "Groupes",
+        nav_download: "Télécharger",
+        tagline: "L'app qui te fait bosser",
+        hero_title: "Le travail régulier,<br><em>enfin addictif.</em>",
+        hero_lead: "Lance le chrono, gagne des XP, défie tes amis — et regarde tes habitudes se construire, session après session.",
+        btn_app_store: "App Store",
+        btn_google_play: "Google Play",
+        ps_today: "Aujourd'hui",
+        ps_xp: "✦ 2 340 XP",
+        ps_timer_label: "Maths · en cours",
+        ps_subject_math: "Mathématiques",
+        ps_time_math: "1 h 24",
+        ps_subject_hist: "Histoire",
+        ps_time_hist: "45 min",
+        ps_subject_en: "Anglais",
+        ps_time_en: "30 min",
+        ps_streak_label: "Série en cours",
+        ps_streak_val: "12 jours",
+        testim_eyebrow: "ILS UTILISENT TYMII",
+        testim_title: "Ce qu'ils en pensent",
+        testim1_body: "Je vois mes heures monter, mes séries s'allonger — ça devient addictif de rester régulier. J'aurais jamais cru qu'un tableau de bord pouvait autant me motiver.",
+        testim1_role: "4ème",
+        testim2_body: "J'avais du mal à m'organiser entre toutes mes matières. Avec les objectifs Tymii, je sais exactement quoi faire chaque jour. Plus de panique la veille.",
+        testim2_role: "Terminale",
+        testim3_body: "On se challenge avec mes amis de prépa sur qui bosse le plus. Voir les stats des autres me motive à ouvrir l'app même quand je n'ai pas envie.",
+        testim3_role: "Classe Prépa",
+        feat_eyebrow: "Fonctionnalités",
+        feat_title: "Tout ce qu'il te faut<br>pour rester régulier",
+        feat1_name: "Chronomètre par matière",
+        feat1_desc: "Suis le temps passé sur chaque discipline. Visualise ta répartition en un coup d'œil.",
+        feat2_name: "XP & niveaux",
+        feat2_desc: "Gagne de l'expérience à chaque session. Monte en niveau et débloque des récompenses.",
+        feat3_name: "Séries & streaks",
+        feat3_desc: "Construis des habitudes solides. Une journée sans étude brise la chaîne — reste invaincu.",
+        feat4_name: "Groupes d'étude",
+        feat4_desc: "Rejoins ou crée des ligues avec tes amis. Progressez ensemble, motivez-vous mutuellement.",
+        group_header: "Classement · Cette semaine",
+        member_you: "Toi",
+        group_eyebrow: "Groupes",
+        group_title: "La compétition bienveillante qui booste.",
+        group_body: "Crée ta ligue, invite tes amis ou ta classe, et vois chaque semaine qui travaille le plus. Pas pour se juger — pour s'encourager.",
+        dl_eyebrow: "Téléchargement",
+        dl_title: "Prêt à commencer ?",
+        dl_sub: "Gratuit · iPhone & Android · Aucune carte requise",
+        store_ios: "Télécharger sur l'App Store",
+        store_android: "Disponible sur Google Play",
+        footer_tagline: "L'app qui te fait bosser"
+      },
+      en: {
+        doc_title: "Tymii — The app that keeps you studying",
+        meta_description: "Tymii is the study app for iPhone and Android: subject timer, XP, streaks, and groups to stay consistent and motivated—solo or with friends.",
+        nav_features: "Features",
+        nav_groups: "Groups",
+        nav_download: "Download",
+        tagline: "The app that keeps you studying",
+        hero_title: "Steady work,<br><em>finally addictive.</em>",
+        hero_lead: "Start the timer, earn XP, challenge your friends — and watch your habits build, session after session.",
+        btn_app_store: "App Store",
+        btn_google_play: "Google Play",
+        ps_today: "Today",
+        ps_xp: "✦ 2,340 XP",
+        ps_timer_label: "Math · in progress",
+        ps_subject_math: "Mathematics",
+        ps_time_math: "1h 24m",
+        ps_subject_hist: "History",
+        ps_time_hist: "45 min",
+        ps_subject_en: "English",
+        ps_time_en: "30 min",
+        ps_streak_label: "Current streak",
+        ps_streak_val: "12 days",
+        testim_eyebrow: "THEY USE TYMII",
+        testim_title: "What they say",
+        testim1_body: "I watch my hours climb and my streaks grow — staying consistent gets addictive. I never thought a dashboard could motivate me this much.",
+        testim1_role: "Grade 8",
+        testim2_body: "I struggled to stay organized across all my subjects. With Tymii goals I know exactly what to do each day. No more last-minute panic.",
+        testim2_role: "Senior year",
+        testim3_body: "My prep-school friends and I compete on who puts in the most work. Seeing everyone else's stats pushes me to open the app even when I don't feel like it.",
+        testim3_role: "Preparatory track",
+        feat_eyebrow: "Features",
+        feat_title: "Everything you need<br>to stay consistent",
+        feat1_name: "Subject timer",
+        feat1_desc: "Track time for each subject. See your split at a glance.",
+        feat2_name: "XP & levels",
+        feat2_desc: "Earn experience every session. Level up and unlock rewards.",
+        feat3_name: "Streaks",
+        feat3_desc: "Build solid habits. Miss a day and the chain breaks — stay on a roll.",
+        feat4_name: "Study groups",
+        feat4_desc: "Join or create leagues with friends. Progress together and cheer each other on.",
+        group_header: "Leaderboard · This week",
+        member_you: "You",
+        group_eyebrow: "Groups",
+        group_title: "Friendly competition that motivates.",
+        group_body: "Create your league, invite friends or your class, and see who puts in the most time each week. Not to judge — to encourage each other.",
+        dl_eyebrow: "Get the app",
+        dl_title: "Ready to start?",
+        dl_sub: "Free · iPhone & Android · No credit card required",
+        store_ios: "Download on the App Store",
+        store_android: "Get it on Google Play",
+        footer_tagline: "The app that keeps you studying"
+      }
+    };
+
+    function normalizeLang(code) {
+      return code === "en" ? "en" : "fr";
+    }
+
+    function detectLang() {
+      var params = new URLSearchParams(window.location.search);
+      var q = params.get("lang");
+      if (q === "en" || q === "fr") return q;
+      try {
+        var saved = localStorage.getItem(LANG_KEY);
+        if (saved === "en" || saved === "fr") return saved;
+      } catch (e) {}
+      var nav = (navigator.language || "fr").toLowerCase();
+      return nav.indexOf("en") === 0 ? "en" : "fr";
+    }
+
+    function syncSeoHead(t) {
+      var desc = t.meta_description;
+      var title = t.doc_title;
+      var pageUrl = "";
+      var absOgImage = "/og-image.png";
+      try {
+        pageUrl = new URL(window.location.href);
+        pageUrl.hash = "";
+        pageUrl = pageUrl.toString();
+        absOgImage = new URL("/og-image.png", window.location.origin).href;
+      } catch (e) {
+        pageUrl = window.location.href.split("#")[0];
+      }
+      var set = function (id, attr, val) {
+        var el = document.getElementById(id);
+        if (el) el.setAttribute(attr, val);
+      };
+      set("seo-meta-desc", "content", desc);
+      set("seo-og-title", "content", title);
+      set("seo-og-desc", "content", desc);
+      set("seo-og-image", "content", absOgImage);
+      set("seo-og-url", "content", pageUrl);
+      set("seo-tw-title", "content", title);
+      set("seo-tw-desc", "content", desc);
+      set("seo-tw-image", "content", absOgImage);
+      set("seo-canonical", "href", pageUrl);
+      var schemaEl = document.getElementById("seo-schema-app");
+      if (schemaEl) {
+        schemaEl.textContent = JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "MobileApplication",
+          name: "Tymii",
+          description: desc,
+          operatingSystem: "iOS, Android",
+          applicationCategory: "EducationApplication"
+        });
+      }
+    }
+
+    function applyLang(lang) {
+      lang = normalizeLang(lang);
+      var t = STR[lang];
+      document.documentElement.lang = lang;
+      document.title = t.doc_title;
+      syncSeoHead(t);
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        var key = el.getAttribute("data-i18n");
+        if (key && t[key] !== undefined) el.textContent = t[key];
+      });
+      document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+        var key = el.getAttribute("data-i18n-html");
+        if (key && t[key] !== undefined) el.innerHTML = t[key];
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+        var key = el.getAttribute("data-i18n-placeholder");
+        if (key && t[key] !== undefined) el.placeholder = t[key];
+      });
+      document.getElementById("lang-btn-fr").classList.toggle("active", lang === "fr");
+      document.getElementById("lang-btn-en").classList.toggle("active", lang === "en");
+      try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    }
+
+    applyLang(detectLang());
+
+    document.querySelectorAll("[data-set-lang]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var lang = normalizeLang(btn.getAttribute("data-set-lang"));
+        try {
+          var u = new URL(window.location.href);
+          u.searchParams.set("lang", lang);
+          history.replaceState({}, "", u.pathname + u.search + u.hash);
+        } catch (e) {}
+        applyLang(lang);
+      });
+    });
 
     // Live timer
     var start = Date.now() - (1*3600+24*60+7)*1000;
