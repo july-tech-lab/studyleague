@@ -1,16 +1,21 @@
+import { PathSubjectOptionsStep } from "@/components/profile/PathSubjectOptionsStep";
 import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import {
-    categoryNeedsYearStep,
-    getSubjectKeysForAcademicPath,
-    requiredSpecialtyCount,
-    yearNeedsSpecialties,
-    YEARS_BY_CATEGORY,
-    type AcademicYearId,
+  categoryNeedsYearStep,
+  getSubjectKeysForAcademicPath,
+  normalizeAcademicYearId,
+  pathNeedsSubjectOptionsStep,
+  yearNeedsSpecialties,
+  YEARS_BY_CATEGORY,
+  type AcademicYearId,
 } from "@/constants/academicPath";
 import type { CategoryId } from "@/constants/categories";
-import { LYCEE_SPECIALTY_SUBJECT_KEYS } from "@/constants/lyceeSpecialties";
+import {
+  LANGUAGE_OPTION_SUBJECT_KEYS,
+  LYCEE_SPECIALTY_SUBJECT_KEYS,
+} from "@/constants/pathSubjectOptions";
 import type { SubjectKey } from "@/constants/subjectCatalog";
 import {
   ensureDefaultSubjectsFromKeys,
@@ -36,17 +41,19 @@ type PathWizardScreen = "category" | "level" | "subjects" | "confirm";
 function parseStoredPath(
   categoryRaw: string | null | undefined,
   yearRaw: string | null | undefined,
-  specs: string[] | null | undefined
+  specs: string[] | null | undefined,
+  langs: string[] | null | undefined
 ): {
   category: CategoryId | null;
   yearId: AcademicYearId | null;
   specialties: SubjectKey[];
+  languages: SubjectKey[];
 } {
   const category =
     (CATEGORY_ORDER.find((c) => c === categoryRaw) as CategoryId | undefined) ??
     null;
   if (!category) {
-    return { category: null, yearId: null, specialties: [] };
+    return { category: null, yearId: null, specialties: [], languages: [] };
   }
   const years = YEARS_BY_CATEGORY[category];
   if (years.length === 1) {
@@ -54,15 +61,21 @@ function parseStoredPath(
       category,
       yearId: years[0].id,
       specialties: [],
+      languages: [],
     };
   }
-  const yearOk = years.some((y) => y.id === yearRaw);
-  const yearId = yearOk ? (yearRaw as AcademicYearId) : null;
+  const normalizedYear = normalizeAcademicYearId(yearRaw);
+  const yearOk = normalizedYear !== null && years.some((y) => y.id === normalizedYear);
+  const yearId = yearOk ? normalizedYear : null;
   const specSet = new Set(LYCEE_SPECIALTY_SUBJECT_KEYS);
   const specialties = (specs ?? []).filter((k): k is SubjectKey =>
     specSet.has(k as SubjectKey)
   );
-  return { category, yearId, specialties };
+  const langSet = new Set(LANGUAGE_OPTION_SUBJECT_KEYS);
+  const languages = (langs ?? []).filter((k): k is SubjectKey =>
+    langSet.has(k as SubjectKey)
+  );
+  return { category, yearId, specialties, languages };
 }
 
 export type AcademicPathModalProps = {
@@ -73,6 +86,7 @@ export type AcademicPathModalProps = {
   academicCategory: string | null | undefined;
   academicYearKey: string | null | undefined;
   specialtyKeys: string[] | null | undefined;
+  languageKeys: string[] | null | undefined;
   /** Sync auth metadata, refetch profile, etc. */
   onSaved: (info: {
     category: CategoryId;
@@ -87,6 +101,7 @@ export function AcademicPathModal({
   academicCategory,
   academicYearKey,
   specialtyKeys,
+  languageKeys,
   onSaved,
 }: AcademicPathModalProps) {
   const theme = useTheme();
@@ -97,6 +112,7 @@ export function AcademicPathModal({
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | null>(null);
   const [yearId, setYearId] = useState<AcademicYearId | null>(null);
   const [selectedSpecialties, setSelectedSpecialties] = useState<SubjectKey[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<SubjectKey[]>([]);
   const [saving, setSaving] = useState(false);
   const [listingPreview, setListingPreview] = useState(false);
   /** New subjects for this path (not yet visible); confirm step toggles a subset. */
@@ -106,17 +122,23 @@ export function AcademicPathModal({
 
   useEffect(() => {
     if (!visible) return;
-    const parsed = parseStoredPath(academicCategory, academicYearKey, specialtyKeys);
+    const parsed = parseStoredPath(
+      academicCategory,
+      academicYearKey,
+      specialtyKeys,
+      languageKeys
+    );
     setSelectedCategory(parsed.category);
     setYearId(parsed.yearId);
     setSelectedSpecialties(parsed.specialties);
+    setSelectedLanguages(parsed.languages);
     setScreen("category");
     setError(null);
     setSaving(false);
     setListingPreview(false);
     setPreviewKeys([]);
     setConfirmSelectedKeys([]);
-  }, [visible, academicCategory, academicYearKey, specialtyKeys]);
+  }, [visible, academicCategory, academicYearKey, specialtyKeys, languageKeys]);
 
   const yearsForCategory = useMemo(() => {
     if (!selectedCategory) return [];
@@ -128,23 +150,7 @@ export function AcademicPathModal({
     const years = YEARS_BY_CATEGORY[id];
     setYearId(years.length === 1 ? years[0].id : null);
     setSelectedSpecialties([]);
-  };
-
-  const specNeeded = useMemo(
-    () =>
-      selectedCategory ? yearNeedsSpecialties(selectedCategory, yearId) : false,
-    [selectedCategory, yearId]
-  );
-
-  const specRequired = useMemo(() => requiredSpecialtyCount(yearId), [yearId]);
-
-  const toggleSpecialty = (key: SubjectKey) => {
-    setSelectedSpecialties((prev) => {
-      if (prev.includes(key)) return prev.filter((k) => k !== key);
-      const max = specRequired;
-      if (max > 0 && prev.length >= max) return prev;
-      return [...prev, key];
-    });
+    setSelectedLanguages([]);
   };
 
   const yearOk = useMemo(() => {
@@ -153,27 +159,37 @@ export function AcademicPathModal({
     return y.length === 1 || yearId !== null;
   }, [selectedCategory, yearId]);
 
-  const specialtiesOk =
-    !specNeeded || selectedSpecialties.length === specRequired;
+  const subjectOptionsNeeded = useMemo(
+    () =>
+      !!selectedCategory &&
+      pathNeedsSubjectOptionsStep(selectedCategory) &&
+      yearOk,
+    [selectedCategory, yearOk]
+  );
 
-  const wizardStepTotal = useMemo(() => {
-    if (!selectedCategory) return 1;
-    let n = 1;
-    if (categoryNeedsYearStep(selectedCategory)) n++;
-    if (yearNeedsSpecialties(selectedCategory, yearId)) n++;
-    return n;
-  }, [selectedCategory, yearId]);
+  const showSpecialtyBlock = useMemo(
+    () =>
+      selectedCategory
+        ? yearNeedsSpecialties(selectedCategory, yearId)
+        : false,
+    [selectedCategory, yearId]
+  );
 
-  const wizardStepCurrent = useMemo(() => {
-    if (screen === "category") return 1;
-    if (screen === "level") return 2;
-    return wizardStepTotal;
-  }, [screen, wizardStepTotal]);
+  const toggleSpecialty = (key: SubjectKey) => {
+    setSelectedSpecialties((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  const toggleLanguage = (key: SubjectKey) => {
+    setSelectedLanguages((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
 
   const canSave =
     !!selectedCategory &&
     yearOk &&
-    specialtiesOk &&
     !saving &&
     !listingPreview;
 
@@ -181,7 +197,7 @@ export function AcademicPathModal({
     setError(null);
     if (screen === "confirm") {
       setScreen(
-        specNeeded
+        subjectOptionsNeeded
           ? "subjects"
           : selectedCategory && categoryNeedsYearStep(selectedCategory)
             ? "level"
@@ -200,7 +216,7 @@ export function AcademicPathModal({
     if (screen === "level") {
       setScreen("category");
     }
-  }, [screen, selectedCategory, specNeeded]);
+  }, [screen, selectedCategory, subjectOptionsNeeded]);
 
   const toggleConfirmSubjectKey = (key: SubjectKey) => {
     setConfirmSelectedKeys((prev) =>
@@ -210,18 +226,18 @@ export function AcademicPathModal({
 
   const requestPreviewSave = async () => {
     if (!canSave || !selectedCategory) return;
-    if (!specialtiesOk) {
-      setError(t("onboarding.fillProfile.errorSpecialties", { count: specRequired }));
-      return;
-    }
     setListingPreview(true);
     setError(null);
     try {
-      const specs = specNeeded ? selectedSpecialties : [];
+      const specs = showSpecialtyBlock ? selectedSpecialties : [];
+      const langs = pathNeedsSubjectOptionsStep(selectedCategory)
+        ? selectedLanguages
+        : [];
       const keys = getSubjectKeysForAcademicPath(
         selectedCategory,
         yearId,
-        specs
+        specs,
+        langs
       );
       const newKeys = await listSubjectKeysToEnsure(userId, keys);
       setPreviewKeys(newKeys);
@@ -237,20 +253,25 @@ export function AcademicPathModal({
   };
 
   const applySave = async () => {
-    if (!selectedCategory || !yearOk || !specialtiesOk) return;
+    if (!selectedCategory || !yearOk) return;
     try {
       setSaving(true);
       setError(null);
-      const specs = specNeeded ? selectedSpecialties : [];
+      const specs = showSpecialtyBlock ? selectedSpecialties : [];
+      const langs = pathNeedsSubjectOptionsStep(selectedCategory)
+        ? selectedLanguages
+        : [];
       await updateUserProfile(userId, {
         academic_category: selectedCategory,
         academic_year_key: yearId,
         specialty_keys: specs,
+        language_keys: langs,
       });
       const allKeys = getSubjectKeysForAcademicPath(
         selectedCategory,
         yearId,
-        specs
+        specs,
+        langs
       );
       const newKeySet = new Set(previewKeys);
       const keysToEnsure = allKeys.filter(
@@ -274,7 +295,7 @@ export function AcademicPathModal({
       setScreen("level");
       return;
     }
-    if (yearNeedsSpecialties(selectedCategory, yearId)) {
+    if (pathNeedsSubjectOptionsStep(selectedCategory) && yearOk) {
       setScreen("subjects");
       return;
     }
@@ -283,7 +304,7 @@ export function AcademicPathModal({
 
   const advanceFromLevel = () => {
     if (!selectedCategory || !yearOk) return;
-    if (yearNeedsSpecialties(selectedCategory, yearId)) {
+    if (pathNeedsSubjectOptionsStep(selectedCategory) && yearOk) {
       setScreen("subjects");
       return;
     }
@@ -293,17 +314,12 @@ export function AcademicPathModal({
   const confirmFromCategory =
     !!selectedCategory &&
     !categoryNeedsYearStep(selectedCategory) &&
-    !yearNeedsSpecialties(selectedCategory, yearId);
+    !pathNeedsSubjectOptionsStep(selectedCategory);
 
   const confirmFromLevel =
     !!selectedCategory &&
     yearOk &&
-    !yearNeedsSpecialties(selectedCategory, yearId);
-
-  const showPathHint =
-    (screen === "category" && wizardStepTotal === 1) ||
-    (screen === "level" && confirmFromLevel) ||
-    (screen === "subjects" && specNeeded);
+    !pathNeedsSubjectOptionsStep(selectedCategory);
 
   const confirmLabel =
     screen === "confirm"
@@ -326,7 +342,7 @@ export function AcademicPathModal({
       : screen === "level"
         ? !yearOk || saving || listingPreview
         : screen === "subjects"
-          ? !specialtiesOk || saving || listingPreview
+          ? saving || listingPreview
           : screen === "confirm"
             ? saving
             : true;
@@ -378,46 +394,24 @@ export function AcademicPathModal({
       }}
     >
       <View style={styles.body}>
-        {wizardStepTotal > 1 && screen !== "confirm" ? (
-          <Text variant="caption" colorName="textMuted" style={styles.stepBadge}>
-            {t("profile.academicPath.wizardStepOf", {
-              current: wizardStepCurrent,
-              total: wizardStepTotal,
-            })}
-          </Text>
-        ) : null}
-
         {screen === "category" ? (
-          <>
-            <Text variant="subtitle" colorName="textMuted">
-              {t("onboarding.fillProfile.categoryLabel")}
-            </Text>
-            <View style={styles.categoryChips}>
-              {CATEGORY_ORDER.map((id) => (
-                <Button
-                  key={id}
-                  title={t(`categories.${id}`)}
-                  variant={selectedCategory === id ? "primary" : "outline"}
-                  shape="pill"
-                  size="sm"
-                  onPress={() => onSelectCategory(id)}
-                />
-              ))}
-            </View>
-            {showPathHint && screen === "category" ? (
-              <Text variant="caption" colorName="textMuted" style={styles.hint}>
-                {t("profile.academicPath.modalHint")}
-              </Text>
-            ) : null}
-          </>
+          <View style={[styles.categoryChips, styles.pathBlockBelowTitle]}>
+            {CATEGORY_ORDER.map((id) => (
+              <Button
+                key={id}
+                title={t(`categories.${id}`)}
+                variant={selectedCategory === id ? "primary" : "outline"}
+                shape="pill"
+                size="sm"
+                onPress={() => onSelectCategory(id)}
+              />
+            ))}
+          </View>
         ) : null}
 
         {screen === "level" && selectedCategory && categoryNeedsYearStep(selectedCategory) ? (
           <>
-            <Text variant="subtitle" colorName="textMuted">
-              {t("onboarding.fillProfile.yearLabel")}
-            </Text>
-            <View style={styles.categoryChips}>
+            <View style={[styles.categoryChips, styles.pathBlockBelowTitle]}>
               {yearsForCategory.map((y) => (
                 <Button
                   key={y.id}
@@ -428,67 +422,33 @@ export function AcademicPathModal({
                   onPress={() => {
                     setYearId(y.id);
                     setSelectedSpecialties([]);
+                    setSelectedLanguages([]);
                   }}
                 />
               ))}
             </View>
-            {showPathHint && screen === "level" ? (
-              <Text variant="caption" colorName="textMuted" style={styles.hint}>
-                {t("profile.academicPath.modalHint")}
-              </Text>
-            ) : null}
           </>
         ) : null}
 
-        {screen === "subjects" && specNeeded ? (
-          <>
-            <Text variant="subtitle" colorName="textMuted">
-              {t("onboarding.fillProfile.specialtiesLabel", {
-                count: specRequired,
-              })}
-            </Text>
-            <ScrollView
-              style={styles.subjectsScroll}
-              contentContainerStyle={styles.subjectsScrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.categoryChips}>
-                {LYCEE_SPECIALTY_SUBJECT_KEYS.map((key) => {
-                  const active = selectedSpecialties.includes(key);
-                  return (
-                    <Pressable
-                      key={key}
-                      onPress={() => toggleSpecialty(key)}
-                      style={({ pressed }) => [
-                        styles.specChip,
-                        {
-                          backgroundColor: active ? theme.primary : theme.surface,
-                          borderColor: theme.divider ?? theme.border,
-                          opacity: pressed ? 0.85 : 1,
-                        },
-                      ]}
-                    >
-                      <Text
-                        variant="micro"
-                        style={{
-                          color: active
-                            ? theme.onPrimary ?? "#fff"
-                            : theme.text,
-                          fontWeight: "600",
-                        }}
-                      >
-                        {t(`subjectCatalog.${key}`)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            <Text variant="caption" colorName="textMuted" style={styles.hint}>
-              {t("profile.academicPath.modalHint")}
-            </Text>
-          </>
+        {screen === "subjects" && subjectOptionsNeeded ? (
+          <View style={styles.pathBlockBelowTitle}>
+            <PathSubjectOptionsStep
+              baseSubjectKeys={getSubjectKeysForAcademicPath(
+                selectedCategory!,
+                yearId,
+                [],
+                []
+              )}
+              showSpecialtyOptions={showSpecialtyBlock}
+              specialtyOptionKeys={LYCEE_SPECIALTY_SUBJECT_KEYS}
+              selectedSpecialties={selectedSpecialties}
+              onToggleSpecialty={toggleSpecialty}
+              showLanguageOptions
+              languageOptionKeys={LANGUAGE_OPTION_SUBJECT_KEYS}
+              selectedLanguages={selectedLanguages}
+              onToggleLanguage={toggleLanguage}
+            />
+          </View>
         ) : null}
 
         {screen === "confirm" ? (
@@ -530,7 +490,7 @@ export function AcademicPathModal({
                           variant="micro"
                           style={{
                             color: active
-                              ? theme.onPrimary ?? "#fff"
+                              ? theme.onPrimaryDark ?? "#FFFFFF"
                               : theme.text,
                             fontWeight: "600",
                           }}
@@ -558,15 +518,14 @@ export function AcademicPathModal({
 
 const createStyles = (theme: { divider?: string; border: string; danger?: string }) =>
   StyleSheet.create({
-    body: { gap: 4 },
-    stepBadge: { marginBottom: 6 },
+    body: { gap: 12, paddingTop: 4 },
+    pathBlockBelowTitle: { marginTop: 14 },
     subjectsScroll: { maxHeight: 280 },
     subjectsScrollContent: { paddingBottom: 4 },
     categoryChips: {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: 10,
-      marginTop: 8,
     },
     specChip: {
       paddingHorizontal: 12,
@@ -574,7 +533,6 @@ const createStyles = (theme: { divider?: string; border: string; danger?: string
       borderRadius: 999,
       borderWidth: 1,
     },
-    hint: { marginTop: 10, lineHeight: 18 },
     confirmIntro: { marginTop: 6, lineHeight: 18 },
     error: {
       color: theme.danger ?? "#c00",

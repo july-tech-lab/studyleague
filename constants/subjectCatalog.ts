@@ -23,6 +23,9 @@ export type SubjectKey =
   | "computer_science"
   | "engineering"
   | "german"
+  | "italian"
+  | "chinese"
+  | "japanese"
   | "geopolitics"
   | "sport"
   | "calculus"
@@ -34,7 +37,26 @@ export type SubjectKey =
   | "languages"
   | "design"
   | "management"
-  | "health";
+  | "health"
+  | "discover_world"
+  | "svt"
+  | "ses"
+  | "snt"
+  | "french_philosophy"
+  | "economics_esh"
+  | "geopolitics_hgg"
+  | "culture_general"
+  | "modern_literature"
+  | "latin"
+  | "greek"
+  | "social_sciences"
+  | "nsi"
+  | "hggsp"
+  | "hlp"
+  | "llce_english"
+  | "arts_plastiques"
+  | "eps"
+  | "si";
 
 export interface CatalogEntry {
   icon: string;
@@ -66,6 +88,9 @@ export const SUBJECT_CATALOG: Record<SubjectKey, CatalogEntry> = {
   computer_science:  { icon: "code",          defaultColor: "#0F766E" },
   engineering:       { icon: "wrench",        defaultColor: "#B45309" },
   german:            { icon: "languages",     defaultColor: "#DC2626" },
+  italian:           { icon: "languages",     defaultColor: "#16A34A" },
+  chinese:           { icon: "languages",     defaultColor: "#B91C1C" },
+  japanese:          { icon: "languages",     defaultColor: "#DB2777" },
   geopolitics:       { icon: "globe",         defaultColor: "#9333EA" },
   sport:             { icon: "dumbbell",      defaultColor: "#16A34A" },
   calculus:          { icon: "calculator",    defaultColor: "#1D4ED8" },
@@ -78,6 +103,25 @@ export const SUBJECT_CATALOG: Record<SubjectKey, CatalogEntry> = {
   design:            { icon: "palette",       defaultColor: "#EC4899" },
   management:        { icon: "briefcase",     defaultColor: "#6366F1" },
   health:            { icon: "heart-pulse",   defaultColor: "#EF4444" },
+  discover_world:    { icon: "globe",         defaultColor: "#0D9488" },
+  svt:               { icon: "leaf",          defaultColor: "#15803D" },
+  ses:               { icon: "trending-up",   defaultColor: "#CA8A04" },
+  snt:               { icon: "cpu",           defaultColor: "#6366F1" },
+  french_philosophy: { icon: "book-open",     defaultColor: "#7C3AED" },
+  economics_esh:     { icon: "trending-up",   defaultColor: "#0D9488" },
+  geopolitics_hgg:   { icon: "globe",         defaultColor: "#9333EA" },
+  culture_general:   { icon: "brain",         defaultColor: "#6D28D9" },
+  modern_literature: { icon: "book-open",     defaultColor: "#B45309" },
+  latin:             { icon: "landmark",      defaultColor: "#A16207" },
+  greek:             { icon: "landmark",      defaultColor: "#854D0E" },
+  social_sciences:   { icon: "users",         defaultColor: "#4F46E5" },
+  nsi:               { icon: "code",          defaultColor: "#0F766E" },
+  hggsp:             { icon: "globe",         defaultColor: "#9333EA" },
+  hlp:               { icon: "book-open",     defaultColor: "#7C3AED" },
+  llce_english:      { icon: "languages",     defaultColor: "#059669" },
+  arts_plastiques:   { icon: "palette",       defaultColor: "#E91E63" },
+  eps:               { icon: "dumbbell",      defaultColor: "#16A34A" },
+  si:                { icon: "wrench",        defaultColor: "#B45309" },
 };
 
 /**
@@ -109,6 +153,9 @@ export const PROFILE_POPULAR_SUBJECT_KEYS: SubjectKey[] = [
   "english",
   "spanish",
   "german",
+  "italian",
+  "chinese",
+  "japanese",
   "science",
   "computer_science",
   "technology",
@@ -120,6 +167,13 @@ export const PROFILE_POPULAR_SUBJECT_KEYS: SubjectKey[] = [
   "sport",
   "history",
   "languages",
+  "svt",
+  "ses",
+  "snt",
+  "discover_world",
+  "french_philosophy",
+  "economics_esh",
+  "geopolitics_hgg",
 ];
 
 /** Eight swatches for creating a custom subject (matches common picker layout). */

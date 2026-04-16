@@ -57,8 +57,7 @@ export function useDashboard(
   const { t } = useTranslation();
   const { profile, subjectTotals, sessionTotals, subjects, allSubjects, loading: profileLoading } =
     useProfile({ userId, autoLoad: true });
-  const { goals, goalsBySubject, loading: goalsLoading } =
-    useSubjectGoals(userId);
+  const { goals, loading: goalsLoading } = useSubjectGoals(userId);
 
   const [weeklySessions, setWeeklySessions] = useState<
     { subject_id: string; duration_seconds: number; ended_at: string }[]
@@ -101,10 +100,6 @@ export function useDashboard(
 
   const parentSubjects = useMemo(() => subjects, [subjects]);
 
-  const subjectIds = useMemo(
-    () => parentSubjects.map((s) => s.id),
-    [parentSubjects]
-  );
   const subjectNameById = useMemo(
     () => Object.fromEntries(parentSubjects.map((s) => [s.id, getSubjectDisplayName(s, t)])),
     [parentSubjects, t]
@@ -348,7 +343,6 @@ export function useDashboard(
     },
     [
       period,
-      focusDate,
       dayKeys,
       actualByDayBySubject,
       actualByDayOfMonthBySubject,

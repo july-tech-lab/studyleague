@@ -11,6 +11,7 @@ Single reference for local development, cleaning a stuck environment, EAS builds
 | **Build for App Store / Play Store** | `eas build --profile production --platform all` |
 | **Submit to stores** | `eas submit --platform android --latest` (or `ios`) |
 | **Check env vars** | `eas env:list` |
+| **Lint + types (before release)** | `npm run lint` and `npx tsc --noEmit` |
 
 ---
 
@@ -101,7 +102,43 @@ Confirm `.env` still exists with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUP
 
 ---
 
-## 4. Git before EAS builds
+## 4. Pre-release checks (lint, types, audit)
+
+These commands are **not** required for every local run, but they help catch issues before a **production** build, a large merge, or store submission. EAS does not run them for you unless you add CI.
+
+### Lint (ESLint)
+
+```bash
+npm run lint
+```
+
+Fix reported problems in your editor or from the CLI output. This matches the `lint` script in `package.json` (`eslint .`).
+
+### TypeScript (no emit)
+
+There is no dedicated `npm` script yet; from the project root:
+
+```bash
+npx tsc --noEmit
+```
+
+Catches type errors that ESLint might not flag. If this fails, fix types before treating the branch as release-ready.
+
+### Security audit (`npm`)
+
+```bash
+npm audit
+```
+
+Useful **from time to time** for dependency advisories. React Native / Expo trees are often large; reports can include low-severity or transitive noise, and `npm audit fix` can introduce breaking upgrades. Prefer reading each advisory and upgrading deliberately (or following upstream Expo releases) rather than blindly “fixing all” right before a store deadline.
+
+### Formatting (Prettier, etc.)
+
+This repository does not ship a **format** script or Prettier config. If the team adds one later, document it here; until then, rely on editor defaults or an agreed style.
+
+---
+
+## 5. Git before EAS builds
 
 EAS builds from your git remote; commit what you want in the build.
 
@@ -121,7 +158,7 @@ git ls-files | grep -E "\.env$"   # should print nothing
 
 ---
 
-## 5. Development build (physical device)
+## 6. Development build (physical device)
 
 ```bash
 eas build --profile development --platform android
@@ -133,7 +170,7 @@ Install the artifact from the EAS download link or QR code.
 
 ---
 
-## 6. Public release (App Store / Play Store)
+## 7. Public release (App Store / Play Store)
 
 ### Prerequisites
 
@@ -142,9 +179,10 @@ Install the artifact from the EAS download link or QR code.
 
 ### Pre-build checklist
 
-1. Commit and push (see §4).
+1. Commit and push (see §5).
 2. `eas env:list` — production (or target env) shows both Supabase vars.
-3. `.env` not committed (command above).
+3. `.env` not committed (see §5 — `git ls-files` check).
+4. Optional: §4 (lint, `tsc --noEmit`, occasional `npm audit`).
 
 ### Build and submit
 
@@ -163,7 +201,7 @@ In **Play Console** and **App Store Connect**, add screenshots, description, pri
 
 ---
 
-## 7. EAS Update (OTA / `expo-updates`)
+## 8. EAS Update (OTA / `expo-updates`)
 
 Push JavaScript and asset changes to **already installed** builds without a new store binary (same **runtime** as defined in `app.json` — here `runtimeVersion` uses the `appVersion` policy).
 
@@ -186,7 +224,7 @@ npx eas build:configure
 
 ### First build with a channel
 
-OTA only applies after users install a build that was produced with EAS and the matching channel. Use the same profiles as in §5 / §6, for example:
+OTA only applies after users install a build that was produced with EAS and the matching channel. Use the same profiles as in §6 / §7, for example:
 
 ```bash
 eas build --profile production --platform android
@@ -207,7 +245,7 @@ eas update --channel development --message "Dev client"
 
 ---
 
-## 8. Build profiles
+## 9. Build profiles
 
 | Profile | Use case |
 |---------|----------|
@@ -217,13 +255,18 @@ eas update --channel development --message "Dev client"
 
 ---
 
-## 9. Common commands
+## 10. Common commands
 
 ```bash
 # Development
 npm start
 npm run android
 npm run ios
+
+# Quality (before release / big PR)
+npm run lint
+npx tsc --noEmit
+npm audit
 
 # Building
 eas build --profile development --platform android
@@ -243,7 +286,7 @@ eas update --channel production --message "Your message"
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 | Issue | What to try |
 |-------|----------------|
@@ -256,9 +299,10 @@ eas update --channel production --message "Your message"
 
 ---
 
-## 11. Reminders
+## 12. Reminders
 
 - **Commit before building** — EAS uses your repository state.
 - **Never commit `.env`** — use `eas env:create` (or update vars in the EAS dashboard) for builds.
 - **Test locally first** — saves build time and EAS usage.
+- **Before store / major merges** — run §4 checks (`lint`, `tsc --noEmit`; `npm audit` occasionally).
 - **Android Studio:** prefer closed or Device Manager–only for normal JS development; use full IDE when changing native modules.

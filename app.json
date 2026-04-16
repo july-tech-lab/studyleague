@@ -46,14 +46,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "c79c4e34-bdff-4db1-bc22-e949cc4ef631"
+        "projectId": "0bc05776-d8a2-4850-95d1-3dd90b33cbfc"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
+    "owner": "juliemaitre",
     "updates": {
-      "url": "https://u.expo.dev/c79c4e34-bdff-4db1-bc22-e949cc4ef631"
+      "url": "https://u.expo.dev/0bc05776-d8a2-4850-95d1-3dd90b33cbfc"
     }
   }
 }

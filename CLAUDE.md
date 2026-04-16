@@ -7,7 +7,7 @@ Stack : expo-router, Supabase (auth, storage, realtime), i18n FR/EN.
 ## Conventions
 - TypeScript strict
 - Composants dans /components, hooks dans /hooks
-- Migrations SQL dans /supabase/migrations
+- Migrations SQL dans **`/migrations`** (exécution manuelle dans le SQL Editor Supabase, sans obligation de CLI)
 - Ne pas modifier app.json ni eas.json sans confirmation
 
 ## Priorités actuelles

@@ -1,22 +1,26 @@
+import { PathSubjectOptionsStep } from "@/components/profile/PathSubjectOptionsStep";
 import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import type { CategoryId } from "@/constants/categories";
 import {
   categoryNeedsYearStep,
+  getDefaultPickedSubjectKeysForPath,
   getSubjectKeysForAcademicPath,
-  requiredSpecialtyCount,
-  type AcademicYearId,
+  pathNeedsSubjectOptionsStep,
   yearNeedsSpecialties,
   YEARS_BY_CATEGORY,
+  type AcademicYearId,
 } from "@/constants/academicPath";
-import { LYCEE_SPECIALTY_SUBJECT_KEYS } from "@/constants/lyceeSpecialties";
+import type { CategoryId } from "@/constants/categories";
 import Colors from "@/constants/Colors";
+import {
+  LANGUAGE_OPTION_SUBJECT_KEYS,
+  LYCEE_SPECIALTY_SUBJECT_KEYS,
+} from "@/constants/pathSubjectOptions";
 import type { SubjectKey } from "@/constants/subjectCatalog";
 import { useAuth } from "@/utils/authContext";
 import { ensureDefaultSubjectsFromKeys } from "@/utils/ensureDefaultSubjectsFromKeys";
 import { uploadAvatar, upsertUserProfile } from "@/utils/queries";
-import { authEyebrow, authFormCard, authTitle } from "./_layout";
 import { useTheme } from "@/utils/themeContext";
 import * as ImagePicker from "expo-image-picker";
 import * as Localization from "expo-localization";
@@ -24,13 +28,8 @@ import { useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, Pencil, User } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
+import { authEyebrow, authFormCard, authTitle } from "./_layout";
 
 const CATEGORY_ORDER: CategoryId[] = [
   "primaire",
@@ -41,7 +40,7 @@ const CATEGORY_ORDER: CategoryId[] = [
   "autres",
 ];
 
-type PathWizardScreen = "category" | "level" | "subjects";
+type PathWizardScreen = "category" | "level" | "subjects" | "catalog";
 
 export default function FillProfileScreen() {
   const router = useRouter();
@@ -56,6 +55,9 @@ export default function FillProfileScreen() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | null>(null);
   const [yearId, setYearId] = useState<AcademicYearId | null>(null);
   const [selectedSpecialties, setSelectedSpecialties] = useState<SubjectKey[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<SubjectKey[]>([]);
+  /** Matières catalogue à créer (parcours sans spécialités lycée) — défaut = catalogue sans LV optionnelles. */
+  const [pickedSubjectKeys, setPickedSubjectKeys] = useState<SubjectKey[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
     (user?.user_metadata as { avatar_url?: string })?.avatar_url ?? null
   );
@@ -85,28 +87,7 @@ export default function FillProfileScreen() {
     const years = YEARS_BY_CATEGORY[id];
     setYearId(years.length === 1 ? years[0].id : null);
     setSelectedSpecialties([]);
-  };
-
-  const specNeeded = useMemo(
-    () =>
-      selectedCategory
-        ? yearNeedsSpecialties(selectedCategory, yearId)
-        : false,
-    [selectedCategory, yearId]
-  );
-
-  const specRequired = useMemo(
-    () => requiredSpecialtyCount(yearId),
-    [yearId]
-  );
-
-  const toggleSpecialty = (key: SubjectKey) => {
-    setSelectedSpecialties((prev) => {
-      if (prev.includes(key)) return prev.filter((k) => k !== key);
-      const max = specRequired;
-      if (max > 0 && prev.length >= max) return prev;
-      return [...prev, key];
-    });
+    setSelectedLanguages([]);
   };
 
   const canGoStep2 =
@@ -118,57 +99,80 @@ export default function FillProfileScreen() {
     return y.length === 1 || yearId !== null;
   }, [selectedCategory, yearId]);
 
-  const specialtiesOk =
-    !specNeeded || selectedSpecialties.length === specRequired;
+  const subjectOptionsStep = useMemo(
+    () =>
+      !!selectedCategory &&
+      pathNeedsSubjectOptionsStep(selectedCategory) &&
+      yearOk,
+    [selectedCategory, yearOk]
+  );
 
-  const confirmFromCategory =
-    !!selectedCategory &&
-    !categoryNeedsYearStep(selectedCategory) &&
-    !yearNeedsSpecialties(selectedCategory, yearId);
+  const showSpecialtyBlock = useMemo(
+    () =>
+      selectedCategory
+        ? yearNeedsSpecialties(selectedCategory, yearId)
+        : false,
+    [selectedCategory, yearId]
+  );
 
-  const confirmFromLevel =
-    !!selectedCategory &&
-    yearOk &&
-    !yearNeedsSpecialties(selectedCategory, yearId);
+  const toggleSpecialty = (key: SubjectKey) => {
+    setSelectedSpecialties((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
+
+  const toggleLanguage = (key: SubjectKey) => {
+    setSelectedLanguages((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
 
   const pathFooterTitle =
-    pathScreen === "subjects" ||
-    (pathScreen === "category" && confirmFromCategory) ||
-    (pathScreen === "level" && confirmFromLevel)
-      ? saving
-        ? t("common.status.saving")
-        : t("onboarding.continue")
-      : t("onboarding.fillProfile.nextStep");
+    saving
+      ? t("common.status.saving")
+      : pathScreen === "catalog" || pathScreen === "subjects"
+        ? t("onboarding.continue")
+        : t("onboarding.fillProfile.nextStep");
 
   const pathFooterDisabled =
     pathScreen === "category"
       ? !selectedCategory || saving || uploadingAvatar
       : pathScreen === "level"
         ? !yearOk || saving || uploadingAvatar
-        : !specialtiesOk || saving || uploadingAvatar;
+        : pathScreen === "subjects"
+          ? saving || uploadingAvatar
+          : pathScreen === "catalog"
+            ? saving || uploadingAvatar
+            : true;
 
   const pathFooterLoading =
-    saving &&
-    (pathScreen === "subjects" ||
-      (pathScreen === "category" && confirmFromCategory) ||
-      (pathScreen === "level" && confirmFromLevel));
+    saving && (pathScreen === "catalog" || pathScreen === "subjects");
 
-  const wizardStepTotal = useMemo(() => {
-    if (!selectedCategory) return 1;
-    let n = 1;
-    if (categoryNeedsYearStep(selectedCategory)) n++;
-    if (yearNeedsSpecialties(selectedCategory, yearId)) n++;
-    return n;
+  const openCatalogScreen = useCallback(() => {
+    if (!selectedCategory) return;
+    const years = YEARS_BY_CATEGORY[selectedCategory];
+    const resolvedYearId = yearId ?? (years.length === 1 ? years[0].id : null);
+    setPickedSubjectKeys(
+      getDefaultPickedSubjectKeysForPath(
+        selectedCategory,
+        resolvedYearId,
+        [],
+        []
+      )
+    );
+    setPathScreen("catalog");
   }, [selectedCategory, yearId]);
-
-  const wizardStepCurrent = useMemo(() => {
-    if (pathScreen === "category") return 1;
-    if (pathScreen === "level") return 2;
-    return wizardStepTotal;
-  }, [pathScreen, wizardStepTotal]);
 
   const goPathBack = useCallback(() => {
     setError(null);
+    if (pathScreen === "catalog") {
+      setPathScreen(
+        selectedCategory && categoryNeedsYearStep(selectedCategory)
+          ? "level"
+          : "category"
+      );
+      return;
+    }
     if (pathScreen === "subjects") {
       setPathScreen(
         selectedCategory && categoryNeedsYearStep(selectedCategory)
@@ -184,7 +188,7 @@ export default function FillProfileScreen() {
 
   const handleBack = () => {
     if (step === 2) {
-      if (pathScreen === "subjects" || pathScreen === "level") {
+      if (pathScreen === "catalog" || pathScreen === "subjects" || pathScreen === "level") {
         goPathBack();
         return;
       }
@@ -248,12 +252,6 @@ export default function FillProfileScreen() {
       setError(t("onboarding.fillProfile.errorYear"));
       return;
     }
-    if (!specialtiesOk) {
-      setError(
-        t("onboarding.fillProfile.errorSpecialties", { count: specRequired })
-      );
-      return;
-    }
     if (!user?.id) {
       setError(t("onboarding.userMissing"));
       return;
@@ -279,6 +277,10 @@ export default function FillProfileScreen() {
         academic_category: selectedCategory,
         academic_year_key: yearId,
         specialty_keys: selectedSpecialties,
+        language_keys:
+          selectedCategory && pathNeedsSubjectOptionsStep(selectedCategory)
+            ? selectedLanguages
+            : [],
       });
 
       await updateUserMetadata({
@@ -289,11 +291,15 @@ export default function FillProfileScreen() {
         avatar_url: finalAvatarUrl,
       });
 
-      const keys = getSubjectKeysForAcademicPath(
-        selectedCategory,
-        yearId,
-        selectedSpecialties
-      );
+      const keys =
+        selectedCategory && pathNeedsSubjectOptionsStep(selectedCategory)
+          ? getSubjectKeysForAcademicPath(
+              selectedCategory,
+              yearId,
+              selectedSpecialties,
+              selectedLanguages
+            )
+          : pickedSubjectKeys;
       await ensureDefaultSubjectsFromKeys(user.id, keys, t);
       await refreshProfileSetup();
       router.replace("/");
@@ -306,42 +312,39 @@ export default function FillProfileScreen() {
 
   return (
     <>
-      <Button
-        iconLeft={ArrowLeft}
-        iconOnly
-        variant="secondary"
-        shape="pill"
-        size="xs"
-        onPress={handleBack}
-        accessibilityLabel={t("common.actions.back")}
-      />
+      <View style={styles.topBlock}>
+        <Button
+          iconLeft={ArrowLeft}
+          iconOnly
+          variant="secondary"
+          shape="pill"
+          size="xs"
+          style={{ alignSelf: "flex-start" }}
+          onPress={handleBack}
+          accessibilityLabel={t("common.actions.back")}
+        />
 
-      <Text variant="micro" style={styles.eyebrow}>
-        {t("auth.branding.eyebrow")}
-      </Text>
-      <Text variant="h2" align="center" style={styles.title}>
-        {step === 1
-          ? t("onboarding.fillProfile.title")
-          : pathScreen === "category"
-            ? t("onboarding.fillProfile.pathTitle")
-            : pathScreen === "level"
-              ? t("onboarding.fillProfile.yearLabel")
-              : t("profile.academicPath.modalTitle")}
-      </Text>
-      {step === 2 && wizardStepTotal > 1 ? (
-        <Text variant="caption" colorName="textMuted" align="center" style={styles.stepBadge}>
-          {t("profile.academicPath.wizardStepOf", {
-            current: wizardStepCurrent,
-            total: wizardStepTotal,
-          })}
+        <Text variant="micro" style={styles.eyebrow}>
+          {t("auth.branding.eyebrow")}
         </Text>
-      ) : null}
+        <Text variant="h2" align="center" style={styles.title}>
+          {step === 1
+            ? t("onboarding.fillProfile.title")
+            : pathScreen === "category"
+              ? t("onboarding.fillProfile.pathTitle")
+              : pathScreen === "level"
+                ? t("onboarding.fillProfile.levelTitle")
+                : pathScreen === "catalog" || pathScreen === "subjects"
+                  ? t("onboarding.fillProfile.subjectPickTitle")
+                  : t("profile.academicPath.modalTitle")}
+        </Text>
+      </View>
 
       {/*
         Auth layout Screen is already a ScrollView. Nested ScrollView + maxHeight %
         often collapses so the form is not visible.
       */}
-      <View style={styles.formOuter}>
+      <View style={[styles.formOuter, step === 2 && styles.formOuterPath]}>
         {step === 1 ? (
           <View style={styles.card}>
             <Pressable
@@ -396,36 +399,23 @@ export default function FillProfileScreen() {
         ) : (
           <View style={styles.card}>
             {pathScreen === "category" ? (
-              <>
-                <Text variant="subtitle" colorName="textMuted">
-                  {t("onboarding.fillProfile.categoryLabel")}
-                </Text>
-                <View style={styles.categoryChips}>
-                  {CATEGORY_ORDER.map((id) => (
-                    <Button
-                      key={id}
-                      title={t(`categories.${id}`)}
-                      variant={selectedCategory === id ? "primary" : "outline"}
-                      shape="pill"
-                      size="sm"
-                      onPress={() => onSelectCategory(id)}
-                    />
-                  ))}
-                </View>
-                {wizardStepTotal === 1 ? (
-                  <Text variant="caption" colorName="textMuted" style={styles.pathHint}>
-                    {t("profile.academicPath.modalHint")}
-                  </Text>
-                ) : null}
-              </>
+              <View style={[styles.categoryChips, styles.pathChipsBelowTitle]}>
+                {CATEGORY_ORDER.map((id) => (
+                  <Button
+                    key={id}
+                    title={t(`categories.${id}`)}
+                    variant={selectedCategory === id ? "primary" : "outline"}
+                    shape="pill"
+                    size="sm"
+                    onPress={() => onSelectCategory(id)}
+                  />
+                ))}
+              </View>
             ) : null}
 
             {pathScreen === "level" && selectedCategory && categoryNeedsYearStep(selectedCategory) ? (
               <>
-                <Text variant="subtitle" colorName="textMuted">
-                  {t("onboarding.fillProfile.yearLabel")}
-                </Text>
-                <View style={styles.categoryChips}>
+                <View style={[styles.categoryChips, styles.pathChipsBelowTitle]}>
                   {yearsForCategory.map((y) => (
                     <Button
                       key={y.id}
@@ -436,67 +426,80 @@ export default function FillProfileScreen() {
                       onPress={() => {
                         setYearId(y.id);
                         setSelectedSpecialties([]);
+                        setSelectedLanguages([]);
                       }}
                     />
                   ))}
                 </View>
-                {yearOk && !yearNeedsSpecialties(selectedCategory, yearId) ? (
-                  <Text variant="caption" colorName="textMuted" style={styles.pathHint}>
-                    {t("profile.academicPath.modalHint")}
-                  </Text>
-                ) : null}
               </>
             ) : null}
 
-            {pathScreen === "subjects" && specNeeded ? (
-              <>
-                <Text variant="subtitle" colorName="textMuted">
-                  {t("onboarding.fillProfile.specialtiesLabel", {
-                    count: specRequired,
-                  })}
-                </Text>
-                <ScrollView
-                  style={styles.specialtiesScroll}
-                  contentContainerStyle={styles.specialtiesScrollContent}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                >
-                  <View style={styles.categoryChips}>
-                    {LYCEE_SPECIALTY_SUBJECT_KEYS.map((key) => {
-                      const active = selectedSpecialties.includes(key);
-                      return (
-                        <Pressable
-                          key={key}
-                          onPress={() => toggleSpecialty(key)}
-                          style={({ pressed }) => [
-                            styles.specChip,
-                            {
-                              backgroundColor: active
-                                ? theme.primary
-                                : theme.surface,
-                              borderColor: theme.divider ?? theme.border,
-                              opacity: pressed ? 0.85 : 1,
-                            },
-                          ]}
+            {pathScreen === "subjects" && subjectOptionsStep ? (
+              <View style={styles.pathChipsBelowTitle}>
+                <PathSubjectOptionsStep
+                  baseSubjectKeys={getSubjectKeysForAcademicPath(
+                    selectedCategory!,
+                    yearId,
+                    [],
+                    []
+                  )}
+                  showSpecialtyOptions={showSpecialtyBlock}
+                  specialtyOptionKeys={LYCEE_SPECIALTY_SUBJECT_KEYS}
+                  selectedSpecialties={selectedSpecialties}
+                  onToggleSpecialty={toggleSpecialty}
+                  showLanguageOptions
+                  languageOptionKeys={LANGUAGE_OPTION_SUBJECT_KEYS}
+                  selectedLanguages={selectedLanguages}
+                  onToggleLanguage={toggleLanguage}
+                />
+              </View>
+            ) : null}
+
+            {pathScreen === "catalog" && selectedCategory ? (
+              <View style={styles.pathChipsBelowTitle}>
+                <View style={styles.categoryChips}>
+                  {getSubjectKeysForAcademicPath(
+                    selectedCategory!,
+                    yearId,
+                    [],
+                    []
+                  ).map((key) => {
+                    const active = pickedSubjectKeys.includes(key);
+                    return (
+                      <Pressable
+                        key={key}
+                        onPress={() => {
+                          setPickedSubjectKeys((prev) =>
+                            prev.includes(key)
+                              ? prev.filter((k) => k !== key)
+                              : [...prev, key]
+                          );
+                        }}
+                        style={({ pressed }) => [
+                          styles.specChip,
+                          {
+                            backgroundColor: active ? theme.primary : theme.surface,
+                            borderColor: theme.divider ?? theme.border,
+                            opacity: pressed ? 0.85 : 1,
+                          },
+                        ]}
+                      >
+                        <Text
+                          variant="micro"
+                          style={{
+                            color: active
+                              ? theme.onPrimaryDark ?? theme.onPrimary ?? "#FFFFFF"
+                              : theme.text,
+                            fontWeight: "600",
+                          }}
                         >
-                          <Text
-                            variant="micro"
-                            style={{
-                              color: active ? theme.onPrimaryDark : theme.text,
-                              fontWeight: "600",
-                            }}
-                          >
-                            {t(`subjectCatalog.${key}`)}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
-                <Text variant="caption" colorName="textMuted" style={styles.pathHint}>
-                  {t("profile.academicPath.modalHint")}
-                </Text>
-              </>
+                          {t(`subjectCatalog.${key}`)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             ) : null}
 
             {error ? (
@@ -521,11 +524,14 @@ export default function FillProfileScreen() {
                     setPathScreen("level");
                     return;
                   }
-                  if (yearNeedsSpecialties(selectedCategory, yearId)) {
+                  if (
+                    pathNeedsSubjectOptionsStep(selectedCategory) &&
+                    yearOk
+                  ) {
                     setPathScreen("subjects");
                     return;
                   }
-                  void handleFinish();
+                  openCatalogScreen();
                   return;
                 }
                 if (pathScreen === "level") {
@@ -533,10 +539,17 @@ export default function FillProfileScreen() {
                     setError(t("onboarding.fillProfile.errorYear"));
                     return;
                   }
-                  if (yearNeedsSpecialties(selectedCategory!, yearId)) {
+                  if (
+                    pathNeedsSubjectOptionsStep(selectedCategory!) &&
+                    yearOk
+                  ) {
                     setPathScreen("subjects");
                     return;
                   }
+                  openCatalogScreen();
+                  return;
+                }
+                if (pathScreen === "catalog") {
                   void handleFinish();
                   return;
                 }
@@ -555,13 +568,23 @@ export default function FillProfileScreen() {
 
 const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
+    topBlock: {
+      width: "100%",
+      paddingTop: 20,
+      gap: 12,
+      marginBottom: 24,
+    },
     eyebrow: authEyebrow(theme),
     title: authTitle(),
     formOuter: { paddingBottom: 32 },
-    stepBadge: { marginBottom: 10 },
-    pathHint: { marginTop: 12, lineHeight: 18 },
-    specialtiesScroll: { maxHeight: 280 },
-    specialtiesScrollContent: { paddingBottom: 4 },
+    formOuterPath: { marginTop: 4 },
+    pathChipsBelowTitle: { marginTop: 16 },
+    specChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 999,
+      borderWidth: 1,
+    },
     card: authFormCard(),
     avatarWrapper: {
       alignItems: "center",
@@ -598,12 +621,6 @@ const createStyles = (theme: typeof Colors.light) =>
       flexDirection: "row",
       flexWrap: "wrap",
       gap: 10,
-    },
-    specChip: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 999,
-      borderWidth: 1,
     },
     error: {
       color: theme.danger,

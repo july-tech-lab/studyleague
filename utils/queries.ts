@@ -18,6 +18,7 @@ export interface Profile {
   academic_category?: string | null;
   academic_year_key?: string | null;
   specialty_keys?: string[] | null;
+  language_keys?: string[] | null;
 }
 
 export interface Subject {
@@ -830,6 +831,7 @@ export const updateUserProfile = async (
     academic_category?: string | null;
     academic_year_key?: string | null;
     specialty_keys?: string[] | null;
+    language_keys?: string[] | null;
   }
 ) => {
   const row: Record<string, unknown> = {};
@@ -849,6 +851,9 @@ export const updateUserProfile = async (
   }
   if (updates.specialty_keys !== undefined) {
     row.specialty_keys = updates.specialty_keys ?? [];
+  }
+  if (updates.language_keys !== undefined) {
+    row.language_keys = updates.language_keys ?? [];
   }
 
   const { data, error } = await supabase
@@ -873,6 +878,7 @@ export const upsertUserProfile = async (
     academic_category?: string | null;
     academic_year_key?: string | null;
     specialty_keys?: string[] | null;
+    language_keys?: string[] | null;
   }
 ) => {
   const row: Record<string, unknown> = {
@@ -893,6 +899,9 @@ export const upsertUserProfile = async (
   }
   if (profile.specialty_keys !== undefined) {
     row.specialty_keys = profile.specialty_keys ?? [];
+  }
+  if (profile.language_keys !== undefined) {
+    row.language_keys = profile.language_keys ?? [];
   }
 
   const { data, error } = await supabase

@@ -9,6 +9,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { Tabs } from "@/components/ui/Tabs";
 import {
   categoryNeedsYearStep,
+  normalizeAcademicYearId,
   YEARS_BY_CATEGORY,
 } from "@/constants/academicPath";
 import type { CategoryId } from "@/constants/categories";
@@ -66,6 +67,7 @@ import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -161,6 +163,7 @@ export default function ProfileScreen() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [accountActionLoading, setAccountActionLoading] = useState<"signout" | "delete" | null>(null);
   const [activeTab, setActiveTab] = useState<"stats" | "subjects" | "settings">("stats");
   const [updatingColor, setUpdatingColor] = useState(false);
@@ -222,7 +225,7 @@ export default function ProfileScreen() {
     const catLabel = t(`categories.${catId}`);
     if (!categoryNeedsYearStep(catId)) return catLabel;
     const y = YEARS_BY_CATEGORY[catId].find(
-      (x) => x.id === profile.academic_year_key
+      (x) => x.id === normalizeAcademicYearId(profile.academic_year_key)
     );
     if (!y) return catLabel;
     return `${catLabel} · ${t(`onboarding.years.${y.labelKey}`)}`;
@@ -601,31 +604,33 @@ export default function ProfileScreen() {
 
   const handleDeleteAccount = () => {
     if (!user?.id) return;
-    Alert.alert(
-      t("profile.account.deleteTitle", "Delete account?"),
-      t("profile.account.deleteMessage", "This will remove your data permanently."),
-      [
-        { text: t("common.actions.cancel"), style: "cancel" },
-        {
-          text: t("common.actions.delete"),
-          style: "destructive",
-          onPress: async () => {
-            setAccountActionLoading("delete");
-            try {
-              await deleteAccount();
-              router.replace("/(auth)/signin");
-            } catch (err: any) {
-              Alert.alert(
-                t("profile.account.deleteErrorTitle", "Unable to delete account"),
-                err?.message ?? t("profile.account.deleteError", "Please try again.")
-              );
-            } finally {
-              setAccountActionLoading(null);
-            }
-          },
-        },
-      ]
-    );
+    // Use in-app Modal instead of Alert: Alert.alert is a no-op on web (RN only implements iOS/Android).
+    setDeleteAccountModalVisible(true);
+  };
+
+  const handleCancelDeleteAccount = () => {
+    if (accountActionLoading === "delete") return;
+    setDeleteAccountModalVisible(false);
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    if (!user?.id) return;
+    setAccountActionLoading("delete");
+    try {
+      await deleteAccount();
+      setDeleteAccountModalVisible(false);
+      router.replace("/(auth)/signin");
+    } catch (err: any) {
+      const title = t("profile.account.deleteErrorTitle", "Unable to delete account");
+      const msg = err?.message ?? t("profile.account.deleteError", "Please try again.");
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.alert(`${title}\n\n${msg}`);
+      } else {
+        Alert.alert(title, msg);
+      }
+    } finally {
+      setAccountActionLoading(null);
+    }
   };
 
   return (
@@ -1252,6 +1257,7 @@ export default function ProfileScreen() {
           academicCategory={profile?.academic_category}
           academicYearKey={profile?.academic_year_key}
           specialtyKeys={profile?.specialty_keys}
+          languageKeys={profile?.language_keys}
           onSaved={async ({ category, yearId }) => {
             await updateUserMetadata({
               category,
@@ -1321,6 +1327,36 @@ export default function ProfileScreen() {
       >
         <Text variant="body" style={{ color: theme.textMuted }}>
           {t("profile.subjects.deleteMessage", "Cette matière sera retirée de votre profil.")}
+        </Text>
+      </Modal>
+
+      <Modal
+        visible={deleteAccountModalVisible}
+        onClose={handleCancelDeleteAccount}
+        title={t("profile.account.deleteTitle", "Delete your account permanently?")}
+        padding={20}
+        dismissible={accountActionLoading !== "delete"}
+        actions={{
+          cancel: {
+            label: t("common.actions.cancel"),
+            onPress: handleCancelDeleteAccount,
+            variant: "outline",
+            disabled: accountActionLoading === "delete",
+          },
+          confirm: {
+            label: t("common.actions.delete"),
+            onPress: handleConfirmDeleteAccount,
+            variant: "destructive",
+            iconLeft: Trash,
+            loading: accountActionLoading === "delete",
+          },
+        }}
+      >
+        <Text variant="body" style={{ color: theme.textMuted }}>
+          {t(
+            "profile.account.deleteMessage",
+            "All data tied to your account will be erased from our database. This is irreversible."
+          )}
         </Text>
       </Modal>
 

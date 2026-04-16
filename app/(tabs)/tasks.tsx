@@ -107,7 +107,7 @@ export default function TasksScreen() {
       setEditSubjectId(task.subjectId ?? null);
       setEditModalVisible(true);
     },
-    [subjects]
+    []
   );
 
   // Refresh tasks when returning to this tab to reflect timer updates
