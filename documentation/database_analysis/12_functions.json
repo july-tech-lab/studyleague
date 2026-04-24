@@ -1,0 +1,137 @@
+[
+    {
+      "function_name": "add_group_creator_as_admin",
+      "arguments": "p_group_id uuid, p_user_id uuid",
+      "return_type": "group_members",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.add_group_creator_as_admin(p_group_id uuid, p_user_id uuid)\n RETURNS group_members\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  result group_members%rowtype;\r\nbegin\r\n  -- Security check: ensure the caller is the user they claim to be\r\n  if p_user_id is distinct from auth.uid() then\r\n    raise exception 'UNAUTHORIZED';\r\n  end if;\r\n\r\n  -- Verify the user is the creator of the group\r\n  if not exists (\r\n    select 1 from groups g\r\n    where g.id = p_group_id\r\n      and g.created_by = p_user_id\r\n  ) then\r\n    raise exception 'NOT_GROUP_CREATOR';\r\n  end if;\r\n\r\n  -- Check if already a member (idempotent)\r\n  if exists (\r\n    select 1 from group_members gm\r\n    where gm.group_id = p_group_id\r\n      and gm.user_id = p_user_id\r\n  ) then\r\n    -- Return existing membership\r\n    select * into result from group_members\r\n    where group_id = p_group_id\r\n      and user_id = p_user_id;\r\n    return result;\r\n  end if;\r\n\r\n  -- Insert the creator as admin member\r\n  insert into group_members (group_id, user_id, role, status)\r\n  values (p_group_id, p_user_id, 'group_admin', 'approved')\r\n  returning * into result;\r\n\r\n  return result;\r\nend;\r\n$function$\n"
+    },
+    {
+      "function_name": "apply_streak_expiry_for_me",
+      "arguments": "",
+      "return_type": "void",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.apply_streak_expiry_for_me()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  uid uuid := auth.uid();\r\n  today_utc date := (timezone('utc', now()))::date;\r\nBEGIN\r\n  IF uid IS NULL THEN\r\n    RETURN;\r\n  END IF;\r\n\r\n  UPDATE public.profiles p\r\n  SET current_streak = 0\r\n  WHERE p.id = uid\r\n    AND p.current_streak > 0\r\n    AND NOT EXISTS (\r\n      SELECT 1\r\n      FROM public.daily_summaries ds\r\n      WHERE ds.user_id = uid\r\n        AND ds.date >= today_utc - 1\r\n    );\r\nEND;\r\n$function$\n"
+    },
+    {
+      "function_name": "cleanup_deleted_tasks",
+      "arguments": "",
+      "return_type": "void",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": "Hard-deletes tasks that were soft-deleted more than 30 days ago. Run periodically via cron.",
+      "full_definition": "CREATE OR REPLACE FUNCTION public.cleanup_deleted_tasks()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  BEGIN\r\n    -- Delete tasks that were soft-deleted more than 30 days ago\r\n    DELETE FROM public.tasks\r\n    WHERE deleted_at IS NOT NULL\r\n      AND deleted_at < now() - interval '30 days';\r\n  END;\r\n  $function$\n"
+    },
+    {
+      "function_name": "create_group_with_creator",
+      "arguments": "p_name text, p_description text, p_visibility group_visibility, p_requires_admin_approval boolean, p_join_password text",
+      "return_type": "TABLE(id uuid, name text, description text, visibility group_visibility, invite_code text, requires_admin_approval boolean, has_password boolean, created_by uuid, created_at timestamp with time zone)",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.create_group_with_creator(p_name text, p_description text, p_visibility group_visibility, p_requires_admin_approval boolean, p_join_password text)\n RETURNS TABLE(id uuid, name text, description text, visibility group_visibility, invite_code text, requires_admin_approval boolean, has_password boolean, created_by uuid, created_at timestamp with time zone)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_group_id uuid;\r\n  v_user_id uuid;\r\nbegin\r\n  v_user_id := auth.uid();\r\n  \r\n  if v_user_id is null then\r\n    raise exception 'UNAUTHORIZED';\r\n  end if;\r\n\r\n  -- Insert the group\r\n  insert into groups (\r\n    name,\r\n    description,\r\n    visibility,\r\n    requires_admin_approval,\r\n    join_password,\r\n    created_by\r\n  )\r\n  values (\r\n    p_name,\r\n    nullif(trim(p_description), ''),\r\n    p_visibility,\r\n    p_requires_admin_approval,\r\n    nullif(trim(p_join_password), ''),\r\n    v_user_id\r\n  )\r\n  returning groups.id into v_group_id;\r\n\r\n  -- Add creator as admin member (bypasses RLS in security definer function)\r\n  insert into group_members (group_id, user_id, role, status)\r\n  values (v_group_id, v_user_id, 'group_admin', 'approved');\r\n\r\n  -- Return the created group\r\n  return query\r\n  select \r\n    g.id,\r\n    g.name,\r\n    g.description,\r\n    g.visibility,\r\n    g.invite_code,\r\n    g.requires_admin_approval,\r\n    g.has_password,\r\n    g.created_by,\r\n    g.created_at\r\n  from groups g\r\n  where g.id = v_group_id;\r\nend;\r\n$function$\n"
+    },
+    {
+      "function_name": "delete_current_user",
+      "arguments": "",
+      "return_type": "void",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.delete_current_user()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  BEGIN\r\n    -- Simply delete the user from auth.users. \r\n    -- Because you have ON DELETE CASCADE set up on profiles, tasks, etc.,\r\n    -- Postgres will automatically and safely clean up all related data.\r\n    DELETE FROM auth.users WHERE id = auth.uid();\r\n  END;\r\n  $function$\n"
+    },
+    {
+      "function_name": "find_group_by_invite_code",
+      "arguments": "p_code text",
+      "return_type": "TABLE(id uuid, name text, description text, visibility group_visibility, created_by uuid, created_at timestamp with time zone, requires_admin_approval boolean, invite_code text, has_password boolean)",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.find_group_by_invite_code(p_code text)\n RETURNS TABLE(id uuid, name text, description text, visibility group_visibility, created_by uuid, created_at timestamp with time zone, requires_admin_approval boolean, invite_code text, has_password boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  return query\r\n  select id, name, description, visibility, created_by, created_at, requires_admin_approval, invite_code, has_password\r\n  from groups\r\n  where lower(invite_code) = lower(p_code);\r\nend;\r\n$function$\n"
+    },
+    {
+      "function_name": "get_user_groups",
+      "arguments": "p_user_id uuid",
+      "return_type": "TABLE(id uuid, name text, description text, visibility group_visibility, invite_code text, requires_admin_approval boolean, has_password boolean, created_by uuid, created_at timestamp with time zone)",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.get_user_groups(p_user_id uuid)\n RETURNS TABLE(id uuid, name text, description text, visibility group_visibility, invite_code text, requires_admin_approval boolean, has_password boolean, created_by uuid, created_at timestamp with time zone)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nBEGIN\r\n  RETURN QUERY\r\n  SELECT \r\n    g.id,\r\n    g.name,\r\n    g.description,\r\n    g.visibility,\r\n    g.invite_code,\r\n    g.requires_admin_approval,\r\n    g.has_password,\r\n    g.created_by,\r\n    g.created_at\r\n  FROM public.groups g\r\n  INNER JOIN public.group_members gm ON gm.group_id = g.id\r\n  WHERE gm.user_id = p_user_id\r\n    AND gm.status = 'approved'\r\n    AND (p_user_id = auth.uid() OR g.visibility = 'public');\r\nEND;\r\n$function$\n"
+    },
+    {
+      "function_name": "handle_new_user",
+      "arguments": "",
+      "return_type": "trigger",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.handle_new_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nBEGIN\r\n  INSERT INTO public.profiles (id, username, avatar_url, onboarding_completed)\r\n  VALUES (\r\n    new.id,\r\n    coalesce(new.raw_user_meta_data->>'full_name', 'User_' || substr(new.id::text, 1, 6)),\r\n    'https://api.dicebear.com/7.x/notionists/svg?seed=' || new.id,\r\n    false\r\n  )\r\n  ON CONFLICT (id) DO NOTHING;\r\n  RETURN new;\r\nEND;\r\n$function$\n"
+    },
+    {
+      "function_name": "handle_session_completed",
+      "arguments": "",
+      "return_type": "trigger",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.handle_session_completed()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  last_day date;\r\n  session_date date;\r\n  has_studied_today boolean;\r\n  xp_gain bigint;\r\nBEGIN\r\n  session_date := (new.started_at AT TIME ZONE 'UTC')::date;\r\n\r\n  xp_gain := GREATEST(0, new.duration_seconds::bigint / 60);\r\n\r\n  UPDATE public.profiles\r\n  SET\r\n    xp_total = xp_total + xp_gain,\r\n    level = (1 + FLOOR((xp_total + xp_gain) / 100))::int\r\n  WHERE id = new.user_id;\r\n\r\n  SELECT EXISTS (\r\n    SELECT 1 FROM public.daily_summaries\r\n    WHERE user_id = new.user_id AND date = session_date\r\n  ) INTO has_studied_today;\r\n\r\n  INSERT INTO public.daily_summaries (user_id, date, total_seconds)\r\n  VALUES (new.user_id, session_date, new.duration_seconds)\r\n  ON CONFLICT (user_id, date)\r\n  DO UPDATE SET\r\n    total_seconds = daily_summaries.total_seconds + excluded.total_seconds,\r\n    updated_at = now();\r\n\r\n  IF NOT has_studied_today THEN\r\n    SELECT date INTO last_day\r\n    FROM public.daily_summaries\r\n    WHERE user_id = new.user_id\r\n      AND date < session_date\r\n    ORDER BY date DESC\r\n    LIMIT 1;\r\n\r\n    IF last_day = session_date - 1 THEN\r\n      UPDATE public.profiles\r\n      SET\r\n        current_streak = current_streak + 1,\r\n        longest_streak = GREATEST(longest_streak, current_streak + 1)\r\n      WHERE id = new.user_id;\r\n    ELSE\r\n      UPDATE public.profiles\r\n      SET\r\n        current_streak = 1,\r\n        longest_streak = GREATEST(longest_streak, 1)\r\n      WHERE id = new.user_id;\r\n    END IF;\r\n  END IF;\r\n\r\n  RETURN new;\r\nEND;\r\n$function$\n"
+    },
+    {
+      "function_name": "handle_task_completed_xp",
+      "arguments": "",
+      "return_type": "trigger",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.handle_task_completed_xp()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  bonus bigint := 5;\r\nBEGIN\r\n  IF NEW.status = 'done' AND (OLD.status IS DISTINCT FROM 'done') THEN\r\n    UPDATE public.profiles\r\n    SET\r\n      xp_total = xp_total + bonus,\r\n      level = (1 + FLOOR((xp_total + bonus) / 100))::int\r\n    WHERE id = NEW.user_id;\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
+    },
+    {
+      "function_name": "refresh_leaderboards",
+      "arguments": "",
+      "return_type": "void",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": "Refreshes all leaderboard materialized views. Call this periodically (e.g., via pg_cron every hour)",
+      "full_definition": "CREATE OR REPLACE FUNCTION public.refresh_leaderboards()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  BEGIN\r\n    REFRESH MATERIALIZED VIEW CONCURRENTLY public.weekly_leaderboard;\r\n    REFRESH MATERIALIZED VIEW CONCURRENTLY public.monthly_leaderboard;\r\n    REFRESH MATERIALIZED VIEW CONCURRENTLY public.yearly_leaderboard;\r\n  END;\r\n  $function$\n"
+    },
+    {
+      "function_name": "regenerate_invite_code",
+      "arguments": "p_group_id uuid",
+      "return_type": "TABLE(invite_code text)",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.regenerate_invite_code(p_group_id uuid)\n RETURNS TABLE(invite_code text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  new_code text;\r\nbegin\r\n  new_code := lower(encode(gen_random_bytes(4), 'hex'));\r\n\r\n  update groups\r\n  set invite_code = new_code\r\n  where id = p_group_id\r\n    and exists (\r\n      select 1 from group_members gm\r\n      where gm.group_id = p_group_id\r\n        and gm.user_id = auth.uid()\r\n        and gm.role = 'group_admin'\r\n    )\r\n  returning invite_code;\r\n\r\n  return query select new_code;\r\nend;\r\n$function$\n"
+    },
+    {
+      "function_name": "request_join_group",
+      "arguments": "p_group_id uuid, p_password text DEFAULT NULL::text",
+      "return_type": "group_members",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.request_join_group(p_group_id uuid, p_password text DEFAULT NULL::text)\n RETURNS group_members\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  g record;\r\n  result group_members%rowtype;\r\nbegin\r\n  select * into g from groups where id = p_group_id;\r\n  if not found then\r\n    raise exception 'GROUP_NOT_FOUND';\r\n  end if;\r\n\r\n  if g.visibility <> 'public' then\r\n    raise exception 'GROUP_NOT_PUBLIC';\r\n  end if;\r\n\r\n  if g.join_password is not null and (p_password is null or p_password <> g.join_password) then\r\n    raise exception 'INVALID_PASSWORD';\r\n  end if;\r\n\r\n  if exists (select 1 from group_members gm where gm.group_id = p_group_id and gm.user_id = auth.uid()) then\r\n    raise exception 'ALREADY_MEMBER';\r\n  end if;\r\n\r\n  insert into group_members (group_id, user_id, role, status)\r\n  values (\r\n    p_group_id,\r\n    auth.uid(),\r\n    'group_member',\r\n    case when g.requires_admin_approval then 'pending' else 'approved' end\r\n  )\r\n  returning * into result;\r\n\r\n  return result;\r\nend;\r\n$function$\n"
+    },
+    {
+      "function_name": "set_updated_at",
+      "arguments": "",
+      "return_type": "trigger",
+      "volatility": "VOLATILE",
+      "security_definer": "NO",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\n  begin\r\n    new.updated_at = now();\r\n    return new;\r\n  end $function$\n"
+    },
+    {
+      "function_name": "update_group_member_count",
+      "arguments": "",
+      "return_type": "trigger",
+      "volatility": "VOLATILE",
+      "security_definer": "YES",
+      "description": null,
+      "full_definition": "CREATE OR REPLACE FUNCTION public.update_group_member_count()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  BEGIN\r\n    -- Update count when membership changes\r\n    IF TG_OP = 'INSERT' AND NEW.status = 'approved' THEN\r\n      UPDATE public.groups\r\n      SET member_count = member_count + 1\r\n      WHERE id = NEW.group_id;\r\n    ELSIF TG_OP = 'DELETE' AND OLD.status = 'approved' THEN\r\n      UPDATE public.groups\r\n      SET member_count = GREATEST(0, member_count - 1)\r\n      WHERE id = OLD.group_id;\r\n    ELSIF TG_OP = 'UPDATE' THEN\r\n      -- Status changed from pending to approved\r\n      IF OLD.status != 'approved' AND NEW.status = 'approved' THEN\r\n        UPDATE public.groups\r\n        SET member_count = member_count + 1\r\n        WHERE id = NEW.group_id;\r\n      -- Status changed from approved to pending\r\n      ELSIF OLD.status = 'approved' AND NEW.status != 'approved' THEN\r\n        UPDATE public.groups\r\n        SET member_count = GREATEST(0, member_count - 1)\r\n        WHERE id = NEW.group_id;\r\n      END IF;\r\n    END IF;\r\n    \r\n    RETURN COALESCE(NEW, OLD);\r\n  END;\r\n  $function$\n"
+    }
+  ]

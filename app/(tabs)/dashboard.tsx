@@ -2,6 +2,7 @@ import { TabScreen } from "@/components/layout/TabScreen";
 import { Text } from "@/components/Themed";
 import { Card } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
+import { SubjectBar } from "@/components/ui/SubjectBar";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { getSubjectDisplayName } from "@/constants/subjectCatalog";
@@ -9,8 +10,13 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { createSubjectColorMap } from "@/utils/color";
 import { useAuth } from "@/utils/authContext";
 import { useTheme } from "@/utils/themeContext";
-import { formatDurationCompact, formatMinutesCompact, getWeekRangeForDate } from "@/utils/time";
 import {
+  formatDurationCompact,
+  formatStatMinutes,
+  isCurrentPeriod as checkIsCurrentPeriod,
+} from "@/utils/time";
+import {
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -18,6 +24,7 @@ import {
   Timer,
   TrendingUp,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -38,12 +45,8 @@ type Period = "day" | "week" | "month" | "year";
 
 const periodOptions: Period[] = ["day", "week", "month", "year"];
 
-function formatStatMinutes(minutes: number): string {
-  if (minutes <= 0) return "0m";
-  return formatMinutesCompact(minutes);
-}
-
 export default function DashboardScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const theme = useTheme();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
@@ -63,20 +66,20 @@ export default function DashboardScreen() {
     distributionBySubject,
     histogramData,
     histogramSubjects,
-    parentSubjects,
+    subjects,
   } = useDashboard(user?.id ?? null, period, focusDate);
 
   const subjectColorById = React.useMemo(
     () =>
       createSubjectColorMap(
-        parentSubjects.map((s) => ({
+        subjects.map((s) => ({
           ...s,
           children: [] as { id: string; custom_color?: string | null; color?: string | null }[],
         })),
         subjectPalette,
         theme.primary
       ),
-    [parentSubjects, subjectPalette, theme.primary]
+    [subjects, subjectPalette, theme.primary]
   );
 
   const goalVsActualTotals = React.useMemo(() => {
@@ -92,7 +95,7 @@ export default function DashboardScreen() {
     1
   );
 
-  const dropdownSubjects = histogramSubjects.length > 0 ? histogramSubjects : parentSubjects;
+  const dropdownSubjects = histogramSubjects.length > 0 ? histogramSubjects : subjects;
 
   const handleSelectSubject = (subjectId: string | null) => {
     setSelectedSubjectId(subjectId);
@@ -150,33 +153,32 @@ export default function DashboardScreen() {
     setFocusDate(d);
   };
 
-  const isCurrentPeriod = React.useMemo(() => {
-    const now = new Date();
-    if (period === "day") {
-      return (
-        focusDate.getFullYear() === now.getFullYear() &&
-        focusDate.getMonth() === now.getMonth() &&
-        focusDate.getDate() === now.getDate()
-      );
-    }
-    if (period === "week") {
-      const focusWeek = getWeekRangeForDate(focusDate);
-      const nowWeek = getWeekRangeForDate(now);
-      return focusWeek.fromIso === nowWeek.fromIso;
-    }
-    if (period === "month") {
-      return focusDate.getMonth() === now.getMonth() && focusDate.getFullYear() === now.getFullYear();
-    }
-    return focusDate.getFullYear() === now.getFullYear();
-  }, [period, focusDate]);
+  const isCurrentPeriod = React.useMemo(
+    () => checkIsCurrentPeriod(period, focusDate),
+    [period, focusDate]
+  );
 
   return (
-    <TabScreen title={t("dashboard.title")} gap={8}>
+    <TabScreen
+      title={t("dashboard.title")}
+      gap={8}
+      rightAction={
+        <Pressable
+          onPress={() => router.push("/calendar-stats")}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t("dashboard.calendarViewA11y")}
+        >
+          <CalendarDays size={22} color={theme.primary} />
+        </Pressable>
+      }
+    >
 
         {/* TABS */}
         <Tabs
+          variant="iconPills"
           style={styles.periodTabs}
-          options={periodOptions.map(option => ({
+          options={periodOptions.map((option) => ({
             value: option,
             label: t(`common.period.${option}`),
           }))}
@@ -251,31 +253,13 @@ export default function DashboardScreen() {
                       ? Math.min(100, (row.actualMinutes / row.goalMinutes) * 100)
                       : 0;
                   return (
-                    <View key={row.subjectId} style={styles.barRow}>
-                      <View style={styles.barHeader}>
-                        <View style={styles.goalVsActualLabelWithDot}>
-                          <View style={[styles.goalVsActualDot, { backgroundColor: dotColor }]} />
-                          <Text variant="caption" colorName="textMuted" style={styles.barLabel}>
-                            {row.subjectName}
-                          </Text>
-                        </View>
-                        <Text variant="caption" colorName="textMuted">
-                          {formatStatMinutes(row.actualMinutes)} /{" "}
-                          {formatStatMinutes(row.goalMinutes)}
-                        </Text>
-                      </View>
-                      <View style={styles.barBg}>
-                        <View
-                          style={[
-                            styles.barFill,
-                            {
-                              width: `${pctFill}%`,
-                              backgroundColor: dotColor,
-                            },
-                          ]}
-                        />
-                      </View>
-                    </View>
+                    <SubjectBar
+                      key={row.subjectId}
+                      color={dotColor}
+                      name={row.subjectName}
+                      value={`${formatStatMinutes(row.actualMinutes)} / ${formatStatMinutes(row.goalMinutes)}`}
+                      fillPercent={pctFill}
+                    />
                   );
                 })}
               </View>
@@ -304,27 +288,13 @@ export default function DashboardScreen() {
                 {distributionBySubject.map((s, i) => {
                   const dotColor = subjectColorById[s.subjectId] ?? subjectPalette[i % subjectPalette.length];
                   return (
-                    <View key={s.subjectId} style={styles.barRow}>
-                      <View style={styles.barHeader}>
-                        <View style={styles.goalVsActualLabelWithDot}>
-                          <View style={[styles.goalVsActualDot, { backgroundColor: dotColor }]} />
-                          <Text variant="caption" colorName="textMuted" style={styles.barLabel}>
-                            {s.name}
-                          </Text>
-                        </View>
-                        <Text variant="caption" colorName="textMuted">
-                          {formatDurationCompact(s.seconds)}
-                        </Text>
-                      </View>
-                      <View style={styles.barBg}>
-                        <View
-                          style={[
-                            styles.barFill,
-                            { width: `${s.percent}%`, backgroundColor: dotColor },
-                          ]}
-                        />
-                      </View>
-                    </View>
+                    <SubjectBar
+                      key={s.subjectId}
+                      color={dotColor}
+                      name={s.name}
+                      value={formatDurationCompact(s.seconds)}
+                      fillPercent={s.percent}
+                    />
                   );
                 })}
               </View>
@@ -355,27 +325,13 @@ export default function DashboardScreen() {
                 {distributionBySubject.map((s, i) => {
                   const dotColor = subjectColorById[s.subjectId] ?? subjectPalette[i % subjectPalette.length];
                   return (
-                    <View key={s.subjectId} style={styles.barRow}>
-                      <View style={styles.barHeader}>
-                        <View style={styles.goalVsActualLabelWithDot}>
-                          <View style={[styles.goalVsActualDot, { backgroundColor: dotColor }]} />
-                          <Text variant="micro" colorName="textMuted" style={styles.barLabel}>
-                            {s.name}
-                          </Text>
-                        </View>
-                        <Text variant="micro" colorName="textMuted" style={styles.goalVsActualTime}>
-                          {s.percent}%
-                        </Text>
-                      </View>
-                      <View style={styles.barBg}>
-                        <View
-                          style={[
-                            styles.barFill,
-                            { width: `${s.percent}%`, backgroundColor: dotColor },
-                          ]}
-                        />
-                      </View>
-                    </View>
+                    <SubjectBar
+                      key={s.subjectId}
+                      color={dotColor}
+                      name={s.name}
+                      value={`${s.percent}%`}
+                      fillPercent={s.percent}
+                    />
                   );
                 })}
               </View>
@@ -587,18 +543,6 @@ const createStyles = (theme: typeof Colors.light) =>
     },
     goalVsActualBars: { marginTop: 8 },
     goalVsActualTime: { fontWeight: "700" },
-    goalVsActualLabelWithDot: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      minWidth: 0,
-    },
-    goalVsActualDot: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-    },
 
     // Metric cards row
     metricsRow: {
@@ -678,19 +622,6 @@ const createStyles = (theme: typeof Colors.light) =>
       alignItems: "center",
       marginBottom: 8,
     },
-
-    // Bars
-    barRow: { marginBottom: 8 },
-    barHeader: { flexDirection: "row", justifyContent: "space-between" },
-    barLabel: {},
-    barBg: {
-      height: 8,
-      backgroundColor: theme.border,
-      borderRadius: 4,
-      overflow: "hidden",
-      marginTop: 4,
-    },
-    barFill: { height: "100%", borderRadius: 4 },
 
     // Heatmap
     heatmapGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },

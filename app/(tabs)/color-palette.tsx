@@ -1,15 +1,15 @@
 import { TabScreen } from "@/components/layout/TabScreen";
+import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { Input } from "@/components/ui/Input";
 import Colors from "@/constants/Colors";
 import typography from "@/constants/typography";
-import { useTheme, useThemePreference } from "@/utils/themeContext";
 import { getReadableTextColor } from "@/utils/color";
-import { AlertCircle, Check, Mail, Search, X } from "lucide-react-native";
+import { useTheme, useThemePreference } from "@/utils/themeContext";
+import { AlertCircle, Check, Mail, Pencil, Search, Trash2, X } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
-import { Text } from "@/components/Themed";
 
 const ColorSwatch = ({ 
   name, 
@@ -233,6 +233,22 @@ export default function ColorPalette() {
               <Button title="Small" variant="primary" size="sm" style={styles.buttonExample} />
               <Button title="Medium" variant="primary" size="md" style={styles.buttonExample} />
               <Button title="Large" variant="primary" size="lg" style={styles.buttonExample} />
+            </View>
+            <Text variant="caption" colorName="textMuted" style={{ marginBottom: 8 }}>
+              Card actions:{" "}
+              <Text variant="caption" colorName="textMuted" style={styles.codeText}>
+                variant=&quot;soft&quot;
+              </Text>{" "}
+              +{" "}
+              <Text variant="caption" colorName="textMuted" style={styles.codeText}>
+                iconOnly
+              </Text>{" "}
+              (tasks, groups, matières)
+            </Text>
+            <View style={[styles.buttonRow, { gap: 4, marginBottom: 16 }]}>
+              <Button iconLeft={Pencil} iconOnly variant="soft" size="xs" accessibilityLabel="Edit" />
+              <Button iconLeft={Check} iconOnly variant="soft" size="xs" accessibilityLabel="Done" />
+              <Button iconLeft={Trash2} iconOnly variant="soft" size="xs" accessibilityLabel="Delete" />
             </View>
             <View style={styles.buttonRow}>
               <Button 

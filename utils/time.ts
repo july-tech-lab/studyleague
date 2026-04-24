@@ -88,6 +88,43 @@ export const formatMinutesCompact = (minutes: number | null | undefined): string
   return `${m}m`;
 };
 
+/** Period selector used by dashboard / calendar stats. */
+export type StatsPeriod = "day" | "week" | "month" | "year";
+
+/**
+ * Compact minutes for stats cards (e.g. goals). Zero shows as "0m", not "--".
+ */
+export function formatStatMinutes(minutes: number): string {
+  if (minutes <= 0) return "0m";
+  return formatMinutesCompact(minutes);
+}
+
+/**
+ * Whether `focusDate` falls in the same calendar day / week / month / year as `now` (local).
+ */
+export function isCurrentPeriod(
+  period: StatsPeriod,
+  focusDate: Date,
+  now: Date = new Date()
+): boolean {
+  if (period === "day") {
+    return (
+      focusDate.getFullYear() === now.getFullYear() &&
+      focusDate.getMonth() === now.getMonth() &&
+      focusDate.getDate() === now.getDate()
+    );
+  }
+  if (period === "week") {
+    const focusWeek = getWeekRangeForDate(focusDate);
+    const nowWeek = getWeekRangeForDate(now);
+    return focusWeek.fromIso === nowWeek.fromIso;
+  }
+  if (period === "month") {
+    return focusDate.getMonth() === now.getMonth() && focusDate.getFullYear() === now.getFullYear();
+  }
+  return focusDate.getFullYear() === now.getFullYear();
+}
+
 /**
  * Gets today's date in ISO format (YYYY-MM-DD) in local timezone.
  * 

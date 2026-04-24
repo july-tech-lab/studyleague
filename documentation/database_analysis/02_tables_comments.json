@@ -1,0 +1,42 @@
+[
+    {
+      "table_name": "daily_summaries",
+      "table_comment": "Daily aggregated study time per user. Used for streaks and leaderboards."
+    },
+    {
+      "table_name": "group_members",
+      "table_comment": "Group membership with role (admin/member) and status (pending/approved)."
+    },
+    {
+      "table_name": "groups",
+      "table_comment": "Study groups with invite codes. Visibility: public (anyone can join) or private (invite only)."
+    },
+    {
+      "table_name": "profiles",
+      "table_comment": "User profiles with XP, level, streaks, and goals. Linked to auth.users via id."
+    },
+    {
+      "table_name": "study_sessions",
+      "table_comment": "Individual study sessions with start/end times. Duration is auto-calculated."
+    },
+    {
+      "table_name": "subject_weekly_goals",
+      "table_comment": "Per-day study time goals per subject (0=Sun, 1=Mon, ..., 6=Sat)"
+    },
+    {
+      "table_name": "subjects",
+      "table_comment": "Subject catalog. owner_id = NULL means global subject, otherwise user-specific."
+    },
+    {
+      "table_name": "subscriptions",
+      "table_comment": null
+    },
+    {
+      "table_name": "tasks",
+      "table_comment": "User tasks with planned time and logged time tracking. Status: planned, in-progress, done."
+    },
+    {
+      "table_name": "user_subjects",
+      "table_comment": null
+    }
+  ]

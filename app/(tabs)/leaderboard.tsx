@@ -100,7 +100,8 @@ export default function LeaderboardScreen() {
     >
       <View style={{ gap: 12 }}>
         <Tabs
-          options={periodOptions.map(option => ({
+          variant="iconPills"
+          options={periodOptions.map((option) => ({
             value: option.value,
             label: t(labels[option.label]),
           }))}

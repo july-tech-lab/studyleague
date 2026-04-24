@@ -1,0 +1,32 @@
+[
+    {
+      "trigger_function": "handle_new_user",
+      "arguments": "",
+      "return_type": "trigger",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.handle_new_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nBEGIN\r\n  INSERT INTO public.profiles (id, username, avatar_url, onboarding_completed)\r\n  VALUES (\r\n    new.id,\r\n    coalesce(new.raw_user_meta_data->>'full_name', 'User_' || substr(new.id::text, 1, 6)),\r\n    'https://api.dicebear.com/7.x/notionists/svg?seed=' || new.id,\r\n    false\r\n  )\r\n  ON CONFLICT (id) DO NOTHING;\r\n  RETURN new;\r\nEND;\r\n$function$\n"
+    },
+    {
+      "trigger_function": "handle_session_completed",
+      "arguments": "",
+      "return_type": "trigger",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.handle_session_completed()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  last_day date;\r\n  session_date date;\r\n  has_studied_today boolean;\r\n  xp_gain bigint;\r\nBEGIN\r\n  session_date := (new.started_at AT TIME ZONE 'UTC')::date;\r\n\r\n  xp_gain := GREATEST(0, new.duration_seconds::bigint / 60);\r\n\r\n  UPDATE public.profiles\r\n  SET\r\n    xp_total = xp_total + xp_gain,\r\n    level = (1 + FLOOR((xp_total + xp_gain) / 100))::int\r\n  WHERE id = new.user_id;\r\n\r\n  SELECT EXISTS (\r\n    SELECT 1 FROM public.daily_summaries\r\n    WHERE user_id = new.user_id AND date = session_date\r\n  ) INTO has_studied_today;\r\n\r\n  INSERT INTO public.daily_summaries (user_id, date, total_seconds)\r\n  VALUES (new.user_id, session_date, new.duration_seconds)\r\n  ON CONFLICT (user_id, date)\r\n  DO UPDATE SET\r\n    total_seconds = daily_summaries.total_seconds + excluded.total_seconds,\r\n    updated_at = now();\r\n\r\n  IF NOT has_studied_today THEN\r\n    SELECT date INTO last_day\r\n    FROM public.daily_summaries\r\n    WHERE user_id = new.user_id\r\n      AND date < session_date\r\n    ORDER BY date DESC\r\n    LIMIT 1;\r\n\r\n    IF last_day = session_date - 1 THEN\r\n      UPDATE public.profiles\r\n      SET\r\n        current_streak = current_streak + 1,\r\n        longest_streak = GREATEST(longest_streak, current_streak + 1)\r\n      WHERE id = new.user_id;\r\n    ELSE\r\n      UPDATE public.profiles\r\n      SET\r\n        current_streak = 1,\r\n        longest_streak = GREATEST(longest_streak, 1)\r\n      WHERE id = new.user_id;\r\n    END IF;\r\n  END IF;\r\n\r\n  RETURN new;\r\nEND;\r\n$function$\n"
+    },
+    {
+      "trigger_function": "handle_task_completed_xp",
+      "arguments": "",
+      "return_type": "trigger",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.handle_task_completed_xp()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nDECLARE\r\n  bonus bigint := 5;\r\nBEGIN\r\n  IF NEW.status = 'done' AND (OLD.status IS DISTINCT FROM 'done') THEN\r\n    UPDATE public.profiles\r\n    SET\r\n      xp_total = xp_total + bonus,\r\n      level = (1 + FLOOR((xp_total + bonus) / 100))::int\r\n    WHERE id = NEW.user_id;\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
+    },
+    {
+      "trigger_function": "set_updated_at",
+      "arguments": "",
+      "return_type": "trigger",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\n  begin\r\n    new.updated_at = now();\r\n    return new;\r\n  end $function$\n"
+    },
+    {
+      "trigger_function": "update_group_member_count",
+      "arguments": "",
+      "return_type": "trigger",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.update_group_member_count()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  BEGIN\r\n    -- Update count when membership changes\r\n    IF TG_OP = 'INSERT' AND NEW.status = 'approved' THEN\r\n      UPDATE public.groups\r\n      SET member_count = member_count + 1\r\n      WHERE id = NEW.group_id;\r\n    ELSIF TG_OP = 'DELETE' AND OLD.status = 'approved' THEN\r\n      UPDATE public.groups\r\n      SET member_count = GREATEST(0, member_count - 1)\r\n      WHERE id = OLD.group_id;\r\n    ELSIF TG_OP = 'UPDATE' THEN\r\n      -- Status changed from pending to approved\r\n      IF OLD.status != 'approved' AND NEW.status = 'approved' THEN\r\n        UPDATE public.groups\r\n        SET member_count = member_count + 1\r\n        WHERE id = NEW.group_id;\r\n      -- Status changed from approved to pending\r\n      ELSIF OLD.status = 'approved' AND NEW.status != 'approved' THEN\r\n        UPDATE public.groups\r\n        SET member_count = GREATEST(0, member_count - 1)\r\n        WHERE id = NEW.group_id;\r\n      END IF;\r\n    END IF;\r\n    \r\n    RETURN COALESCE(NEW, OLD);\r\n  END;\r\n  $function$\n"
+    }
+  ]

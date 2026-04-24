@@ -7,7 +7,8 @@ const brand = {
   primary: "#4AC9CC",
   primaryDark: "#1F8E92",
   primaryLight: "#8BE3E5",
-  primaryTint: "#CCF3F4",
+  /** Very light wash (reads almost white on #FFF — closer to paper-style UI). */
+  primaryTint: "#F2FAFA",
 
   // Secondary (coral) — doubles as "accent"
   secondary: "#F28C8C",
@@ -28,22 +29,23 @@ const brand = {
   warningDark: "#B89137",
   dangerDark: "#B84623",
 
-  // Subject colors
+  // Subject colors (picker + default cycling)
   subjectPalette: [
-    "#60B3E3", // blue
-    "#26BD93", // green
-    "#FFCE53", // yellow
+    "#60B3E3", // bleu
+    "#26BD93", // vert
+    "#FFCE53", // jaune
     "#F97046", // orange
-    "#FF8FD3", // pink
-    "#C992E3", // purple
+    "#F94F7B", // rose
+    "#8B5CF6", // violet
   ],
 };
 
 // Base neutrals
 const lightBase = {
-  background: "#F6FAF8",
+  background: "#FFFFFF",
   surface: "#FFFFFF",
-  surfaceElevated: "#EEF5F2",
+  /** Slightly off-white for chips/cards; kept close to white for a prototype-like canvas. */
+  surfaceElevated: "#FAFAFA",
 
   text: "#1F2A2C",
   textMuted: "#5F7772",

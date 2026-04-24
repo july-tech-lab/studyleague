@@ -523,8 +523,11 @@ begin
   values (
     p_group_id,
     auth.uid(),
-    'group_member',
-    case when g.requires_admin_approval then 'pending' else 'approved' end
+    'group_member'::"public"."group_role",
+    case
+      when g.requires_admin_approval then 'pending'::"public"."membership_status"
+      else 'approved'::"public"."membership_status"
+    end
   )
   returning * into result;
 
@@ -801,21 +804,19 @@ CREATE OR REPLACE VIEW "public"."session_subject_totals" WITH ("security_invoker
             "ss"."duration_seconds",
             "ss"."started_at",
             "s"."id" AS "subject_id",
-            COALESCE("s"."parent_subject_id", "s"."id") AS "parent_id",
-            COALESCE("parent"."name", "s"."name") AS "parent_name",
-            ("s"."parent_subject_id" IS NULL) AS "is_root"
-           FROM (("public"."study_sessions" "ss"
+            "s"."name" AS "subject_name",
+            true AS "is_root"
+           FROM ("public"."study_sessions" "ss"
              JOIN "public"."subjects" "s" ON ((("s"."id" = "ss"."subject_id") AND ("s"."deleted_at" IS NULL))))
-             LEFT JOIN "public"."subjects" "parent" ON ((("parent"."id" = "s"."parent_subject_id") AND ("parent"."deleted_at" IS NULL))))
         )
  SELECT "user_id",
-    "parent_id",
-    "parent_name",
+    "subject_id",
+    "subject_name",
     COALESCE("sum"("duration_seconds"), (0)::bigint) AS "total_seconds",
     COALESCE("sum"("duration_seconds") FILTER (WHERE "is_root"), (0)::bigint) AS "direct_seconds",
     COALESCE("sum"("duration_seconds") FILTER (WHERE (NOT "is_root")), (0)::bigint) AS "subtag_seconds"
    FROM "base"
-  GROUP BY "user_id", "parent_id", "parent_name";
+  GROUP BY "user_id", "subject_id", "subject_name";
 
 
 ALTER VIEW "public"."session_subject_totals" OWNER TO "postgres";

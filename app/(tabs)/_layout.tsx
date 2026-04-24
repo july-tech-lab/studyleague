@@ -103,6 +103,14 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="group-live"
+        options={{
+          href: null,
+          title: t("groups.live.screenTitle"),
+        }}
+      />
+
+      <Tabs.Screen
         name="groups"
         options={{
           title: t("tabs.groups"),
@@ -115,6 +123,14 @@ export default function TabsLayout() {
         options={{
           title: t("tabs.stats"),
           tabBarIcon: makeTabIcon(BarChart2, t("tabs.stats")),
+        }}
+      />
+
+      <Tabs.Screen
+        name="calendar-stats"
+        options={{
+          href: null,
+          title: t("calendarStats.title"),
         }}
       />
 

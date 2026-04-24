@@ -15,7 +15,7 @@ import Colors from "@/constants/Colors";
 import { INTER } from "@/constants/typography";
 import { useTheme } from "@/utils/themeContext";
 
-type ButtonVariant = "primary" | "secondary" | "destructive" | "outline" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "destructive" | "outline" | "ghost" | "soft";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 type ButtonShape = "default" | "pill";
 
@@ -71,6 +71,13 @@ function getPalette(colorSet: ColorSet, variant: ButtonVariant) {
       return { bg: colorSet.danger, pressedBg: colorSet.dangerDark, text: "#FFFFFF", border: "transparent", borderWidth: 0 };
     case "outline":
       return { bg: "transparent", pressedBg: colorSet.primaryTint, text: colorSet.primaryDark, border: colorSet.primaryDark, borderWidth: 1 };
+    /** Teal tint surface + dark teal icon (task/group/subject card action row). */
+    case "soft":
+      return { bg: colorSet.primaryTint, pressedBg: colorSet.primaryLight,
+        text: colorSet.primaryDark,
+        border: "transparent",
+        borderWidth: 0,
+      };
     case "ghost":
     default:
       return base;
@@ -103,8 +110,7 @@ export function Button({
   const p = getPalette(colorSet, variant);
   const isDisabled = !!disabled || !!loading;
 
-  const radius =
-    shape === "pill" ? 999 : variant === "primary" ? 16 : s.r;
+  const radius = shape === "pill" ? 999 : variant === "primary" ? 16 : s.r;
   const iconOnlySize = iconOnly ? ICON_ONLY_DIM[size] : undefined;
 
   const a11yLabel = accessibilityLabel ?? title ?? "Button";

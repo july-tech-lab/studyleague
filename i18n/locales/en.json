@@ -194,6 +194,7 @@
     "errorTitle": "Error",
     "errorSave": "Unable to save.",
     "addSubjectPlaceholder": "Subject name",
+    "addSubjectModalTitle": "Add subject",
     "tabSubjects": "Subjects",
     "tabTasks": "Tasks",
     "tasksEmpty": "No active tasks",
@@ -219,12 +220,23 @@
     "membersCount_one": "{{count}} member",
     "membersCount_other": "{{count}} members",
     "adminApprovalRequired": "Admin approval required",
+    "pendingBadge": "Awaiting approval",
+    "pendingApprovalModal": {
+      "title": "Request pending",
+      "message": "Your request to join \"{{name}}\" has been sent. A group admin must approve it before you have access.",
+      "close": "Got it"
+    },
+    "cancelPending": {
+      "accessibility": "Cancel join request",
+      "confirmTitle": "Cancel this request?",
+      "confirmMessage": "You can send a new request later if the group still allows it.",
+      "confirm": "Cancel request"
+    },
     "passwordRequired": "Password required",
     "create": {
       "title": "Create a group",
       "namePlaceholder": "Group name",
       "descriptionPlaceholder": "Description (optional)",
-      "inviteCodeInfo": "The invitation code will be generated automatically.",
       "passwordPlaceholder": "Group password (optional)",
       "visibility": "Visibility",
       "public": "Public",
@@ -270,7 +282,8 @@
       "search": "Search failed",
       "notFound": "No group found for this code",
       "delete": "Could not delete group",
-      "leave": "Could not leave group"
+      "leave": "Could not leave group",
+      "cancelPending": "Could not cancel the request"
     },
     "success": {
       "requestSent": "Request sent",
@@ -281,8 +294,18 @@
     "errorLoading": "Unable to load leaderboard.",
     "empty": "No data for this period."
   },
+  "calendarStats": {
+    "title": "Statistics",
+    "emptyDay": "No sessions on this day",
+    "emptyPeriod": "No sessions in this period",
+    "totalDay": "Day total",
+    "thisWeek": "This week",
+    "breakdown": "Breakdown",
+    "monthTotal": "{{month}}: {{time}}"
+  },
   "dashboard": {
     "title": "My Overview",
+    "calendarViewA11y": "Open calendar view",
     "longestSession": "Longest session",
     "bestSubject": "Best subject",
     "filterAll": "All subjects",
@@ -331,7 +354,7 @@
       "dark": "Dark"
     },
     "tabs": {
-      "subjects": "Subjects",
+      "subjects": "My subjects",
       "settings": "Settings"
     },
     "displayName": {
@@ -378,7 +401,8 @@
       "available": "Available subjects",
       "moreAvailable": "+ more available subjects",
       "create": "Create",
-      "searchPlaceholder": "Search or create a subject",
+      "createSubjectPlaceholder": "Create a subject",
+      "addSubjectSubmit": "Add subject",
       "searchResults": "Search results",
       "noResults": "No results found",
       "createHint": "Press \"Create\" to create a new subject named \"{{name}}\"",
@@ -388,9 +412,11 @@
       "deleteMessage": "It will disappear from your list. Your recorded study time is kept.",
       "deleteErrorTitle": "Unable to remove",
       "deleteError": "Please try again later.",
+      "deleteOwnedTitle": "Delete this subject permanently?",
+      "deleteOwnedMessage": "If you have no recorded study time on this subject, it will be removed from the database. Otherwise it will only be archived.",
+      "deleteOwnedConfirm": "Delete permanently",
       "customizeColor": "Customize color",
       "colorPickerTitle": "Choose color",
-      "colorPickerSubtitle": "Select a color for {{name}}",
       "defaultColor": "Default"
     },
     "account": {
@@ -420,20 +446,22 @@
       "name": "Task name",
       "subject": "Subject",
       "minutes": "Minutes",
-      "add": "Add to list"
+      "add": "Save"
     },
     "view": {
       "active": "Active",
       "done": "Done"
     },
-    "planBlock": "Plan a study block",
+    "addTaskAction": "Add task",
+    "addTaskSubmit": "Add task",
+    "addTaskErrorName": "Enter a task name.",
     "progress": "{{current}} / {{target}} min",
     "resume": "Resume",
     "edit": "Edit task",
-    "editBlock": "Edit task",
     "delete": "Delete task",
     "completeNow": "Mark as done",
     "emptyState": "No tasks yet. Add one to plan your focus.",
+    "emptyStateDone": "No completed tasks yet…",
     "planningTabs": {
       "weeklyGoals": "Weekly goals",
       "tasks": "Tasks"
@@ -487,6 +515,11 @@
     "japanese": "Japanese",
     "geopolitics": "Geopolitics",
     "sport": "Sport",
+    "calculus": "Calculus",
+    "algorithms": "Algorithms",
+    "data_structures": "Data structures",
+    "marketing": "Marketing",
+    "productivity": "Productivity",
     "law": "Law",
     "languages": "Languages",
     "design": "Design",
@@ -505,7 +538,7 @@
     "bySubject": "By Subject",
     "byDay": "By Day",
     "saved": "Goals saved.",
-    "noTime": "0min/week",
+    "perWeekSuffix": "/week",
     "clear": "Clear",
     "minutesPlaceholder": "minutes",
     "apply": "Apply",

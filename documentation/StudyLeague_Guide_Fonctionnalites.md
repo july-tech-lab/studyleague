@@ -148,10 +148,10 @@ L'écran **Objectifs** (`(tabs)/goals`) permet de fixer le temps par matière.
 
 ### Modes d'affichage
 
-- **Par matière** : objectif hebdomadaire global (minutes) par matière parente
+- **Par matière** : objectif hebdomadaire global (minutes) par matière
 - **Par jour** : pour chaque matière, minutes cibles par jour de la semaine (lundi → dimanche), avec contrôles type curseur / palette de durées
 
-Les données sont alignées sur les matières du profil et une source type **`subject_day_goals`** (matière × jour), cohérente avec le tableau de bord (prévu vs réel).
+Les données sont alignées sur les matières du profil et la table **`subject_weekly_goals`** (matière × jour de semaine), cohérente avec le tableau de bord (prévu vs réel).
 
 ---
 
@@ -187,6 +187,8 @@ Les totaux et histogrammes s'appuient sur les hooks de données (ex. `useDashboa
 - Rejoindre un groupe : recherche par code, ONGLET « groupes publics », etc.
 - Modification des paramètres pour les groupes dont l'utilisateur est gestionnaire
 
+Côté **Supabase**, les droits sur les tables `groups` et `group_members` (qui voit un groupe, qui voit la liste des membres) sont appliqués par la **RLS**. Une migration d’avril 2026 (`migrations/20260417120000_fix_groups_rls_infinite_recursion.sql`) remplace les sous-requêtes croisées directes par des **fonctions auxiliaires** (`rls_*`, exécution `SECURITY DEFINER`) afin d’éviter une récursion infinie entre ces deux tables lors des lectures combinées (liste « mes groupes », création avec `RETURNING`, etc.). Détail technique : `documentation/TECH_STACK.md` §3.
+
 ### Classement (`(tabs)/leaderboard`)
 
 Écran **non affiché dans la barre d'onglets** : accessible depuis l'expérience **Groupes** (navigation interne).
@@ -212,7 +214,7 @@ Des bonus (ex. tâche terminée) peuvent compléter la formule selon les fonctio
 
 ### Matières
 
-- Arborescence (matières parentes / sous-matières) avec couleurs
+- Liste de matières (catalogue + personnalisées), couleurs et ordre d’affichage
 - Ajout depuis la banque ou **création personnalisée**
 - Masquage / dissociation du profil, suppression définitive sous conditions (pas de données bloquantes)
 
@@ -254,4 +256,4 @@ Routes indicatives **Expo Router** (chemins logiques) :
 
 ---
 
-*Document rédigé le 8 avril 2026 — Tymii (base documentaire alignée sur le dépôt applicatif Expo).*
+*Document rédigé le 8 avril 2026 — mis à jour le 22 avril 2026. Tymii (base documentaire alignée sur le dépôt applicatif Expo).*

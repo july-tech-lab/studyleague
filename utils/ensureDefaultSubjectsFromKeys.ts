@@ -3,23 +3,21 @@ import { SUBJECT_CATALOG } from "@/constants/subjectCatalog";
 import {
   attachSubjectToUser,
   createAndAttachSubject,
-  fetchSubjects,
-  fetchUserSubjects,
+  fetchAllUserSubjects,
   type Subject,
 } from "@/utils/queries";
 
 async function loadBankSubjectsAndVisibleIds(userId: string) {
-  const [availableSubjects, userSubjects] = await Promise.all([
-    fetchSubjects(userId),
-    fetchUserSubjects(userId),
-  ]);
+  const allLinkedSubjects = await fetchAllUserSubjects(userId);
 
   const subjectsByBankKey = new Map<string, Subject>();
-  availableSubjects.forEach((s) => {
+  allLinkedSubjects.forEach((s) => {
     if (s.bank_key) subjectsByBankKey.set(s.bank_key, s);
   });
 
-  const visibleIds = new Set(userSubjects.map((s) => s.id));
+  const visibleIds = new Set(
+    allLinkedSubjects.filter((s) => !s.is_hidden).map((s) => s.id)
+  );
   return { subjectsByBankKey, visibleIds };
 }
 

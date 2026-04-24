@@ -6,24 +6,25 @@ import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import { useProfile } from "@/hooks/useProfile";
-import { useSubjectGoals, GoalsBySubject } from "@/hooks/useSubjectGoals";
-import { attachSubjectToUser, fetchSubjects, Subject } from "@/utils/queries";
-import { createSubjectColorMap } from "@/utils/color";
+import { GoalsBySubject, useSubjectGoals } from "@/hooks/useSubjectGoals";
 import { useAuth } from "@/utils/authContext";
+import { createSubjectColorMapFromFlat } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 import { formatMinutesCompact } from "@/utils/time";
-import { BookOpen, Calendar, Plus, Save, X } from "lucide-react-native";
+import Slider from "@react-native-community/slider";
+import { useFocusEffect } from "expo-router";
+import { BookOpen, Calendar, Save, X } from "lucide-react-native";
 import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
-import Slider from "@react-native-community/slider";
 
 const DAYS_ORDER = [1, 2, 3, 4, 5, 6, 0] as const; // Mon-Sun
 const DAY_KEYS = [
@@ -66,8 +67,6 @@ export function WeeklyGoalsPanel() {
     autoLoad: true,
   });
 
-  const parentSubjects = useMemo(() => profileSubjects, [profileSubjects]);
-
   const {
     goalsBySubject,
     loading: goalsLoading,
@@ -76,9 +75,16 @@ export function WeeklyGoalsPanel() {
     saveGoals,
   } = useSubjectGoals(user?.id ?? null);
 
+  useFocusEffect(
+    useCallback(() => {
+      void refetchProfile();
+      void refetchGoals();
+    }, [refetchProfile, refetchGoals])
+  );
+
   const subjectIds = useMemo(
-    () => parentSubjects.map((s) => s.id),
-    [parentSubjects]
+    () => profileSubjects.map((s) => s.id),
+    [profileSubjects]
   );
 
   const initialGoals = useMemo(
@@ -88,10 +94,6 @@ export function WeeklyGoalsPanel() {
 
   const [viewMode, setViewMode] = useState<"bySubject" | "byDay">("bySubject");
   const [localGoals, setLocalGoals] = useState<GoalsBySubject>(initialGoals);
-  const [addSubjectVisible, setAddSubjectVisible] = useState(false);
-  const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
-  const [selectedSubjectToAdd, setSelectedSubjectToAdd] = useState<string | null>(null);
-  const [addingSubject, setAddingSubject] = useState(false);
   const [timePickerVisible, setTimePickerVisible] = useState(false);
   const [timePickerTarget, setTimePickerTarget] = useState<{
     subjectId: string;
@@ -150,15 +152,8 @@ export function WeeklyGoalsPanel() {
 
   const subjectColorById = useMemo(
     () =>
-      createSubjectColorMap(
-        parentSubjects.map((s) => ({
-          ...s,
-          children: [] as { id: string; custom_color?: string | null; color?: string | null }[],
-        })),
-        subjectPalette,
-        safeTheme.primary
-      ),
-    [parentSubjects, subjectPalette, safeTheme.primary]
+      createSubjectColorMapFromFlat(profileSubjects, subjectPalette, safeTheme.primary),
+    [profileSubjects, subjectPalette, safeTheme.primary]
   );
 
   const styles = useMemo(() => createStyles(safeTheme), [safeTheme]);
@@ -204,40 +199,6 @@ export function WeeklyGoalsPanel() {
       handleTimePick(clamped);
     }
   }, [customMinutesInput, handleTimePick]);
-
-  const openAddSubject = useCallback(async () => {
-    if (!user?.id) return;
-    setAddSubjectVisible(true);
-    try {
-      const all = await fetchSubjects(user.id);
-      const existingIds = new Set(parentSubjects.map((s) => s.id));
-      setAvailableSubjects(all.filter((s) => !existingIds.has(s.id)));
-    } catch (err) {
-      console.error(err);
-      Alert.alert(t("goals.errorLoad", "Unable to load subjects."), t("common.errors.unexpected"));
-    }
-  }, [user?.id, parentSubjects, t]);
-
-  const handleAddSubject = useCallback(async () => {
-    if (!user?.id || !selectedSubjectToAdd) return;
-    setAddingSubject(true);
-    try {
-      await attachSubjectToUser(user.id, selectedSubjectToAdd);
-      await refetchProfile();
-      await refetchGoals();
-      setLocalGoals((prev) => {
-        const next = { ...prev };
-        next[selectedSubjectToAdd] = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-        return next;
-      });
-      setAddSubjectVisible(false);
-      setSelectedSubjectToAdd(null);
-    } catch (err: any) {
-      Alert.alert(t("goals.errorAdd", "Unable to add subject."), err.message ?? t("common.errors.unexpected"));
-    } finally {
-      setAddingSubject(false);
-    }
-  }, [user?.id, selectedSubjectToAdd, refetchProfile, refetchGoals, t]);
 
   const weeklyTotal = useCallback(
     (subjectId: string) => {
@@ -300,7 +261,7 @@ export function WeeklyGoalsPanel() {
       >
         {viewMode === "bySubject" && (
           <>
-            {parentSubjects.map((subject) => {
+            {profileSubjects.map((subject) => {
               const color = subjectColorById[subject.id] ?? safeTheme.primary;
               const total = weeklyTotal(subject.id);
               return (
@@ -314,8 +275,8 @@ export function WeeklyGoalsPanel() {
                     </View>
                     <Text variant="subtitle" style={styles.weeklyTotal}>
                       {total > 0
-                        ? `${formatMinutesCompact(total)}/week`
-                        : t("goals.noTime", "0min/week")}
+                        ? `${formatMinutesCompact(total)}${t("goals.perWeekSuffix")}`
+                        : `0min${t("goals.perWeekSuffix")}`}
                     </Text>
                   </View>
                   <View style={styles.weekGrid}>
@@ -356,14 +317,6 @@ export function WeeklyGoalsPanel() {
                 </View>
               );
             })}
-
-            <Button
-              variant="outline"
-              title={t("common.addSubject")}
-              iconLeft={Plus}
-              onPress={openAddSubject}
-              style={styles.addButton}
-            />
           </>
         )}
 
@@ -381,34 +334,35 @@ export function WeeklyGoalsPanel() {
                       {total > 0 ? formatMinutesCompact(total) : "--"}
                     </Text>
                   </View>
-                  {parentSubjects
-                    .filter((subject) => (localGoals[subject.id]?.[dow] ?? 0) > 0)
-                    .map((subject) => {
-                      const mins = localGoals[subject.id]?.[dow] ?? 0;
-                      const color = subjectColorById[subject.id] ?? safeTheme.primary;
-                      return (
-                        <View key={subject.id} style={styles.daySubjectRow}>
-                          <View style={[styles.colorDot, { backgroundColor: color }]} />
-                          <Text variant="body" style={styles.daySubjectName}>
-                            {getSubjectDisplayName(subject, t)}
-                          </Text>
-                          <Slider
-                            style={styles.slider}
-                            minimumValue={0}
-                            maximumValue={SLIDER_MAX}
-                            step={SLIDER_STEP}
-                            value={mins}
-                            onValueChange={(v) => updateGoal(subject.id, dow, Math.round(v))}
-                            minimumTrackTintColor={safeTheme.primary}
-                            maximumTrackTintColor={safeTheme.border}
-                            thumbTintColor={safeTheme.primary}
-                          />
-                          <Text variant="caption" style={styles.sliderValue}>
-                            {formatMinutesCompact(mins)}
-                          </Text>
-                        </View>
-                      );
-                    })}
+                  {profileSubjects.map((subject) => {
+                    const mins = localGoals[subject.id]?.[dow] ?? 0;
+                    const color = subjectColorById[subject.id] ?? safeTheme.primary;
+                    return (
+                      <View key={subject.id} style={styles.daySubjectRow}>
+                        <View style={[styles.colorDot, { backgroundColor: color }]} />
+                        <Text variant="body" style={styles.daySubjectName}>
+                          {getSubjectDisplayName(subject, t)}
+                        </Text>
+                        <Slider
+                          style={styles.slider}
+                          minimumValue={0}
+                          maximumValue={SLIDER_MAX}
+                          step={SLIDER_STEP}
+                          value={mins}
+                          onValueChange={(v) => updateGoal(subject.id, dow, Math.round(v))}
+                          minimumTrackTintColor={safeTheme.primary}
+                          maximumTrackTintColor={safeTheme.border}
+                          // iOS: thumbTintColor often stretches the thumb into a pill; default thumb stays round.
+                          thumbTintColor={
+                            Platform.OS === "android" ? safeTheme.primary : undefined
+                          }
+                        />
+                        <Text variant="caption" style={styles.sliderValue}>
+                          {formatMinutesCompact(mins)}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
               );
             })}
@@ -467,50 +421,6 @@ export function WeeklyGoalsPanel() {
             />
           </View>
         </View>
-      </Modal>
-
-      <Modal
-        visible={addSubjectVisible}
-        onClose={() => {
-          setAddSubjectVisible(false);
-          setSelectedSubjectToAdd(null);
-        }}
-        title={t("common.addSubject")}
-        actions={{
-          confirm: {
-            label: t("common.actions.add"),
-            onPress: handleAddSubject,
-            loading: addingSubject,
-            disabled: !selectedSubjectToAdd,
-          },
-        }}
-      >
-        {availableSubjects.length === 0 ? (
-          <Text variant="body" style={styles.emptyText}>
-            {t("goals.allSubjectsAdded", "All available subjects have been added.")}
-          </Text>
-        ) : (
-          <ScrollView style={styles.addSubjectList}>
-            {availableSubjects.map((subject) => {
-                const color =
-                  subjectColorById[subject.id] ??
-                  subject.custom_color ??
-                  subject.color ??
-                  safeTheme.primary;
-                const isSelected = selectedSubjectToAdd === subject.id;
-                return (
-                  <TouchableOpacity
-                    key={subject.id}
-                    style={[styles.addSubjectItem, isSelected && styles.addSubjectItemSelected]}
-                    onPress={() => setSelectedSubjectToAdd(subject.id)}
-                  >
-                    <View style={[styles.colorDot, { backgroundColor: color }]} />
-                    <Text variant="body">{getSubjectDisplayName(subject, t)}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-          </ScrollView>
-        )}
       </Modal>
     </View>
   );
@@ -620,10 +530,6 @@ const createStyles = (theme: typeof Colors.light) =>
     slotValueInactive: {
       color: theme.textMuted,
     },
-    addButton: {
-      alignSelf: "center",
-      marginTop: 8,
-    },
     dayCard: {
       backgroundColor: theme.surface,
       borderRadius: 12,
@@ -663,7 +569,11 @@ const createStyles = (theme: typeof Colors.light) =>
     },
     slider: {
       flex: 2,
-      height: 32,
+      // Match @react-native-community/slider iOS default (~40) so the native control is not vertically squeezed.
+      ...Platform.select({
+        ios: { height: 40 },
+        default: { height: 32 },
+      }),
     },
     sliderValue: {
       minWidth: 40,
@@ -715,22 +625,8 @@ const createStyles = (theme: typeof Colors.light) =>
     },
     customMinutesInputText: {
       fontSize: 12,
-    },
-    emptyText: {
-      color: theme.textMuted,
-    },
-    addSubjectList: {
-      maxHeight: 240,
-    },
-    addSubjectItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      paddingVertical: 12,
-      paddingHorizontal: 8,
-      borderRadius: 8,
-    },
-    addSubjectItemSelected: {
-      backgroundColor: theme.primaryTint,
+      lineHeight: 16,
+      paddingVertical: 0,
+      textAlign: "center",
     },
   });

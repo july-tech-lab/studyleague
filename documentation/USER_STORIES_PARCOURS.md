@@ -8,7 +8,7 @@ Document simple : parcours **de l’inscription au chronomètre de session**, av
 
 1. **Arrivée** → connexion ou création de compte.  
 2. **Première connexion** → complétion obligatoire du profil (onboarding).  
-3. **Accès à l’app** → onglets (tableau de bord, timer, tâches, profil, groupes selon version).  
+3. **Accès à l’app** → barre d’onglets : **Focus** (chronomètre), **Tâches**, **Groupes**, **Statistiques** (tableau de bord / agrégats), **Profil**. Écrans hors barre (navigation contextuelle) : **classement** d’un groupe, **groupe en direct** (qui étudie), **calendrier des stats**.  
 4. **Session d’étude** → choix matière (et optionnellement tâche) → démarrage du chrono → arrêt → enregistrement d’une ligne `study_sessions`.
 
 ---
@@ -60,6 +60,7 @@ Document simple : parcours **de l’inscription au chronomètre de session**, av
 
 - Les matières affichées pour le suivi proviennent de la liaison **`user_subjects`** : matières non masquées (`is_hidden = false`), sujets non supprimés (`subjects.deleted_at` nul).
 - Les enregistrements **`user_subjects`** sont limités par RLS au **`user_id`** de l’utilisateur connecté (lecture / écriture sur ses propres lignes).
+- Les entrées **catalogue** (sujets globaux sans propriétaire) peuvent être **matérialisées en lignes `subjects` personnelles** (`owner_id` = utilisateur) pour permettre renommage / couleur sans impacter les autres comptes ; l’usage timer et les listes restent cohérents via **`user_subjects`** (voir migration `20260423100000_ypt_detach_global_subjects_per_user.sql` si déployée).
 
 ### US-S2 — Créer ou masquer une matière personnelle
 **En tant qu’** utilisateur,  
@@ -141,6 +142,29 @@ Document simple : parcours **de l’inscription au chronomètre de session**, av
 - Création de groupe : le **`created_by`** est l’utilisateur créateur.
 - Mises à jour / suppressions : réservées aux **créateurs** ou **admins de groupe** approuvés, selon les politiques SQL déployées.
 
+### US-G5 — Créer un groupe
+**En tant qu’** utilisateur connecté,  
+**je veux** créer un groupe (nom, visibilité, options mot de passe / approbation admin),  
+**afin d’** inviter d’autres étudiants et suivre un classement collectif.
+
+**Règles de gestion**
+
+- **Insert** sur `groups` : le client envoie une ligne avec **`created_by` = utilisateur courant** ; la politique d’insertion exige cette égalité avec `auth.uid()`.
+- **Lecture après création** (`RETURNING`, embed `groups` depuis `group_members`, etc.) : les politiques **SELECT** sur `groups` et `group_members` ne doivent pas s’appeler en boucle l’une l’autre via de simples sous-requêtes mutuelles (erreur Postgres `42P17`). Le dépôt prévoit une migration **`migrations/20260417120000_fix_groups_rls_infinite_recursion.sql`** : fonctions **`rls_*`** (`SECURITY DEFINER`, `search_path = public`) utilisées par les politiques pour préserver les mêmes règles métier sans cycle RLS.
+- **Alternative serveur** : la RPC **`create_group_with_creator`** peut créer le groupe et la ligne membre admin en une transaction (voir `TECH_STACK.md` §3.6).
+
+### US-G6 — Voir en direct qui étudie dans mon groupe
+**En tant que** membre **approuvé** d’un groupe,  
+**je veux** voir quels co‑membres ont le **chronomètre en cours** (état « en étude »),  
+**afin de** me motiver et synchroniser mon rythme avec le groupe.
+
+**Règles de gestion**
+
+- Pendant une session, le client maintient une ligne dans **`user_study_presence`** (heartbeat ~45 s, effacement à l’arrêt du timer) via les requêtes dédiées côté app (`useStudyPresenceSync`).
+- **RLS** : chaque utilisateur ne peut **insérer / mettre à jour / supprimer** que **sa** ligne (`user_id = auth.uid()`). La **lecture** est autorisée pour soi‑même **ou** pour tout utilisateur avec lequel on partage **au moins un groupe** en statut **`approved`** des deux côtés (fonction **`rls_users_share_approved_group`**, politique `presence_select_peers`).
+- L’UI « groupe en direct » agrège membres + présence ; un pair est affiché « en ligne » sur le chrono seulement si la présence est **récente** (seuil côté app, ex. **2 min** via `STUDY_PRESENCE_STALE_MS`, indépendamment du heartbeat ~45 s).
+- La visibilité des **profils** minimaux (pseudo, avatar) entre co‑membres de groupe privé repose sur les mêmes règles d’**appartenance approuvée** (politique `profiles` mise à jour dans la migration **`migrations/20260422150000_user_study_presence_group_peers.sql`**), ainsi que la lecture élargie de la **liste des membres** `group_members` pour les groupes non publics lorsque l’observateur est lui‑même membre approuvé.
+
 ---
 
 ## 5. Session d’étude (chronomètre)
@@ -183,6 +207,7 @@ Document simple : parcours **de l’inscription au chronomètre de session**, av
 **Règles de gestion**
 
 - À l’arrêt, si le mode focus était actif, l’app tente de **désactiver** le mode focus côté natif (hors web).
+- Tant que le chrono tourne, l’état peut être **poussé** vers `user_study_presence` pour les pairs du groupe (voir **US-G6**).
 
 ### US-M4 — Feedback après session
 **En tant qu’** utilisateur,  
@@ -201,13 +226,15 @@ Document simple : parcours **de l’inscription au chronomètre de session**, av
 |--------|--------|
 | **Navigation** | Utilisateur non connecté → écran de connexion. Onboarding incomplet → `fill-profile`. |
 | **Sessions** | Une ligne de session appartient toujours au **`user_id`** de l’utilisateur connecté (RLS). |
-| **Matières (usage timer)** | L’interface ne propose le chronomètre que dans le cadre des **matières rattachées** à l’utilisateur via `user_subjects` (non masquées). |
+| **Matières (usage timer)** | L’interface ne propose le chronomètre que dans le cadre des **matières rattachées** à l’utilisateur via `user_subjects` (non masquées), avec sujets **`subjects`** typiquement **possédés** par l’utilisateur lorsque le modèle catalogue est détaché par compte. |
 | **Tâches** | Un utilisateur ne manipule que **ses** tâches. |
 | **Groupes publics / privés** | Découverte standard = groupes **publics** ; accès complet aux données d’un groupe **privé** = typiquement **membre approuvé** (et politiques RLS associées). |
+| **RLS groupes / membres** | Pas de cycle de politiques entre `groups` et `group_members` : contrôles d’appartenance et de visibilité via fonctions **`rls_*`** déployées avec la migration `20260417120000_fix_groups_rls_infinite_recursion.sql`. |
 | **Mot de passe / validation de groupe** | Géré côté serveur via RPC de demande d’adhésion. |
 | **Intégrité temporelle** | Sessions avec fin après début, durée bornée, contrôle anti‑futur côté base. |
 | **Soft delete** | Matières (et tâches) : `deleted_at` renseigné = archivé, exclu des listes actives ; historique préservé ; restauration possible pour les matières. |
 | **Durée minimale de session** | App : minimum **1 s** si arrêt à 0 s ; base : durée **> 0** et **≤ 24 h** (valeurs typiques du schéma). |
+| **Présence d’étude (groupes)** | Table **`user_study_presence`** : écriture **propriétaire** ; lecture **soi + pairs** approuvés dans un groupe commun ; heartbeat pendant le timer ; migration **`20260422150000_user_study_presence_group_peers.sql`**. |
 
 ---
 
@@ -219,4 +246,4 @@ Document simple : parcours **de l’inscription au chronomètre de session**, av
 
 ---
 
-*Document généré pour cadrage produit / recette ; à tenir à jour lors des évolutions de parcours ou des RPC groupes / sessions.*
+*Document généré pour cadrage produit / recette ; à tenir à jour lors des évolutions de parcours ou des RPC groupes / sessions. Mis à jour le 23 avril 2026 (navigation onglets, US-G6 présence groupe, matières catalogue par utilisateur, renvois migrations `20260422150000`, `20260423100000`).*

@@ -11,7 +11,7 @@ import { useAuth } from "@/utils/authContext";
 import { Group } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
 import { useRouter } from "expo-router";
-import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Shield, Trash2, Trophy, UserPlus, Users } from "lucide-react-native";
+import { Eye, EyeOff, Globe, Lock, Pencil, Plus, Search, Trash2, Trophy, UserMinus, UserPlus, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -31,6 +31,7 @@ export default function GroupsScreen() {
 
   const {
     groups,
+    pendingGroups,
     publicGroups,
     createGroup: createGroupHook,
     joinGroup: joinGroupHook,
@@ -71,6 +72,23 @@ export default function GroupsScreen() {
   const [editPasswordChanged, setEditPasswordChanged] = useState(false);
   const [removingGroupId, setRemovingGroupId] = useState<string | null>(null);
   const [removeGroupTarget, setRemoveGroupTarget] = useState<Group | null>(null);
+  const [pendingApprovalGroupName, setPendingApprovalGroupName] = useState<string | null>(null);
+
+  const pendingIdSet = useMemo(
+    () => new Set(pendingGroups.map((p) => p.id)),
+    [pendingGroups]
+  );
+
+  const myGroupsCombined = useMemo(
+    () => [...pendingGroups, ...groups],
+    [pendingGroups, groups]
+  );
+
+  const getRemovalMode = (g: Group): "delete" | "leave" | "cancelPending" => {
+    if (pendingIdSet.has(g.id)) return "cancelPending";
+    if (user?.id && g.created_by === user.id) return "delete";
+    return "leave";
+  };
 
   const openEditModal = (g: Group) => {
     setEditingGroup(g);
@@ -160,16 +178,13 @@ export default function GroupsScreen() {
     setJoinLoading(true);
     try {
       const status = await joinGroupHook(group, password ?? null);
-      
-      if (status === "pending") {
-        Alert.alert(
-          t("groups.success.requestSent"),
-          t("groups.success.approvalNeeded")
-        );
-      }
 
       setSelectedGroup(null);
       setJoinPassword("");
+
+      if (status === "pending") {
+        setPendingApprovalGroupName(group.name);
+      }
     } catch (error: any) {
       if (error.message?.includes("ALREADY_MEMBER")) {
         Alert.alert(t("groups.errors.alreadyMember"));
@@ -215,11 +230,14 @@ export default function GroupsScreen() {
     }
   };
 
-  const handleRemoveMyGroup = async (g: Group, isCreator: boolean) => {
+  const handleRemoveMyGroup = async (
+    g: Group,
+    mode: "delete" | "leave" | "cancelPending"
+  ) => {
     if (!user?.id) return;
     setRemovingGroupId(g.id);
     try {
-      if (isCreator) {
+      if (mode === "delete") {
         await deleteGroupHook(g.id);
       } else {
         await leaveGroupHook(g.id);
@@ -230,10 +248,13 @@ export default function GroupsScreen() {
       setRemoveGroupTarget(null);
     } catch (error: any) {
       console.error("Error removing group:", error);
-      Alert.alert(
-        isCreator ? t("groups.errors.delete") : t("groups.errors.leave"),
-        error?.message ?? t("groups.errors.unknown")
-      );
+      const errTitle =
+        mode === "delete"
+          ? t("groups.errors.delete")
+          : mode === "cancelPending"
+            ? t("groups.errors.cancelPending")
+            : t("groups.errors.leave");
+      Alert.alert(errTitle, error?.message ?? t("groups.errors.unknown"));
     } finally {
       setRemovingGroupId(null);
     }
@@ -247,113 +268,170 @@ export default function GroupsScreen() {
         style={[
           styles.badge,
           {
-            backgroundColor: isPublic ? theme.primaryTint : theme.surfaceElevated,
+            backgroundColor: theme.surfaceElevated,
+            borderColor: theme.border,
           },
         ]}
       >
-        <Icon size={12} color={isPublic ? theme.primaryDark : theme.textMuted} />
-        <Text
-          variant="caption"
-          style={[
-            styles.badgeText,
-            { color: isPublic ? theme.primaryDark : theme.textMuted },
-          ]}
-        >
+        <Icon size={12} color={theme.textMuted} />
+        <Text variant="caption" style={[styles.badgeText, { color: theme.textMuted }]}>
           {isPublic ? t("groups.create.public") : t("groups.create.private")}
         </Text>
       </View>
     );
   };
 
-  const renderGroupCard = (g: Group, showJoinButton: boolean) => {
+  const renderGroupCard = (g: Group, opts: { variant: "public" | "my" }) => {
     const isCreator = g.created_by === user?.id;
     const isRemoving = removingGroupId === g.id;
-    return (
-    <Card variant="border" style={styles.groupCard}>
-      <View style={styles.groupCardContent}>
-        <View style={styles.groupCardMain}>
-          <View style={styles.groupCardHeader}>
-            <Text variant="subtitle" style={styles.groupTitle} numberOfLines={1}>
-              {g.name}
-            </Text>
-            <View style={styles.badgeRow}>
-              {renderBadge(g.visibility)}
-              {g.requires_admin_approval && (
-                <Shield size={16} color={theme.textMuted} style={styles.shieldIcon} />
-              )}
-            </View>
-          </View>
-          {g.description ? (
-            <Text variant="caption" colorName="textMuted" style={styles.groupDesc} numberOfLines={2}>
-              {g.description}
-            </Text>
-          ) : null}
-          <View style={styles.memberRow}>
-            <Users size={14} color={theme.textMuted} />
-            <Text variant="caption" colorName="textMuted" style={styles.memberCount}>
-              {t("groups.membersCount", { count: g.member_count ?? 0 })}
-            </Text>
-          </View>
-          <View style={styles.groupMetaRow}>
-            <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
-              {t("groups.code")}: {g.invite_code}
-            </Text>
-            {g.requires_admin_approval ? (
-              <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
-                {t("groups.adminApprovalRequired")}
-              </Text>
-            ) : null}
-            {g.has_password ? (
-              <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
-                {t("groups.passwordRequired")}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-        <View style={styles.groupCardActions}>
-          {showJoinButton ? (
-            <Button
-              iconLeft={UserPlus}
-              title={t("groups.joinGroup")}
-              variant="primary"
-              onPress={() => setSelectedGroup(g)}
-              size="sm"
-              style={styles.joinButton}
-            />
-          ) : (
-            <View style={styles.groupCardActionRow}>
-              {isCreator ? (
-                <Button
-                  iconLeft={Pencil}
-                  iconOnly
-                  variant="ghost"
-                  size="xs"
-                  onPress={() => openEditModal(g)}
-                  accessibilityLabel={t("groups.edit.title")}
-                  disabled={isRemoving}
-                  style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
-                />
-              ) : null}
-              <Button
-                iconLeft={Trash2}
-                iconOnly
-                variant="ghost"
-                size="xs"
-                onPress={() => setRemoveGroupTarget(g)}
-                accessibilityLabel={
-                  isCreator ? t("groups.delete.accessibility") : t("groups.leave.accessibility")
-                }
-                loading={isRemoving}
-                disabled={isRemoving}
-                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
-              />
-            </View>
-          )}
-        </View>
+    const hasPendingRequest = pendingIdSet.has(g.id);
+    const isPublicCard = opts.variant === "public";
+    const membershipPending = opts.variant === "my" && hasPendingRequest;
+    const showPendingColumn = hasPendingRequest && (isPublicCard || membershipPending);
+    const showApprovalMeta = g.requires_admin_approval && !hasPendingRequest;
+
+    const pendingPill = (
+      <View
+        style={[
+          styles.pendingPill,
+          {
+            backgroundColor: theme.warningTint,
+            borderColor: theme.warning,
+          },
+        ]}
+      >
+        <Text variant="caption" style={{ color: theme.warningDark }} numberOfLines={2}>
+          {t("groups.pendingBadge")}
+        </Text>
       </View>
-    </Card>
-  );
-};
+    );
+
+    const cancelRequestButton = (
+      <Button
+        iconLeft={UserMinus}
+        iconOnly
+        variant="soft"
+        size="xs"
+        onPress={() => setRemoveGroupTarget(g)}
+        accessibilityLabel={t("groups.cancelPending.accessibility")}
+        loading={isRemoving}
+        disabled={isRemoving}
+      />
+    );
+
+    const canOpenGroupLive = opts.variant === "my" && !hasPendingRequest;
+
+    return (
+      <Card variant="border" style={styles.groupCard}>
+        <View style={styles.groupCardContent}>
+          <Pressable
+            disabled={!canOpenGroupLive}
+            onPress={() => {
+              if (!canOpenGroupLive) return;
+              router.push({
+                pathname: "/(tabs)/group-live",
+                params: { id: g.id, name: g.name },
+              });
+            }}
+            style={({ pressed }) => ({
+              flex: 1,
+              minWidth: 0,
+              opacity: pressed && canOpenGroupLive ? 0.85 : 1,
+            })}
+            accessibilityRole="button"
+            accessibilityLabel={canOpenGroupLive ? t("groups.live.openA11y", { name: g.name }) : undefined}
+          >
+          <View style={styles.groupCardMain}>
+            <View style={styles.groupCardHeader}>
+              <Text variant="subtitle" style={styles.groupTitle} numberOfLines={1}>
+                {g.name}
+              </Text>
+              <View style={styles.badgeRow}>{renderBadge(g.visibility)}</View>
+            </View>
+            {g.description ? (
+              <Text variant="caption" colorName="textMuted" style={styles.groupDesc} numberOfLines={2}>
+                {g.description}
+              </Text>
+            ) : null}
+            <View style={styles.memberRow}>
+              <Users size={14} color={theme.textMuted} />
+              <Text variant="caption" colorName="textMuted" style={styles.memberCount}>
+                {t("groups.membersCount", { count: g.member_count ?? 0 })}
+              </Text>
+            </View>
+            <View style={styles.groupMetaRow}>
+              <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
+                {t("groups.code")}: {g.invite_code}
+              </Text>
+              {showApprovalMeta ? (
+                <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
+                  {t("groups.adminApprovalRequired")}
+                </Text>
+              ) : null}
+              {g.has_password ? (
+                <Text variant="micro" colorName="textMuted" style={styles.groupMeta}>
+                  {t("groups.passwordRequired")}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          </Pressable>
+          <View style={styles.groupCardActions}>
+            {isPublicCard ? (
+              showPendingColumn ? (
+                <View style={styles.pendingActionColumn}>
+                  {pendingPill}
+                  {cancelRequestButton}
+                </View>
+              ) : (
+                <Button
+                  iconLeft={UserPlus}
+                  iconOnly
+                  variant="soft"
+                  onPress={() => setSelectedGroup(g)}
+                  size="xs"
+                  accessibilityLabel={t("groups.joinGroup")}
+                />
+              )
+            ) : membershipPending ? (
+              <View style={styles.pendingActionColumn}>
+                {pendingPill}
+                {cancelRequestButton}
+              </View>
+            ) : (
+              <View style={styles.groupCardActionRow}>
+                {isCreator ? (
+                  <Button
+                    iconLeft={Pencil}
+                    iconOnly
+                    variant="soft"
+                    size="xs"
+                    onPress={() => openEditModal(g)}
+                    accessibilityLabel={t("groups.edit.title")}
+                    disabled={isRemoving}
+                  />
+                ) : null}
+                <Button
+                  iconLeft={isCreator ? Trash2 : UserMinus}
+                  iconOnly
+                  variant="soft"
+                  size="xs"
+                  onPress={() => setRemoveGroupTarget(g)}
+                  accessibilityLabel={
+                    isCreator ? t("groups.delete.accessibility") : t("groups.leave.accessibility")
+                  }
+                  loading={isRemoving}
+                  disabled={isRemoving}
+                />
+              </View>
+            )}
+          </View>
+        </View>
+      </Card>
+    );
+  };
+
+  const removalMode = removeGroupTarget ? getRemovalMode(removeGroupTarget) : null;
 
   return (
     <TabScreen
@@ -392,32 +470,45 @@ export default function GroupsScreen() {
               onSubmitEditing={handleSearchGroupByCode}
             />
             <Button
-              title={searchingCode ? "..." : t("common.actions.search")}
+              iconLeft={Search}
+              iconOnly
               variant="primary"
+              size="md"
               onPress={handleSearchGroupByCode}
               disabled={searchingCode || !searchCode.trim()}
               loading={searchingCode}
-              size="sm"
+              accessibilityLabel={t("common.actions.search")}
             />
           </View>
 
           <Tabs
+            variant="iconPills"
             options={[
-              { value: "my", label: `${t("groups.myGroups")} (${groups.length})` },
-              { value: "public", label: `${t("groups.publicGroups")} (${publicGroups.length})` },
+              {
+                value: "my",
+                label: `${t("groups.myGroups")} (${myGroupsCombined.length})`,
+                icon: Users,
+              },
+              {
+                value: "public",
+                label: `${t("groups.publicGroups")} (${publicGroups.length})`,
+                icon: Globe,
+              },
             ]}
             value={groupTab}
             onChange={(v) => setGroupTab(v as "my" | "public")}
           />
 
           {groupTab === "my" ? (
-            groups.length === 0 ? (
+            myGroupsCombined.length === 0 ? (
               <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
                 {t("groups.noGroupsYet")}
               </Text>
             ) : (
               <View style={styles.groupCardsContainer}>
-                {groups.map((g) => <View key={g.id}>{renderGroupCard(g, false)}</View>)}
+                {myGroupsCombined.map((g) => (
+                  <View key={g.id}>{renderGroupCard(g, { variant: "my" })}</View>
+                ))}
               </View>
             )
           ) : (
@@ -428,7 +519,9 @@ export default function GroupsScreen() {
                 </Text>
               ) : (
                 <View style={styles.groupCardsContainer}>
-                  {filteredPublicGroups.map((g) => <View key={g.id}>{renderGroupCard(g, true)}</View>)}
+                  {filteredPublicGroups.map((g) => (
+                    <View key={g.id}>{renderGroupCard(g, { variant: "public" })}</View>
+                  ))}
                 </View>
               )}
             </>
@@ -469,10 +562,6 @@ export default function GroupsScreen() {
           onChangeText={setGroupDescription}
           containerStyle={{ marginBottom: 10 }}
         />
-
-        <Text variant="caption" colorName="textMuted" style={{ marginBottom: 10 }}>
-          {t("groups.create.inviteCodeInfo", "Le code d'invitation sera généré automatiquement.")}
-        </Text>
 
         <Input
           placeholder={t("groups.create.passwordPlaceholder", "Mot de passe du groupe (optionnel)")}
@@ -627,9 +716,11 @@ export default function GroupsScreen() {
           setRemoveGroupTarget(null);
         }}
         title={
-          removeGroupTarget?.created_by === user?.id
-            ? t("groups.delete.confirmTitle")
-            : t("groups.leave.confirmTitle")
+          removalMode === "cancelPending"
+            ? t("groups.cancelPending.confirmTitle")
+            : removalMode === "delete"
+              ? t("groups.delete.confirmTitle")
+              : t("groups.leave.confirmTitle")
         }
         padding={20}
         actions={{
@@ -641,25 +732,48 @@ export default function GroupsScreen() {
           },
           confirm: {
             label:
-              removeGroupTarget?.created_by === user?.id
-                ? t("groups.delete.confirm")
-                : t("groups.leave.confirm"),
+              removalMode === "cancelPending"
+                ? t("groups.cancelPending.confirm")
+                : removalMode === "delete"
+                  ? t("groups.delete.confirm")
+                  : t("groups.leave.confirm"),
             onPress: () => {
-              if (!removeGroupTarget || !user?.id) return;
-              const isCreator = removeGroupTarget.created_by === user.id;
-              void handleRemoveMyGroup(removeGroupTarget, isCreator);
+              if (!removeGroupTarget || !removalMode) return;
+              void handleRemoveMyGroup(removeGroupTarget, removalMode);
             },
-            variant:
-              removeGroupTarget?.created_by === user?.id ? "destructive" : "primary",
+            variant: removalMode === "delete" ? "destructive" : "primary",
             loading: removingGroupId === removeGroupTarget?.id,
             disabled: removingGroupId === removeGroupTarget?.id,
           },
         }}
       >
         <Text variant="body" colorName="textMuted" style={{ marginTop: 4 }}>
-          {removeGroupTarget?.created_by === user?.id
-            ? t("groups.delete.confirmMessage")
-            : t("groups.leave.confirmMessage")}
+          {removalMode === "cancelPending"
+            ? t("groups.cancelPending.confirmMessage")
+            : removalMode === "delete"
+              ? t("groups.delete.confirmMessage")
+              : t("groups.leave.confirmMessage")}
+        </Text>
+      </Modal>
+
+      <Modal
+        visible={!!pendingApprovalGroupName}
+        dismissible
+        onClose={() => setPendingApprovalGroupName(null)}
+        title={t("groups.pendingApprovalModal.title")}
+        padding={20}
+        actions={{
+          confirm: {
+            label: t("groups.pendingApprovalModal.close"),
+            onPress: () => setPendingApprovalGroupName(null),
+            variant: "primary",
+          },
+        }}
+      >
+        <Text variant="body" colorName="textMuted" style={{ marginTop: 4 }}>
+          {pendingApprovalGroupName
+            ? t("groups.pendingApprovalModal.message", { name: pendingApprovalGroupName })
+            : null}
         </Text>
       </Modal>
 
@@ -747,9 +861,17 @@ const createStyles = (theme: typeof Colors.light) =>
       paddingHorizontal: 8,
       paddingVertical: 4,
       gap: 4,
+      borderWidth: 1,
     },
     badgeText: { fontWeight: "600" },
-    shieldIcon: { marginLeft: 2 },
+    pendingPill: {
+      borderRadius: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+      maxWidth: 132,
+      borderWidth: 1,
+    },
+    pendingActionColumn: { alignItems: "flex-end", gap: 6 },
     groupDesc: { marginBottom: 6 },
     memberRow: {
       flexDirection: "row",
@@ -761,8 +883,6 @@ const createStyles = (theme: typeof Colors.light) =>
     groupMeta: {},
     groupCardActions: { alignSelf: "flex-start" },
     groupCardActionRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-    iconButton: { borderRadius: 12 },
-    joinButton: {},
     headerActions: {
       flexDirection: "row",
       alignItems: "center",

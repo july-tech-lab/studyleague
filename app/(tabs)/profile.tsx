@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListCard, ListItem } from "@/components/ui/ListCard";
 import { Modal } from "@/components/ui/Modal";
-import { StatCard } from "@/components/ui/StatCard";
 import { Tabs } from "@/components/ui/Tabs";
 import {
   categoryNeedsYearStep,
@@ -15,21 +14,17 @@ import {
 import type { CategoryId } from "@/constants/categories";
 import Colors from "@/constants/Colors";
 import {
-  CUSTOM_SUBJECT_CREATE_SWATCHES,
   getSubjectDisplayName,
-  PROFILE_POPULAR_SUBJECT_KEYS,
   SUBJECT_CATALOG,
   type SubjectKey,
 } from "@/constants/subjectCatalog";
-import { useDashboard } from "@/hooks/useDashboard";
 import { useProfile } from "@/hooks/useProfile";
+import { useSubjects } from "@/hooks/useSubjects";
 import { changeLanguage } from "@/i18n";
 import { useAuth } from "@/utils/authContext";
 import { createSubjectColorMap } from "@/utils/color";
 import {
-  attachSubjectToUser,
   buildSubjectTree,
-  createAndAttachSubject,
   deleteSubject,
   hideUserSubject,
   permanentlyDeleteSubject,
@@ -40,15 +35,12 @@ import {
   updateUserSubjectCustomization,
 } from "@/utils/queries";
 import { useTheme, useThemePreference } from "@/utils/themeContext";
-import { formatDuration, formatDurationCompact } from "@/utils/time";
 import { useRouter } from "expo-router";
 // FAMILY_CONTROLS_DISABLED: Shield, ShieldAlert removed from imports (re-add when enabling)
 import {
   ChevronDown,
-  Clock,
   Eye,
   EyeOff,
-  Flame,
   Globe,
   GraduationCap,
   LogOut,
@@ -56,8 +48,6 @@ import {
   Pencil,
   Plus,
   Save,
-  Sparkles,
-  Timer,
   Trash,
   User,
   X,
@@ -67,6 +57,7 @@ import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -74,6 +65,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+/** Case- and accent-insensitive match for subject name / bank_key search (e.g. "franc" → "Français"). */
+function foldAccents(s: string) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
 
 
 
@@ -86,14 +82,6 @@ const ACADEMIC_CATEGORY_IDS: CategoryId[] = [
   "universite",
   "autres",
 ];
-
-// Types
-interface StatCardData {
-  icon: React.ComponentType<{ size?: number; color?: string }>;
-  label: string;
-  value: string;
-  iconColor: string;
-}
 
 export default function ProfileScreen() {
   const { colorScheme, setPreference } = useThemePreference();
@@ -110,16 +98,17 @@ export default function ProfileScreen() {
     allSubjects,
     hiddenSubjects,
     subjectTotals,
-    sessionTotals,
     loading,
-    error: profileError,
     refetch: refetchProfile,
   } = useProfile({
     userId: user?.id ?? null,
     autoLoad: true,
   });
 
-  const { longestSessionSeconds } = useDashboard(user?.id ?? null);
+  const { createSubject, attachSubject } = useSubjects({
+    userId: user?.id ?? null,
+    autoLoad: false,
+  });
 
   // Initialize display name input when profile loads
   useEffect(() => {
@@ -156,16 +145,19 @@ export default function ProfileScreen() {
   const [bankListModalVisible, setBankListModalVisible] = useState(false);
   const [customSubjectName, setCustomSubjectName] = useState("");
   const [customCreateColor, setCustomCreateColor] = useState(
-    CUSTOM_SUBJECT_CREATE_SWATCHES[0] ?? "#60B3E3"
+    theme.subjectPalette?.[0] ?? theme.primary
   );
   const [savingSubject, setSavingSubject] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
+  /** Permanent delete (DB): in-app modal required — Alert is a no-op on web. */
+  const [deleteOwnedPermanentModalVisible, setDeleteOwnedPermanentModalVisible] = useState(false);
+  const [subjectToDeleteOwned, setSubjectToDeleteOwned] = useState<Subject | null>(null);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [accountActionLoading, setAccountActionLoading] = useState<"signout" | "delete" | null>(null);
-  const [activeTab, setActiveTab] = useState<"stats" | "subjects" | "settings">("stats");
+  const [activeTab, setActiveTab] = useState<"settings" | "subjects">("settings");
   const [updatingColor, setUpdatingColor] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState("");
   const [savingDisplayName, setSavingDisplayName] = useState(false);
@@ -211,11 +203,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Combine profile error with local error state for display
-  const error = profileError ? profileError.message : null;
-
-  const iconColor = theme.primary;
-
   const academicPathSummary = useMemo(() => {
     const c = profile?.academic_category;
     if (!c || !ACADEMIC_CATEGORY_IDS.includes(c as CategoryId)) {
@@ -236,52 +223,6 @@ export default function ProfileScreen() {
     setAcademicPathModalVisible(true);
   };
 
-  const xpFormatted = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.language?.startsWith("fr") ? "fr-FR" : "en-US").format(
-        profile?.xp_total ?? 0
-      ),
-    [profile?.xp_total, i18n.language]
-  );
-
-  const statCards: StatCardData[] = useMemo(
-    () => [
-      {
-        icon: Clock,
-        label: t("common.totalTime"),
-        value: formatDurationCompact(sessionTotals.totalSeconds),
-        iconColor,
-      },
-      {
-        icon: Timer,
-        label: t("dashboard.longestSession"),
-        value: formatDurationCompact(longestSessionSeconds),
-        iconColor,
-      },
-      {
-        icon: Sparkles,
-        label: t("profile.stats.xp"),
-        value: xpFormatted,
-        iconColor: theme.secondaryDark,
-      },
-      {
-        icon: Flame,
-        label: t("profile.stats.streak"),
-        value: t("profile.stats.streakValue", { count: profile?.current_streak ?? 0 }),
-        iconColor: theme.secondaryDark,
-      },
-    ],
-    [
-      sessionTotals,
-      longestSessionSeconds,
-      iconColor,
-      t,
-      xpFormatted,
-      theme.secondaryDark,
-      profile?.current_streak,
-    ]
-  );
-
   const handleCreateCustomSubject = async () => {
     if (!user?.id) return;
     const trimmed = customSubjectName.trim();
@@ -289,13 +230,13 @@ export default function ProfileScreen() {
     setSavingSubject(true);
     setAddError(null);
     try {
-      await createAndAttachSubject(user.id, trimmed, {
+      await createSubject(trimmed, {
         color: customCreateColor,
         icon: "bookmark",
       });
       await refetchProfile();
       setCustomSubjectName("");
-      setCustomCreateColor(CUSTOM_SUBJECT_CREATE_SWATCHES[0] ?? "#60B3E3");
+      setCustomCreateColor(theme.subjectPalette?.[0] ?? theme.primary);
     } catch (err: any) {
       setAddError(err?.message ?? t("profile.subjects.addError", "Impossible d'ajouter la matière"));
     } finally {
@@ -313,10 +254,10 @@ export default function ProfileScreen() {
     setBankListModalVisible(false);
     try {
       if (catalogRow) {
-        await attachSubjectToUser(user.id, catalogRow.id);
+        await attachSubject(catalogRow.id);
       } else {
         const name = t(`subjectCatalog.${key}`);
-        await createAndAttachSubject(user.id, name, {
+        await createSubject(name, {
           bankKey: key,
           color: entry.defaultColor,
           icon: entry.icon,
@@ -377,7 +318,7 @@ export default function ProfileScreen() {
     if (!user?.id) return;
     setRestoringHiddenId(subject.id);
     try {
-      await attachSubjectToUser(user.id, subject.id);
+      await attachSubject(subject.id);
       await refetchProfile();
     } catch (err: any) {
       Alert.alert(
@@ -482,10 +423,10 @@ export default function ProfileScreen() {
     return keys;
   }, [subjects, hiddenSubjects]);
 
-  /** Popular catalog entries the user can still add (attach or create-with-bank-key). */
-  const availablePopularBankEntries = useMemo(() => {
+  /** Catalog bank_key entries the user can still add (reactivate hidden copy or create owned row from catalog). */
+  const addableBankCatalogEntries = useMemo(() => {
     const out: { key: SubjectKey; label: string; dotColor: string }[] = [];
-    for (const key of PROFILE_POPULAR_SUBJECT_KEYS) {
+    for (const key of Object.keys(SUBJECT_CATALOG) as SubjectKey[]) {
       const entry = SUBJECT_CATALOG[key];
       if (!entry) continue;
       const catalogRow = allSubjects.find((s) => s.bank_key === key);
@@ -502,6 +443,36 @@ export default function ProfileScreen() {
     }
     return out;
   }, [allSubjects, t, userAttachedSubjectIds, userBankKeys]);
+
+  /** Full catalog still addable, A–Z for the chevron picker modal. */
+  const addableBankCatalogSorted = useMemo(() => {
+    return [...addableBankCatalogEntries].sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    );
+  }, [addableBankCatalogEntries]);
+
+  /** Suggestions while typing a custom name: match translated label or bank_key (underscores as spaces). */
+  const customInputBankSuggestions = useMemo(() => {
+    const q = customSubjectName.trim();
+    if (!q) return [];
+    const qFold = foldAccents(q);
+    const matched = addableBankCatalogEntries.filter((item) => {
+      const labelFold = foldAccents(item.label);
+      const keyFold = foldAccents(item.key.replace(/_/g, " "));
+      return labelFold.includes(qFold) || keyFold.includes(qFold);
+    });
+    matched.sort((a, b) => {
+      const aLabel = foldAccents(a.label);
+      const bLabel = foldAccents(b.label);
+      const aKey = foldAccents(a.key.replace(/_/g, " "));
+      const bKey = foldAccents(b.key.replace(/_/g, " "));
+      const aStarts = aLabel.startsWith(qFold) || aKey.startsWith(qFold);
+      const bStarts = bLabel.startsWith(qFold) || bKey.startsWith(qFold);
+      if (aStarts !== bStarts) return aStarts ? -1 : 1;
+      return aLabel.length - bLabel.length;
+    });
+    return matched.slice(0, 12);
+  }, [addableBankCatalogEntries, customSubjectName]);
 
   const subjectsOrdered = useMemo(
     () => sortSubjectsForDisplay(subjects),
@@ -527,69 +498,55 @@ export default function ProfileScreen() {
     );
   }, [allSubjectsTree, theme.subjectPalette, theme.primary]);
 
-  /** Total study time per root subject (all-time), same source as before profile/stats refactor. */
-  const subjectTotalsForBreakdown = useMemo(() => {
-    const totalsById = new Map(subjectTotals.map((r) => [r.parentId, r]));
-    return subjectsOrdered
-      .map((s) => {
-        const row = totalsById.get(s.id);
-        return {
-          parentId: s.id,
-          parentName: getSubjectDisplayName(s, t),
-          totalSeconds: row?.totalSeconds ?? 0,
-        };
-      })
-      .sort((a, b) => b.totalSeconds - a.totalSeconds);
-  }, [subjectsOrdered, subjectTotals, t]);
-
   /** All-time seconds per subject id (for disabling permanent delete when study time exists). */
   const subjectTotalSecondsById = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of subjectTotals) {
-      m.set(r.parentId, r.totalSeconds);
+      m.set(r.subjectId, r.totalSeconds);
     }
     return m;
   }, [subjectTotals]);
 
-  const handleDeleteOwnedSubject = (subject: Subject) => {
+  const openDeleteOwnedPermanentModal = (subject: Subject) => {
     if (!user?.id || subject.owner_id !== user.id) return;
-    Alert.alert(
-      t("profile.subjects.deleteTitle", "Retirer la matière ?"),
-      t("profile.subjects.deleteMessage", "Cette matière sera retirée de votre profil."),
-      [
-        { text: t("common.actions.cancel"), style: "cancel" },
-        {
-          text: t("common.actions.delete"),
-          style: "destructive",
-          onPress: async () => {
-            setDeletingId(subject.id);
-            try {
-              // Try to permanently delete (hard delete) if no study time recorded
-              // Falls back to soft delete if there's study time
-              try {
-                await permanentlyDeleteSubject(subject.id, user.id);
-              } catch (err: any) {
-                // If hard delete fails due to study sessions, use soft delete instead
-                if (err?.message?.includes("study time")) {
-                  await deleteSubject(subject.id);
-                } else {
-                  throw err;
-                }
-              }
-              // Refetch profile to get updated data
-              await refetchProfile();
-            } catch (err: any) {
-              Alert.alert(
-                t("profile.subjects.deleteErrorTitle", "Impossible de retirer"),
-                err?.message ?? t("profile.subjects.deleteError", "Réessayez plus tard.")
-              );
-            } finally {
-              setDeletingId(null);
-            }
-          },
-        },
-      ]
-    );
+    setSubjectToDeleteOwned(subject);
+    setDeleteOwnedPermanentModalVisible(true);
+  };
+
+  const handleCancelDeleteOwnedPermanent = () => {
+    if (subjectToDeleteOwned && deletingId === subjectToDeleteOwned.id) return;
+    setDeleteOwnedPermanentModalVisible(false);
+    setSubjectToDeleteOwned(null);
+  };
+
+  const handleConfirmDeleteOwnedPermanent = async () => {
+    if (!user?.id || !subjectToDeleteOwned) return;
+    const subject = subjectToDeleteOwned;
+    setDeletingId(subject.id);
+    try {
+      try {
+        await permanentlyDeleteSubject(subject.id, user.id);
+      } catch (err: any) {
+        if (err?.message?.includes("study time")) {
+          await deleteSubject(subject.id);
+        } else {
+          throw err;
+        }
+      }
+      await refetchProfile();
+      setDeleteOwnedPermanentModalVisible(false);
+      setSubjectToDeleteOwned(null);
+    } catch (err: any) {
+      const title = t("profile.subjects.deleteErrorTitle", "Impossible de retirer");
+      const msg = err?.message ?? t("profile.subjects.deleteError", "Réessayez plus tard.");
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.alert(`${title}\n\n${msg}`);
+      } else {
+        Alert.alert(title, msg);
+      }
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleSignOut = async () => {
@@ -650,10 +607,10 @@ export default function ProfileScreen() {
       }}
     >
         <Tabs
+          variant="underline"
           options={[
-            { value: "stats", label: t("tabs.stats") },
-            { value: "subjects", label: t("profile.tabs.subjects", "Subjects") },
             { value: "settings", label: t("profile.tabs.settings", "Settings") },
+            { value: "subjects", label: t("profile.tabs.subjects", "My subjects") },
           ]}
           value={activeTab}
           onChange={setActiveTab}
@@ -668,9 +625,6 @@ export default function ProfileScreen() {
                   {t("profile.displayName.label", "Display name")}
                 </Text>
               </View>
-              <Text variant="caption" colorName="textMuted" style={styles.settingsDisplayNameHint}>
-                {t("profile.displayName.hint")}
-              </Text>
               <View style={styles.displayNameEditorRow}>
                 <Input
                   value={displayNameInput}
@@ -862,91 +816,6 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {activeTab === "stats" && (
-          <>
-            {loading ? (
-              <Text variant="body" align="center" style={{ marginTop: 12 }}>{t("common.status.loading")}</Text>
-            ) : error ? (
-              <Text variant="body" align="center" style={{ marginTop: 12, color: theme.danger ?? "#f66" }}>{error}</Text>
-            ) : (
-              <>
-                <View style={styles.statsGrid}>
-                  {Array.from(
-                    { length: Math.ceil(statCards.length / 2) },
-                    (_, rowIdx) => (
-                      <View key={rowIdx} style={styles.statsRow}>
-                        {statCards
-                          .slice(rowIdx * 2, rowIdx * 2 + 2)
-                          .map((stat) => (
-                            <StatCard
-                              key={stat.label}
-                              icon={stat.icon}
-                              value={stat.value}
-                              label={stat.label}
-                              iconColor={stat.iconColor}
-                            />
-                          ))}
-                      </View>
-                    )
-                  )}
-                </View>
-
-                {subjectTotalsForBreakdown.length > 0 && (
-                  <View style={styles.breakdownSection}>
-                    <View style={[styles.subjectsHeaderRow, styles.statsBreakdownHeader]}>
-                      <View style={styles.sectionTitleGroup}>
-                        <Text variant="subtitle" style={[styles.subjectsSectionTitle, styles.statsBreakdownTitle]}>
-                          {t("profile.subjects.breakdownTitle")}
-                        </Text>
-                        {sessionTotals.totalSeconds > 0 ? (
-                          <Text variant="caption" colorName="textMuted" style={styles.subjectsCount}>
-                            {formatDurationCompact(sessionTotals.totalSeconds)}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </View>
-                    <ListCard padding={8} style={styles.subjectsListCard}>
-                      {subjectTotalsForBreakdown.map((row, index) => {
-                        const subjectColor = subjectColorById[row.parentId] ?? theme.primary;
-                        return (
-                          <ListItem
-                            key={row.parentId}
-                            style={{ pointerEvents: "box-none" }}
-                            isLast={index === subjectTotalsForBreakdown.length - 1}
-                            paddingVertical={6}
-                            paddingHorizontal={6}
-                          >
-                            <View style={[styles.subjectInfo, styles.subjectRowInner, { pointerEvents: "none" }]}>
-                              <View
-                                style={[
-                                  styles.subjectColorBadge,
-                                  { backgroundColor: subjectColor },
-                                ]}
-                              />
-                              <Text variant="micro" colorName="textMuted" style={styles.subjectNameText}>
-                                {row.parentName}
-                              </Text>
-                            </View>
-                            <View style={[styles.subjectBreakdownTimeWrap, { pointerEvents: "none" }]}>
-                              <Text
-                                variant="micro"
-                                colorName="textMuted"
-                                style={styles.subjectBreakdownTime}
-                              >
-                                {formatDuration(row.totalSeconds)}
-                              </Text>
-                            </View>
-                          </ListItem>
-                        );
-                      })}
-                    </ListCard>
-                  </View>
-                )}
-              </>
-            )}
-          </>
-        )}
-
         {activeTab === "subjects" && (
           <>
             <View style={styles.subjectsHeaderRow}>
@@ -968,22 +837,32 @@ export default function ProfileScreen() {
                 <Pressable
                   onPress={() => {
                     setAddError(null);
-                    setShowAddSubjectPanel((open) => !open);
+                    setShowAddSubjectPanel((open) => {
+                      const next = !open;
+                      if (!next) {
+                        setCustomSubjectName("");
+                        setCustomCreateColor(
+                          theme.subjectPalette?.[0] ?? theme.primary
+                        );
+                      }
+                      return next;
+                    });
                   }}
                   style={({ pressed }) => [
                     styles.addSubjectToggle,
                     {
-                      borderColor: pressed ? theme.primary : theme.divider,
-                      opacity: pressed ? 0.92 : 1,
+                      backgroundColor: theme.primaryTint,
+                      borderColor: pressed ? theme.primaryDark : theme.primary,
+                      opacity: pressed ? 0.96 : 1,
                     },
                   ]}
                 >
                   {showAddSubjectPanel ? (
-                    <X size={18} color={theme.textMuted} strokeWidth={2} />
+                    <X size={18} color={theme.primaryDark} strokeWidth={2} />
                   ) : (
-                    <Plus size={18} color={theme.textMuted} strokeWidth={2} />
+                    <Plus size={18} color={theme.primaryDark} strokeWidth={2} />
                   )}
-                  <Text variant="body" style={[styles.addSubjectToggleText, { color: theme.textMuted }]}>
+                  <Text variant="body" style={[styles.addSubjectToggleText, { color: theme.primaryDark }]}>
                     {showAddSubjectPanel
                       ? t("common.actions.cancel")
                       : t("profile.subjects.addSubjectAction", "Add subject")}
@@ -1000,89 +879,103 @@ export default function ProfileScreen() {
                       },
                     ]}
                   >
-                    {availablePopularBankEntries.length > 0 ? (
-                      <View>
-                        <Text variant="caption" colorName="textMuted" style={styles.addSubjectSectionLabel}>
-                          {t("profile.subjects.popularLabel", "Popular subjects")}
-                        </Text>
-                        <Pressable
-                          onPress={() => setBankListModalVisible(true)}
-                          disabled={savingSubject}
-                          style={[
-                            styles.bankSelectTrigger,
-                            {
-                              borderColor: theme.primaryDark,
-                              backgroundColor: theme.surface,
-                            },
-                          ]}
+                    <Input
+                      value={customSubjectName}
+                      onChangeText={(text) => {
+                        setCustomSubjectName(text);
+                        if (addError) setAddError(null);
+                      }}
+                      placeholder={t(
+                        "profile.subjects.createSubjectPlaceholder",
+                        "Create a subject"
+                      )}
+                      editable={!savingSubject}
+                      containerStyle={{ marginBottom: 0 }}
+                      onSubmitEditing={() => void handleCreateCustomSubject()}
+                      returnKeyType="done"
+                      blurOnSubmit
+                      rightIcon={addableBankCatalogSorted.length > 0 ? ChevronDown : undefined}
+                      onRightIconPress={
+                        addableBankCatalogSorted.length > 0
+                          ? () => setBankListModalVisible(true)
+                          : undefined
+                      }
+                    />
+                    {customInputBankSuggestions.length > 0 ? (
+                      <View
+                        style={[
+                          styles.bankSuggestDropdown,
+                          {
+                            borderColor: theme.divider,
+                            backgroundColor: theme.surface,
+                          },
+                        ]}
+                        accessibilityRole="list"
+                        accessibilityLabel={t("profile.subjects.searchResults", "Search results")}
+                      >
+                        <ScrollView
+                          style={styles.bankSuggestScroll}
+                          keyboardShouldPersistTaps="handled"
+                          nestedScrollEnabled
                         >
-                          <Text variant="body" style={{ color: theme.textMuted, flex: 1 }} numberOfLines={1}>
-                            {t(
-                              "profile.subjects.selectSubjectPlaceholder",
-                              "Select a subject to add..."
-                            )}
-                          </Text>
-                          <ChevronDown size={20} color={theme.textMuted} strokeWidth={2} />
-                        </Pressable>
+                          {customInputBankSuggestions.map((item, idx) => (
+                            <TouchableOpacity
+                              key={item.key}
+                              style={[
+                                styles.bankListRow,
+                                idx === customInputBankSuggestions.length - 1 && styles.bankListRowLast,
+                              ]}
+                              onPress={() => {
+                                Keyboard.dismiss();
+                                setCustomSubjectName("");
+                                void handleAddPopularBankSubject(item.key);
+                              }}
+                              disabled={savingSubject}
+                            >
+                              <View style={[styles.bankListDot, { backgroundColor: item.dotColor }]} />
+                              <Text variant="body" style={{ flex: 1, color: theme.text }}>
+                                {item.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
                       </View>
                     ) : null}
-
-                    <View>
-                      <Text variant="caption" colorName="textMuted" style={styles.addSubjectSectionLabel}>
-                        {t("profile.subjects.customCreateLabel", "Or create your own")}
-                      </Text>
-                      <View style={styles.customCreateRow}>
-                        <Input
-                          value={customSubjectName}
-                          onChangeText={(text) => {
-                            setCustomSubjectName(text);
-                            if (addError) setAddError(null);
-                          }}
-                          placeholder={t("timer.addSubjectPlaceholder", "Subject name")}
-                          editable={!savingSubject}
-                          containerStyle={styles.customCreateInput}
-                          onSubmitEditing={handleCreateCustomSubject}
-                          returnKeyType="done"
-                        />
-                        <Button
-                          iconLeft={Save}
-                          iconOnly
-                          variant="primary"
-                          size="sm"
-                          onPress={handleCreateCustomSubject}
-                          disabled={savingSubject || !customSubjectName.trim()}
-                          loading={savingSubject}
-                          accessibilityLabel={t("common.actions.save")}
-                          style={styles.customCreateSaveButton}
-                        />
-                      </View>
-                      <View style={styles.colorCreateRow}>
-                        {CUSTOM_SUBJECT_CREATE_SWATCHES.map((hex) => {
-                          const selected = customCreateColor === hex;
-                          return (
-                            <Pressable
-                              key={hex}
-                              onPress={() => setCustomCreateColor(hex)}
-                              disabled={savingSubject}
-                              style={[
-                                styles.colorCreateRing,
-                                selected && {
-                                  borderColor: theme.primaryDark,
-                                  borderWidth: 2,
-                                },
-                              ]}
-                            >
-                              <View style={[styles.colorCreateInner, { backgroundColor: hex }]} />
-                            </Pressable>
-                          );
-                        })}
-                      </View>
-                      {addError ? (
-                        <Text variant="caption" style={{ color: theme.danger, marginTop: 4 }}>
-                          {addError}
-                        </Text>
-                      ) : null}
+                    <View style={styles.addSubjectColorWrap}>
+                      {(theme.subjectPalette?.length
+                        ? theme.subjectPalette
+                        : [theme.primary]
+                      ).map((hex) => {
+                        const selected = customCreateColor === hex;
+                        return (
+                          <TouchableOpacity
+                            key={hex}
+                            style={[
+                              styles.addSubjectColorChip,
+                              selected && styles.addSubjectColorChipSelected,
+                            ]}
+                            onPress={() => setCustomCreateColor(hex)}
+                            disabled={savingSubject}
+                            accessibilityState={{ selected }}
+                          >
+                            <View style={[styles.addSubjectColorDot, { backgroundColor: hex }]} />
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
+                    {addError ? (
+                      <Text variant="caption" style={{ color: theme.danger, marginTop: 4 }}>
+                        {addError}
+                      </Text>
+                    ) : null}
+                    <Button
+                      title={t("profile.subjects.addSubjectSubmit", "Add subject")}
+                      variant="primary"
+                      onPress={() => void handleCreateCustomSubject()}
+                      disabled={savingSubject || !customSubjectName.trim()}
+                      loading={savingSubject}
+                      fullWidth
+                    />
                   </View>
                 ) : null}
               </>
@@ -1137,16 +1030,15 @@ export default function ProfileScreen() {
                             <Button
                               iconLeft={Pencil}
                               iconOnly
-                              variant="ghost"
+                              variant="soft"
                               size="xs"
                               onPress={() => openEditSubjectModal(subjectRow)}
                               accessibilityLabel={t("profile.subjects.editSubject", "Edit subject")}
-                              style={[styles.taskIconButton, { backgroundColor: theme.primaryTint }]}
                             />
                             <Button
                               iconLeft={EyeOff}
                               iconOnly
-                              variant="ghost"
+                              variant="soft"
                               size="xs"
                               onPress={() => {
                                 if (user?.id) {
@@ -1154,15 +1046,14 @@ export default function ProfileScreen() {
                                 }
                               }}
                               accessibilityLabel={t("profile.subjects.hideSubject", "Hide subject")}
-                              style={[styles.taskIconButton, { backgroundColor: theme.primaryTint }]}
                             />
                             {isOwnedSubject ? (
                               <Button
                                 iconLeft={Trash}
                                 iconOnly
-                                variant="ghost"
+                                variant="soft"
                                 size="xs"
-                                onPress={() => handleDeleteOwnedSubject(subjectRow)}
+                                onPress={() => openDeleteOwnedPermanentModal(subjectRow)}
                                 disabled={!canPermanentlyDeleteOwned}
                                 accessibilityLabel={
                                   canPermanentlyDeleteOwned
@@ -1172,11 +1063,7 @@ export default function ProfileScreen() {
                                         "Cannot delete: study time is recorded. Hide the subject instead."
                                       )
                                 }
-                                style={[
-                                  styles.taskIconButton,
-                                  { backgroundColor: theme.primaryTint },
-                                  !canPermanentlyDeleteOwned && styles.subjectActionDisabled,
-                                ]}
+                                style={!canPermanentlyDeleteOwned ? styles.subjectActionDisabled : undefined}
                               />
                             ) : null}
                           </>
@@ -1190,12 +1077,16 @@ export default function ProfileScreen() {
 
             {!loading && (
               <View style={styles.subjectsInactiveBlock}>
-                <Text variant="subtitle" style={styles.subjectsInactiveTitle}>
-                  {t("profile.subjects.inactiveTitle", "Hidden subjects")}
-                </Text>
-                <Text variant="caption" colorName="textMuted" style={styles.subjectsInactiveHint}>
-                  {t("profile.subjects.inactiveHint")}
-                </Text>
+                <View style={styles.subjectsHeaderRow}>
+                  <View style={styles.sectionTitleGroup}>
+                    <Text variant="subtitle" style={styles.subjectsSectionTitle}>
+                      {t("profile.subjects.inactiveTitle", "Hidden subjects")}
+                    </Text>
+                    <Text variant="caption" colorName="textMuted" style={styles.subjectsCount}>
+                      {hiddenSubjectsOrdered.length > 0 ? `${hiddenSubjectsOrdered.length}` : ""}
+                    </Text>
+                  </View>
+                </View>
                 {hiddenSubjectsOrdered.length > 0 ? (
                   <ListCard padding={8} style={styles.subjectsListCard}>
                     {hiddenSubjectsOrdered.map((hiddenRow, index) => {
@@ -1227,11 +1118,10 @@ export default function ProfileScreen() {
                               <Button
                                 iconLeft={Eye}
                                 iconOnly
-                                variant="ghost"
+                                variant="soft"
                                 size="xs"
                                 onPress={() => handleRestoreHiddenSubject(hiddenRow)}
                                 accessibilityLabel={t("profile.subjects.restoreSubject", "Show subject again")}
-                                style={[styles.taskIconButton, { backgroundColor: theme.primaryTint }]}
                               />
                             )}
                           </View>
@@ -1272,7 +1162,7 @@ export default function ProfileScreen() {
       <Modal
         visible={bankListModalVisible}
         onClose={() => setBankListModalVisible(false)}
-        title={t("profile.subjects.popularLabel", "Popular subjects")}
+        title={t("profile.subjects.available", "Available subjects")}
         padding={20}
         actions={{
           cancel: {
@@ -1284,7 +1174,7 @@ export default function ProfileScreen() {
         }}
       >
         <ScrollView style={styles.bankListScroll} keyboardShouldPersistTaps="handled">
-          {availablePopularBankEntries.map((item) => (
+          {addableBankCatalogSorted.map((item) => (
             <TouchableOpacity
               key={item.key}
               style={styles.bankListRow}
@@ -1327,6 +1217,39 @@ export default function ProfileScreen() {
       >
         <Text variant="body" style={{ color: theme.textMuted }}>
           {t("profile.subjects.deleteMessage", "Cette matière sera retirée de votre profil.")}
+        </Text>
+      </Modal>
+
+      {/* Permanent delete (owned subject): Modal required on web — Alert.alert does not show. */}
+      <Modal
+        visible={deleteOwnedPermanentModalVisible}
+        onClose={handleCancelDeleteOwnedPermanent}
+        title={t("profile.subjects.deleteOwnedTitle", "Delete this subject permanently?")}
+        padding={20}
+        dismissible={
+          !(subjectToDeleteOwned && deletingId === subjectToDeleteOwned.id)
+        }
+        actions={{
+          cancel: {
+            label: t("common.actions.cancel"),
+            onPress: handleCancelDeleteOwnedPermanent,
+            variant: "outline",
+            disabled: !!(subjectToDeleteOwned && deletingId === subjectToDeleteOwned.id),
+          },
+          confirm: {
+            label: t("profile.subjects.deleteOwnedConfirm", "Delete permanently"),
+            onPress: handleConfirmDeleteOwnedPermanent,
+            variant: "destructive",
+            iconLeft: Trash,
+            loading: !!deletingId && deletingId === subjectToDeleteOwned?.id,
+          },
+        }}
+      >
+        <Text variant="body" style={{ color: theme.textMuted }}>
+          {t(
+            "profile.subjects.deleteOwnedMessage",
+            "If you have no recorded study time on this subject, it will be removed from the database. Otherwise it will only be archived."
+          )}
         </Text>
       </Modal>
 
@@ -1414,50 +1337,27 @@ export default function ProfileScreen() {
                 {getSubjectDisplayName(subjectToEdit, t)}
               </Text>
             )}
-            <Text variant="body" style={{ marginBottom: 12, color: theme.textMuted }}>
-              {t("profile.subjects.colorPickerSubtitle", "Select a color for {{name}}", {
-                name: getSubjectDisplayName(subjectToEdit, t),
+            <View style={styles.addSubjectColorWrap}>
+              {(theme.subjectPalette ?? []).map((color) => {
+                const selected = subjectToEdit.custom_color === color;
+                return (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.addSubjectColorChip,
+                      selected && styles.addSubjectColorChipSelected,
+                    ]}
+                    onPress={() => handleUpdateColor(subjectToEdit, color)}
+                    disabled={updatingColor || savingSubjectRename}
+                    accessibilityState={{ selected }}
+                  >
+                    <View style={[styles.addSubjectColorDot, { backgroundColor: color }]} />
+                  </TouchableOpacity>
+                );
               })}
-            </Text>
-            <View style={styles.colorPickerGrid}>
-              <TouchableOpacity
-                style={[
-                  styles.colorOption,
-                  !subjectToEdit.custom_color && styles.colorOptionSelected,
-                  { borderColor: theme.divider },
-                ]}
-                onPress={() => handleUpdateColor(subjectToEdit, null)}
-                disabled={updatingColor || savingSubjectRename}
-              >
-                <View style={[styles.colorSwatch, { backgroundColor: theme.divider }]}>
-                  <Text variant="caption" style={{ color: theme.textMuted }}>
-                    D
-                  </Text>
-                </View>
-                <Text variant="caption" style={{ marginTop: 4, color: theme.textMuted }}>
-                  {t("profile.subjects.defaultColor", "Default")}
-                </Text>
-              </TouchableOpacity>
-              {(theme.subjectPalette ?? []).map((color, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.colorOption,
-                    subjectToEdit.custom_color === color && styles.colorOptionSelected,
-                    { borderColor: theme.divider },
-                  ]}
-                  onPress={() => handleUpdateColor(subjectToEdit, color)}
-                  disabled={updatingColor || savingSubjectRename}
-                >
-                  <View style={[styles.colorSwatch, { backgroundColor: color }]} />
-                  <Text variant="caption" style={{ marginTop: 4, color: theme.textMuted }}>
-                    {index + 1}
-                  </Text>
-                </TouchableOpacity>
-              ))}
             </View>
             {updatingColor && (
-              <View style={{ marginTop: 16, alignItems: "center" }}>
+              <View style={{ marginTop: 10, alignItems: "center" }}>
                 <ActivityIndicator size="small" color={theme.primary} />
               </View>
             )}
@@ -1497,27 +1397,6 @@ const createStyles = (theme: typeof Colors.light) =>
     profileEmail: {
       fontSize: 14,
     },
-    statsGrid: {
-      gap: 10,
-      marginBottom: 8,
-    },
-    statsRow: {
-      flexDirection: "row",
-      gap: 10,
-      marginBottom: 10,
-    },
-    iconBox: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
-      backgroundColor: theme.surfaceElevated,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 16,
-    },
-    statInfo: { flex: 1 },
-    // Note: Typography handled by Themed Text component with variant prop
-    statValues: { alignItems: 'flex-end' },
     langRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -1599,57 +1478,53 @@ const createStyles = (theme: typeof Colors.light) =>
       borderWidth: StyleSheet.hairlineWidth,
       padding: 16,
       marginBottom: 16,
-      gap: 16,
+      gap: 14,
     },
-    addSubjectSectionLabel: {
-      fontWeight: "600",
-      marginBottom: 8,
-    },
-    bankSelectTrigger: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      borderRadius: 12,
-      borderWidth: 2,
-      gap: 8,
-    },
-    customCreateRow: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: 8,
-      marginBottom: 10,
-    },
-    customCreateInput: {
-      flex: 1,
-      marginBottom: 0,
-      minWidth: 0,
-    },
-    customCreateSaveButton: {
-      marginTop: 2,
-    },
-    colorCreateRow: {
+    /** Same rhythm as `tasks` add-task time chips (`timeOptionsWrap`). */
+    addSubjectColorWrap: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 10,
-      alignItems: "center",
+      gap: 8,
     },
-    colorCreateRing: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      borderWidth: 2,
-      borderColor: "transparent",
+    addSubjectColorChip: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.surfaceElevated,
       alignItems: "center",
       justifyContent: "center",
     },
-    colorCreateInner: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
+    addSubjectColorChipSelected: {
+      backgroundColor: theme.primaryTint,
+      borderWidth: 1.5,
+      borderColor: theme.primaryDark,
+    },
+    addSubjectColorDot: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
     },
     bankListScroll: {
       maxHeight: 320,
+    },
+    bankSuggestDropdown: {
+      marginVertical: 0,
+      borderRadius: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      overflow: "hidden",
+      ...Platform.select({
+        ios: {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+        },
+        android: { elevation: 3 },
+        default: {},
+      }),
+    },
+    bankSuggestScroll: {
+      maxHeight: 220,
     },
     bankListRow: {
       flexDirection: "row",
@@ -1660,6 +1535,9 @@ const createStyles = (theme: typeof Colors.light) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.divider ?? theme.border,
     },
+    bankListRowLast: {
+      borderBottomWidth: 0,
+    },
     bankListDot: {
       width: 10,
       height: 10,
@@ -1669,18 +1547,7 @@ const createStyles = (theme: typeof Colors.light) =>
       marginBottom: 12,
     },
     subjectsInactiveBlock: {
-      marginTop: 8,
-    },
-    subjectsInactiveTitle: {
-      marginTop: 4,
-      marginBottom: 4,
-      fontWeight: "600",
-      fontSize: 14,
-      color: theme.textMuted,
-    },
-    subjectsInactiveHint: {
-      marginBottom: 8,
-      fontSize: 11,
+      marginTop: 0,
     },
     subjectsInactiveEmpty: {
       fontSize: 12,
@@ -1719,30 +1586,6 @@ const createStyles = (theme: typeof Colors.light) =>
       width: 10,
       height: 10,
       borderRadius: 5,
-    },
-    colorPickerGrid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 12,
-      marginTop: 8,
-    },
-    colorOption: {
-      alignItems: "center",
-      padding: 12,
-      borderRadius: 12,
-      borderWidth: 2,
-      minWidth: 70,
-    },
-    colorOptionSelected: {
-      borderColor: theme.primary,
-      backgroundColor: theme.primaryTint,
-    },
-    colorSwatch: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center",
     },
     deleteButton: {
       minWidth: 36,
@@ -1791,24 +1634,6 @@ const createStyles = (theme: typeof Colors.light) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.divider ?? theme.border,
     },
-    breakdownSection: { marginTop: 0, marginBottom: 20 },
-    statsBreakdownHeader: {
-      marginBottom: 2,
-    },
-    statsBreakdownTitle: {
-      marginTop: 0,
-      marginBottom: 4,
-    },
-    subjectBreakdownTimeWrap: {
-      justifyContent: "center",
-      marginLeft: 10,
-      flexShrink: 0,
-    },
-    subjectBreakdownTime: {
-      fontWeight: "600",
-      fontVariant: ["tabular-nums"],
-    },
-    taskIconButton: { borderRadius: 12 },
     subjectActionDisabled: { opacity: 0.4 },
 
     // Account actions

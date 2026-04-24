@@ -1,0 +1,1032 @@
+[
+    {
+      "table_schema": "public",
+      "table_name": "daily_summaries",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "daily_summaries",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "daily_summaries",
+      "column_name": "date",
+      "data_type": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "daily_summaries",
+      "column_name": "total_seconds",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "daily_summaries",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "group_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "group_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "UQ"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "UQ"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "role",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "YES",
+      "column_default": "'group_member'::group_role",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "group_members",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "YES",
+      "column_default": "'approved'::membership_status",
+      "column_comment": "Membership status: pending (awaiting approval) or approved (active member)",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "visibility",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "YES",
+      "column_default": "'private'::group_visibility",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "requires_admin_approval",
+      "data_type": "boolean",
+      "is_nullable": "YES",
+      "column_default": "false",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "invite_code",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "lower(encode(gen_random_bytes(4), 'hex'::text))",
+      "column_comment": "Unique 8-character hex code for joining the group",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "join_password",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "has_password",
+      "data_type": "boolean",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "groups",
+      "column_name": "member_count",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "username",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "avatar_url",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "xp_total",
+      "data_type": "bigint",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "column_comment": "Total experience points earned (1 second of study = 1 XP)",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "level",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": "1",
+      "column_comment": "User level calculated as: 1 + floor(xp_total / 3600)",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "current_streak",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "column_comment": "Current consecutive days with study activity",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "longest_streak",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "weekly_goal_minutes",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": "1200",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "is_public",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "false",
+      "column_comment": "Whether this profile is visible to other users. Default false (private).",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "show_in_leaderboard",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "true",
+      "column_comment": "Whether this user appears in leaderboards. Default true (opt-out).",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "language_preference",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "User preferred language: \"en\" for English, \"fr\" for French. NULL means use system default.",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "theme_preference",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "User preferred theme: \"light\" or \"dark\". NULL means use system default.",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "onboarding_completed",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "true",
+      "column_comment": "False until user finishes in-app onboarding (fill-profile).",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "academic_category",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "App category id: primaire, college, lycee, prepa, universite, autres.",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "academic_year_key",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "e.g. lycee_premiere, college_3e.",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "specialty_keys",
+      "data_type": "ARRAY",
+      "is_nullable": "NO",
+      "column_default": "'{}'::text[]",
+      "column_comment": "Lycée spécialités keys from app catalog (e.g. spe_mathematics).",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "profiles",
+      "column_name": "language_keys",
+      "data_type": "ARRAY",
+      "is_nullable": "NO",
+      "column_default": "'{}'::text[]",
+      "column_comment": "Living-language subject catalog keys chosen at onboarding (e.g. english, spanish).",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "subject_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "started_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "ended_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "duration_seconds",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "Auto-calculated duration in seconds (generated column)",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "study_sessions",
+      "column_name": "task_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "UQ"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "subject_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "subject_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "UQ"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "day_of_week",
+      "data_type": "smallint",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": "0=Sunday, 1=Monday, ..., 6=Saturday",
+      "constraint_type": "UQ"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "minutes",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "column_comment": "Goal minutes for this subject on this day (0-480)",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subject_weekly_goals",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "slug",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "icon",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "color",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "Hex color code in format #RRGGBB (e.g., #FF5733)",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "owner_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "parent_subject_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "is_active",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "true",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "deleted_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "Soft delete timestamp. NULL means subject is active. Set to timestamp when subject is deleted.",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subjects",
+      "column_name": "bank_key",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "plan_id",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "price_id",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "current_period_start",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "current_period_end",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "cancel_at_period_end",
+      "data_type": "boolean",
+      "is_nullable": "YES",
+      "column_default": "false",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "subscriptions",
+      "column_name": "status_changed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "subject_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "title",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "planned_minutes",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "scheduled_for",
+      "data_type": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "logged_seconds",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "column_comment": "Total seconds logged across all linked study sessions (auto-updated by trigger). Can exceed planned_minutes if user over-delivers.",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "column_default": "'planned'::task_status",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "tasks",
+      "column_name": "deleted_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "subject_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "FK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "subject_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "column_comment": null,
+      "constraint_type": "PK"
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "is_hidden",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "false",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()",
+      "column_comment": null,
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "display_order",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "User-defined display order for subjects. Lower numbers appear first. NULL means use default (alphabetical).",
+      "constraint_type": null
+    },
+    {
+      "table_schema": "public",
+      "table_name": "user_subjects",
+      "column_name": "custom_color",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "column_comment": "User-defined hex color for this subject (e.g., #FF5733). NULL means use default palette color.",
+      "constraint_type": null
+    }
+  ]

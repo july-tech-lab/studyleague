@@ -1,6 +1,14 @@
 import type { LucideIcon } from "lucide-react-native";
 import React from "react";
-import { Modal as RNModal, ModalProps as RNModalProps, Pressable, StyleSheet, View } from "react-native";
+import {
+    Pressable,
+    Modal as RNModal,
+    ModalProps as RNModalProps,
+    ScrollView,
+    StyleSheet,
+    useWindowDimensions,
+    View,
+} from "react-native";
 
 import { Text } from "@/components/Themed";
 import { useTheme } from "@/utils/themeContext";
@@ -40,6 +48,9 @@ export function Modal({
   ...rest
 }: ModalProps) {
   const colors = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
+  // Cap scroll area so inline pickers (e.g. SubjectPicker) are not covered by action buttons.
+  const bodyMaxHeight = Math.max(160, windowHeight * 0.5);
 
   return (
     <RNModal
@@ -70,9 +81,14 @@ export function Modal({
             </Text>
           )}
 
-          <View style={styles.content}>
+          <ScrollView
+            style={[styles.scrollBody, { maxHeight: bodyMaxHeight }]}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+          >
             {children}
-          </View>
+          </ScrollView>
 
           {actions && (
             <View style={styles.actions}>
@@ -117,7 +133,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     boxShadow: "0 0 8px 0 rgba(0, 0, 0, 0.15)",
   },
-  content: {
+  scrollBody: {
     marginVertical: 10,
   },
   actions: {

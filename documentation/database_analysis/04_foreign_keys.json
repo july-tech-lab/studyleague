@@ -1,0 +1,107 @@
+[
+  {
+    "table_name": "daily_summaries",
+    "column_name": "user_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "group_members",
+    "column_name": "group_id",
+    "constraint_type": "FK",
+    "referenced_table": "groups",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "group_members",
+    "column_name": "user_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "groups",
+    "column_name": "created_by",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "study_sessions",
+    "column_name": "subject_id",
+    "constraint_type": "FK",
+    "referenced_table": "subjects",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "study_sessions",
+    "column_name": "task_id",
+    "constraint_type": "FK",
+    "referenced_table": "tasks",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "study_sessions",
+    "column_name": "user_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "subject_weekly_goals",
+    "column_name": "subject_id",
+    "constraint_type": "FK",
+    "referenced_table": "subjects",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "subjects",
+    "column_name": "owner_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "subjects",
+    "column_name": "parent_subject_id",
+    "constraint_type": "FK",
+    "referenced_table": "subjects",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "subscriptions",
+    "column_name": "user_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "tasks",
+    "column_name": "subject_id",
+    "constraint_type": "FK",
+    "referenced_table": "subjects",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "tasks",
+    "column_name": "user_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "user_subjects",
+    "column_name": "subject_id",
+    "constraint_type": "FK",
+    "referenced_table": "subjects",
+    "referenced_column": "id"
+  },
+  {
+    "table_name": "user_subjects",
+    "column_name": "user_id",
+    "constraint_type": "FK",
+    "referenced_table": "profiles",
+    "referenced_column": "id"
+  }
+]

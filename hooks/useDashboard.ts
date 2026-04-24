@@ -98,11 +98,9 @@ export function useDashboard(
     loadSessions();
   }, [loadSessions]);
 
-  const parentSubjects = useMemo(() => subjects, [subjects]);
-
   const subjectNameById = useMemo(
-    () => Object.fromEntries(parentSubjects.map((s) => [s.id, getSubjectDisplayName(s, t)])),
-    [parentSubjects, t]
+    () => Object.fromEntries(subjects.map((s) => [s.id, getSubjectDisplayName(s, t)])),
+    [subjects, t]
   );
 
   const weeklyTotalSeconds = useMemo(
@@ -129,14 +127,7 @@ export function useDashboard(
     const byId = new Map(allSubjects.map((s) => [s.id, s]));
     const rootOf = (id: string | null | undefined): string | null => {
       if (!id) return null;
-      let s = byId.get(id);
-      if (!s) return null;
-      while (s.parent_subject_id) {
-        const p = byId.get(s.parent_subject_id);
-        if (!p) break;
-        s = p;
-      }
-      return s.id;
+      return byId.has(id) ? id : null;
     };
 
     const sums = new Map<string, number>();
@@ -182,24 +173,17 @@ export function useDashboard(
     [goalsByDayMap, focusDayOfWeekNum]
   );
 
-  const subjectIdToParentId = useMemo(() => {
-    const map: Record<string, string> = {};
-    (allSubjects ?? []).forEach((s) => {
-      map[s.id] = s.parent_subject_id ?? s.id;
-    });
-    return map;
-  }, [allSubjects]);
-
   const subjectGoalVsActual: SubjectGoalVsActual[] = useMemo(() => {
     const actualBySubject: Record<string, number> = {};
     weeklySessions.forEach((s) => {
-      const parentId = subjectIdToParentId[s.subject_id] ?? s.subject_id;
+      if (!s.subject_id) return;
+      const sid = s.subject_id;
       const mins = Math.round((s.duration_seconds ?? 0) / 60);
-      actualBySubject[parentId] = (actualBySubject[parentId] ?? 0) + mins;
+      actualBySubject[sid] = (actualBySubject[sid] ?? 0) + mins;
     });
 
     if (period === "day") {
-      return parentSubjects
+      return subjects
         .filter(
           (s) => getGoalMinutesForSubjectOnLocalDate(goals, s.id, focusDate) > 0
         )
@@ -217,7 +201,7 @@ export function useDashboard(
         });
     }
 
-    return parentSubjects
+    return subjects
       .filter((s) => (goalsBySubjectMap[s.id] ?? 0) > 0)
       .map((s) => {
         const actual = actualBySubject[s.id] ?? 0;
@@ -233,11 +217,10 @@ export function useDashboard(
       });
   }, [
     period,
-    parentSubjects,
+    subjects,
     goals,
     goalsBySubjectMap,
     weeklySessions,
-    subjectIdToParentId,
     focusDate,
     t,
   ]);
@@ -247,30 +230,30 @@ export function useDashboard(
       1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}, 7: {},
     };
     weeklySessions.forEach((s) => {
-      if (!s.ended_at) return;
+      if (!s.ended_at || !s.subject_id) return;
       const d = new Date(s.ended_at);
       const dow = d.getDay();
       const dayNum = dow === 0 ? 7 : dow;
-      const parentId = subjectIdToParentId[s.subject_id] ?? s.subject_id;
+      const sid = s.subject_id;
       const mins = Math.round((s.duration_seconds ?? 0) / 60);
-      byDay[dayNum][parentId] = (byDay[dayNum][parentId] ?? 0) + mins;
+      byDay[dayNum][sid] = (byDay[dayNum][sid] ?? 0) + mins;
     });
     return byDay;
-  }, [weeklySessions, subjectIdToParentId]);
+  }, [weeklySessions]);
 
   const actualByDayOfMonthBySubject = useMemo(() => {
     const byDay: Record<number, Record<string, number>> = {};
     weeklySessions.forEach((s) => {
-      if (!s.ended_at) return;
+      if (!s.ended_at || !s.subject_id) return;
       const d = new Date(s.ended_at);
       const dayOfMonth = d.getDate();
       if (!byDay[dayOfMonth]) byDay[dayOfMonth] = {};
-      const parentId = subjectIdToParentId[s.subject_id] ?? s.subject_id;
+      const sid = s.subject_id;
       const mins = Math.round((s.duration_seconds ?? 0) / 60);
-      byDay[dayOfMonth][parentId] = (byDay[dayOfMonth][parentId] ?? 0) + mins;
+      byDay[dayOfMonth][sid] = (byDay[dayOfMonth][sid] ?? 0) + mins;
     });
     return byDay;
-  }, [weeklySessions, subjectIdToParentId]);
+  }, [weeklySessions]);
 
   const actualByMonthBySubject = useMemo(() => {
     const byMonth: Record<number, Record<string, number>> = {
@@ -278,15 +261,15 @@ export function useDashboard(
       7: {}, 8: {}, 9: {}, 10: {}, 11: {}, 12: {},
     };
     weeklySessions.forEach((s) => {
-      if (!s.ended_at) return;
+      if (!s.ended_at || !s.subject_id) return;
       const d = new Date(s.ended_at);
       const month = d.getMonth() + 1;
-      const parentId = subjectIdToParentId[s.subject_id] ?? s.subject_id;
+      const sid = s.subject_id;
       const mins = Math.round((s.duration_seconds ?? 0) / 60);
-      byMonth[month][parentId] = (byMonth[month][parentId] ?? 0) + mins;
+      byMonth[month][sid] = (byMonth[month][sid] ?? 0) + mins;
     });
     return byMonth;
-  }, [weeklySessions, subjectIdToParentId]);
+  }, [weeklySessions]);
 
   const dayKeys = useMemo(() => {
     if (period === "day") return [focusDayOfWeekNum];
@@ -369,9 +352,9 @@ export function useDashboard(
       });
     }
     const ids = new Set([...hasSessions, ...hasGoals]);
-    return parentSubjects.filter((s) => ids.has(s.id));
+    return subjects.filter((s) => ids.has(s.id));
   }, [
-    parentSubjects,
+    subjects,
     actualByDayBySubject,
     goalsByDayAndSubject,
     period,
@@ -401,9 +384,9 @@ export function useDashboard(
     const best = subjectTotals.reduce((a, b) =>
       a.totalSeconds >= b.totalSeconds ? a : b
     );
-    const subj = allSubjects.find((s) => s.id === best.parentId);
+    const subj = allSubjects.find((s) => s.id === best.subjectId);
     if (subj) return getSubjectDisplayName(subj, t);
-    return best.parentName;
+    return best.subjectName;
   }, [subjectTotals, allSubjects, t]);
 
   return {
@@ -420,7 +403,7 @@ export function useDashboard(
     subjectNameById,
     histogramData,
     histogramSubjects,
-    parentSubjects,
+    subjects,
     loading: profileLoading || goalsLoading || sessionsLoading,
     refetch: loadSessions,
   };

@@ -1,6 +1,6 @@
+import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Text } from "@/components/Themed";
 import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import { Subject, Task } from "@/utils/queries";
 import { useTheme } from "@/utils/themeContext";
@@ -68,9 +68,6 @@ export function TaskCard({
       alignItems: "center",
       gap: 4,
     },
-    iconButton: {
-      borderRadius: 12,
-    },
     progressRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -119,43 +116,39 @@ export function TaskCard({
               <Button
                 iconLeft={Pencil}
                 iconOnly
-                variant="ghost"
+                variant="soft"
                 size="xs"
                 onPress={() => onEdit(task)}
                 accessibilityLabel={t("tasks.edit")}
-                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
               />
             ) : null}
             {task.status === "done" && onResume ? (
               <Button
                 iconLeft={RotateCcw}
                 iconOnly
-                variant="ghost"
+                variant="soft"
                 size="xs"
                 onPress={() => onResume(task)}
                 accessibilityLabel={t("tasks.resume")}
-                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
               />
             ) : onComplete ? (
               <Button
                 iconLeft={Check}
                 iconOnly
-                variant="ghost"
+                variant="soft"
                 size="xs"
                 onPress={() => onComplete(task)}
                 accessibilityLabel={t("tasks.completeNow")}
-                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
               />
             ) : null}
             {onDelete && (
               <Button
                 iconLeft={Trash2}
                 iconOnly
-                variant="ghost"
+                variant="soft"
                 size="xs"
                 onPress={() => onDelete(task.id)}
                 accessibilityLabel={t("tasks.delete")}
-                style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
               />
             )}
           </View>

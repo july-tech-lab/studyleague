@@ -1,0 +1,87 @@
+[
+  {
+    "table_name": "daily_summaries",
+    "column_name": "date",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "daily_summaries",
+    "column_name": "user_id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "group_members",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "group_members",
+    "column_name": "group_id",
+    "constraint_type": "UQ"
+  },
+  {
+    "table_name": "group_members",
+    "column_name": "user_id",
+    "constraint_type": "UQ"
+  },
+  {
+    "table_name": "groups",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "study_sessions",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "subject_weekly_goals",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "subject_weekly_goals",
+    "column_name": "day_of_week",
+    "constraint_type": "UQ"
+  },
+  {
+    "table_name": "subject_weekly_goals",
+    "column_name": "subject_id",
+    "constraint_type": "UQ"
+  },
+  {
+    "table_name": "subject_weekly_goals",
+    "column_name": "user_id",
+    "constraint_type": "UQ"
+  },
+  {
+    "table_name": "subjects",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "subscriptions",
+    "column_name": "user_id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "tasks",
+    "column_name": "id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "user_subjects",
+    "column_name": "subject_id",
+    "constraint_type": "PK"
+  },
+  {
+    "table_name": "user_subjects",
+    "column_name": "user_id",
+    "constraint_type": "PK"
+  }
+]

@@ -7,10 +7,10 @@ import { ChevronDown } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export interface SubjectPickerProps {
@@ -61,14 +61,14 @@ export function SubjectPicker({
       justifyContent: "space-between",
       gap: 8,
       borderColor: theme.divider,
-      backgroundColor: theme.surfaceElevated,
+      backgroundColor: theme.surface,
     },
     dropdown: {
       marginTop: 8,
       borderWidth: 1,
       borderColor: theme.divider,
       borderRadius: 12,
-      backgroundColor: theme.surfaceElevated,
+      backgroundColor: theme.surface,
       overflow: "hidden",
     },
     dropdownItem: {

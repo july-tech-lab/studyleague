@@ -1,0 +1,232 @@
+[
+    {
+      "table_name": "daily_summaries",
+      "column_name": "total_seconds",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "daily_summaries",
+      "column_name": "updated_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "group_members",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "group_members",
+      "column_name": "id",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "table_name": "group_members",
+      "column_name": "role",
+      "default_expression": "'group_member'::group_role"
+    },
+    {
+      "table_name": "group_members",
+      "column_name": "status",
+      "default_expression": "'approved'::membership_status"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "has_password",
+      "default_expression": "((join_password IS NOT NULL) AND (length(join_password) > 0))"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "id",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "invite_code",
+      "default_expression": "lower(encode(gen_random_bytes(4), 'hex'::text))"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "member_count",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "requires_admin_approval",
+      "default_expression": "false"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "updated_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "groups",
+      "column_name": "visibility",
+      "default_expression": "'private'::group_visibility"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "current_streak",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "is_public",
+      "default_expression": "false"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "language_keys",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "level",
+      "default_expression": "1"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "longest_streak",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "onboarding_completed",
+      "default_expression": "true"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "show_in_leaderboard",
+      "default_expression": "true"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "specialty_keys",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "updated_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "weekly_goal_minutes",
+      "default_expression": "1200"
+    },
+    {
+      "table_name": "profiles",
+      "column_name": "xp_total",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "study_sessions",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "study_sessions",
+      "column_name": "duration_seconds",
+      "default_expression": "EXTRACT(epoch FROM (ended_at - started_at))"
+    },
+    {
+      "table_name": "study_sessions",
+      "column_name": "id",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "table_name": "subject_weekly_goals",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "subject_weekly_goals",
+      "column_name": "id",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "table_name": "subject_weekly_goals",
+      "column_name": "minutes",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "subject_weekly_goals",
+      "column_name": "updated_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "subjects",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "subjects",
+      "column_name": "id",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "table_name": "subjects",
+      "column_name": "is_active",
+      "default_expression": "true"
+    },
+    {
+      "table_name": "subjects",
+      "column_name": "updated_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "subscriptions",
+      "column_name": "cancel_at_period_end",
+      "default_expression": "false"
+    },
+    {
+      "table_name": "subscriptions",
+      "column_name": "status_changed_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "tasks",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "tasks",
+      "column_name": "id",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "table_name": "tasks",
+      "column_name": "logged_seconds",
+      "default_expression": "0"
+    },
+    {
+      "table_name": "tasks",
+      "column_name": "status",
+      "default_expression": "'planned'::task_status"
+    },
+    {
+      "table_name": "tasks",
+      "column_name": "updated_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "user_subjects",
+      "column_name": "created_at",
+      "default_expression": "now()"
+    },
+    {
+      "table_name": "user_subjects",
+      "column_name": "is_hidden",
+      "default_expression": "false"
+    }
+  ]

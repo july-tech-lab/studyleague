@@ -1,6 +1,6 @@
 # Tymii — Documentation Technique
 
-> Version 1.2 — Avril 2026  
+> Version 1.4 — Avril 2026  
 > Stack : React Native / Expo SDK 54 + Supabase  
 > Plateformes : iOS & Android (App Store + Google Play)  
 > Auteur : Julie Maitre
@@ -47,6 +47,8 @@ L'application cible principalement les lycéens, étudiants en prépa et étudia
 | 🎯 Objectifs | Objectifs hebdomadaires par matière et par jour |
 | 📊 Dashboard | Stats, histogramme réel vs prévu, streak |
 | 👥 Groupes | Groupes publics/privés, classement, admin |
+| 🔴 Live groupe | Qui étudie maintenant (présence + Realtime) |
+| 📅 Calendrier stats | Vue calendrier du temps étudié (depuis Stats) |
 | ⭐ XP & Niveaux | Gamification basée sur les minutes étudiées |
 | 🌙 Thème & i18n | Mode sombre/clair, Français et Anglais |
 | 🔒 Mode Focus | Module natif Android/iOS (contrôles parentaux) |
@@ -70,7 +72,7 @@ L'application cible principalement les lycéens, étudiants en prépa et étudia
 
 ### 2.2 Structure du projet (architecture des dossiers)
 
-Racine utile pour l’app et le backend déclaratif :
+Racine utile pour l’app et le backend déclaratif (le dépôt local peut s’appeler autrement que le dossier illustré ; **Tymii** est le nom produit, `package.json` → `name: "tymii"`).
 
 ```
 tymii/
@@ -90,18 +92,20 @@ tymii/
 │   │   ├── dashboard.tsx     # Stats
 │   │   ├── profile.tsx
 │   │   ├── leaderboard.tsx   # hors barre (href masqué), entrée depuis Groupes
+│   │   ├── group-live.tsx    # présence « qui étudie », hors barre (depuis Groupes)
+│   │   ├── calendar-stats.tsx # calendrier temps étudié, hors barre (depuis Stats)
 │   │   └── color-palette.tsx # outil thème (hors barre)
 │   ├── modal.tsx
 │   ├── +not-found.tsx
 │   └── ui.tsx
 ├── components/
-│   ├── ui/                   # Button, Input, Modal, TaskCard, SubjectPicker, …
+│   ├── ui/                   # Button, Input, Modal, TaskCard, SubjectPicker, SubjectBar, …
 │   ├── layout/               # Screen, Header, TabScreen
 │   ├── planning/             # WeeklyGoalsPanel, …
 │   ├── profile/              # AcademicPathModal, …
 │   └── Themed.tsx
 ├── constants/                # subjectCatalog, categories, typography, Colors, …
-├── hooks/                    # useTimer, useTasks, useDashboard, useGroups, …
+├── hooks/                    # useTimer, useTasks, useDashboard, useGroups, useStudyPresenceSync, …
 ├── i18n/                     # i18next — locales fr.json / en.json
 ├── modules/focus-module/     # Module natif Focus (Expo module — Android Kotlin, iOS)
 ├── plugins/                  # withFocusMode.js (config Expo)
@@ -110,10 +114,12 @@ tymii/
 │   ├── authContext.tsx
 │   ├── themeContext.tsx
 │   ├── queries.ts
+│   ├── queries/              # types partagés requêtes (ex. types.ts)
 │   ├── time.ts
 │   ├── color.ts
 │   └── ensureDefaultSubjectsFromKeys.ts
 ├── assets/                   # Images, docs internes éventuels
+├── landing/                  # Page marketing statique (ex. index.html)
 ├── documentation/          # TECH_STACK, guides build, audits SQL, …
 ├── supabase/migrations/      # Migrations appliquées via Supabase CLI (dépôt distant)
 ├── migrations/               # Scripts SQL historiques / sync (voir migrations/MIGRATION_GUIDE.md)
@@ -176,7 +182,7 @@ Aucune autre variable `EXPO_PUBLIC_*` n’est requise par le code applicatif act
 
 ### 3.0 Schéma relationnel (tables et relations)
 
-**Sources dans le dépôt :** `full_structure.sql` (schéma `public` exporté), complété par `supabase/migrations/` (dont graines catalogue matières). Les noms ci-dessous sont ceux des tables PostgreSQL.
+**Sources dans le dépôt :** `full_structure.sql` (schéma `public` exporté — à régénérer après changements SQL), scripts sous **`migrations/`** (exécution manuelle dans le SQL Editor Supabase, voir `CLAUDE.md`), et le dossier `supabase/migrations/` si utilisé pour le dépôt distant. Les noms ci-dessous sont ceux des tables PostgreSQL.
 
 **Cœur identité**
 
@@ -185,7 +191,7 @@ Aucune autre variable `EXPO_PUBLIC_*` n’est requise par le code applicatif act
 
 **Matières et liaison utilisateur**
 
-- `subjects` — matières globales (`owner_id` NULL) ou personnelles ; auto-référence `parent_subject_id` → `subjects(id)` ; `bank_key` pour rattachement au catalogue applicatif.
+- `subjects` — matières globales (`owner_id` NULL) ou personnelles ; `bank_key` pour rattachement au catalogue applicatif. Modèle **plat** : plus de hiérarchie `parent_subject_id` (migration `migrations/20260416180000_drop_subjects_parent_subject_id.sql`). Détachement du catalogue global par utilisateur : `migrations/20260423100000_ypt_detach_global_subjects_per_user.sql`.
 - `user_subjects` — (`user_id` → `profiles`, `subject_id` → `subjects`) : matières visibles / ordre / couleur perso.
 
 **Temps d’étude et tâches**
@@ -199,6 +205,10 @@ Aucune autre variable `EXPO_PUBLIC_*` n’est requise par le code applicatif act
 
 - `groups` — `created_by` → `profiles`.
 - `group_members` — `group_id` → `groups`, `user_id` → `profiles`.
+
+**Présence temps réel (vue live groupe)**
+
+- `user_study_presence` — au plus **une ligne par utilisateur** (PK `user_id` → `profiles`, `ON DELETE CASCADE`) ; indicateur éphémère du minuteur (`is_studying`, `session_started_at`, `updated_at`). Consommée par l’écran **group-live** avec **Supabase Realtime** sur cette table. Migration `migrations/20260422150000_user_study_presence_group_peers.sql` (RLS, publication Realtime si disponible, fonction `rls_users_share_approved_group` et ajustements SELECT sur `profiles` / `group_members` pour les co-membres approuvés des groupes privés).
 
 **Abonnement (prévu)**
 
@@ -216,12 +226,12 @@ erDiagram
   PROFILES ||--o{ DAILY_SUMMARIES : user_id
   PROFILES ||--o{ GROUPS : created_by
   PROFILES ||--o{ GROUP_MEMBERS : user_id
+  PROFILES |o--|| USER_STUDY_PRESENCE : "0..1 row"
   PROFILES ||--o{ SUBSCRIPTIONS : user_id
   SUBJECTS ||--o{ STUDY_SESSIONS : subject_id
   SUBJECTS ||--o{ TASKS : subject_id
   SUBJECTS ||--o{ USER_SUBJECTS : subject_id
   SUBJECTS ||--o{ SUBJECT_WEEKLY_GOALS : subject_id
-  SUBJECTS }o--o| SUBJECTS : parent_subject_id
   TASKS ||--o{ STUDY_SESSIONS : task_id
   GROUPS ||--o{ GROUP_MEMBERS : group_id
 ```
@@ -239,6 +249,7 @@ erDiagram
 | `group_members` | ✅ Actif | Membres avec rôle et statut d'approbation |
 | `subject_weekly_goals` | ✅ Actif | Objectifs hebdomadaires par matière/jour |
 | `daily_summaries` | ✅ Actif | Résumés journaliers (agrégation server-side) |
+| `user_study_presence` | ✅ Actif | Présence minuteur pour la vue live groupe (ligne optionnelle par user) |
 | `subscriptions` | ✅ Actif | Abonnements (lecture seule côté client) |
 
 ### 3.2 Audit RLS — Résultat (Avril 2026)
@@ -248,10 +259,13 @@ erDiagram
 | RLS activé sur toutes les tables | ✅ OK | 100% des tables protégées |
 | WITH CHECK sur tous les INSERT | ✅ Corrigé | `auth.uid() = user_id` sur toutes les tables |
 | Policies SELECT avec auth.uid() | ✅ OK | Isolation stricte par utilisateur |
-| groups SELECT inclut les membres | ✅ OK | Membres approuvés peuvent voir leur groupe |
+| `groups` / `group_members` — pas de cycle RLS | ✅ Corrigé (17 avr. 2026) | Les politiques qui croisaient `EXISTS` sur l’une et l’autre table provoquaient l’erreur Postgres `42P17` (récursion infinie). **Correction :** fonctions `public.rls_current_user_is_approved_group_member`, `rls_current_user_is_approved_group_admin`, `rls_group_is_public_or_current_user_creator` (`SECURITY DEFINER`, `search_path = public`) appelées depuis les politiques — migration `migrations/20260417120000_fix_groups_rls_infinite_recursion.sql`. |
+| groups SELECT — membres approuvés | ✅ OK | Via la fonction membre ci-dessus (même intention métier qu’avant) |
 | subscriptions — blocage INSERT/UPDATE | ✅ OK | `WITH CHECK (false)` — server-side uniquement |
 | profiles INSERT policy | ✅ OK | Trigger `on_auth_user_created` sur auth.users |
 | daily_summaries INSERT/UPDATE | ✅ OK | Server-side uniquement, bypasse RLS |
+| `profiles` SELECT — co-membres de groupe | ✅ OK (22 avr. 2026) | Policy étendue : lecture de profils des utilisateurs avec lesquels on partage un groupe **approuvé** (`rls_users_share_approved_group`) — migration `migrations/20260422150000_user_study_presence_group_peers.sql`. |
+| `user_study_presence` | ✅ OK | INSERT/UPDATE/DELETE **soi** ; SELECT réservé aux pairs (même groupe approuvé) + sa propre ligne — même migration. |
 
 ### 3.3 Récapitulatif détaillé par opération
 
@@ -267,8 +281,9 @@ erDiagram
 | `subscriptions` | ✅ blocked | ✅ | ✅ blocked | — | 🟢 Parfait |
 | `profiles` | ✅ trigger | ✅ | ✅ | — | 🟢 Parfait |
 | `daily_summaries` | ✅ server | ✅ | — | — | 🟢 Parfait |
+| `user_study_presence` | ✅ | ✅ | ✅ | ✅ | 🟢 Parfait |
 
-> ✅ **Audit RLS 100% terminé** — Base de données validée et prête pour la publication store.
+> **Audit RLS** — Couverture des tables principales validée ; le schéma exporté `full_structure.sql` peut rester en retard sur les correctifs appliqués directement en production (regénérer l’export après migrations).
 
 ### 3.4 Colonnes et tables — référence produit
 
@@ -277,7 +292,7 @@ Synthèse alignée sur le schéma Supabase (noms anglais en base).
 | Table | Rôle principal |
 |---|---|
 | `profiles` | `id` (PK, FK `auth.users`), `username` (contrainte longueur ≥ 3), `avatar_url`, `xp_total`, `level`, `current_streak`, `longest_streak`, `weekly_goal_minutes`, `language_preference`, `theme_preference`, `is_public`, `show_in_leaderboard`, champs onboarding (`onboarding_completed`, `academic_category`, etc.), `created_at`, `updated_at` |
-| `subjects` | `id`, `name`, `owner_id`, `parent_subject_id`, `icon`, `color`, `is_active`, `deleted_at` (soft delete) |
+| `subjects` | `id`, `name`, `slug` (catalogue / unicité côté global), `owner_id` (NULL = matière catalogue globale), `icon`, `color`, `is_active`, `deleted_at` (soft delete), `bank_key` (clé de rattachement banque applicative), `created_at`, `updated_at` |
 | `user_subjects` | `user_id`, `subject_id`, `is_hidden`, `display_order`, `custom_color` (surcharge couleur utilisateur) |
 | `study_sessions` | `id`, `user_id`, `subject_id`, `task_id`, `started_at`, `ended_at`, `notes`, `duration_seconds` (généré ou dérivé selon migration) |
 | `tasks` | `id`, `user_id`, `title`, `subject_id`, `planned_minutes`, `logged_seconds`, `status` (`planned` \| `in-progress` \| `done`), `scheduled_for`, `created_at`, `updated_at`, `deleted_at` si soft delete |
@@ -285,6 +300,7 @@ Synthèse alignée sur le schéma Supabase (noms anglais en base).
 | `group_members` | `id`, `group_id`, `user_id`, `role` (`group_admin` \| `group_member`), `status` (`pending` \| `approved`), `created_at` |
 | `daily_summaries` | PK (`user_id`, `date`) ; `user_id` → `profiles` ; `total_seconds`, `updated_at` |
 | `subject_weekly_goals` | Objectifs par matière et par jour de semaine : `user_id`, `subject_id`, `day_of_week` (0 = dimanche … 6 = samedi), `minutes` |
+| `user_study_presence` | PK `user_id` → `profiles` ; `is_studying`, `session_started_at`, `updated_at` (lignes périmées si `updated_at` ancien) |
 | `subscriptions` | Prévu pour l’abonnement (Stripe / lecture côté client) — hors flux cœur si non activé |
 
 ### 3.5 Vues et vues matérialisées
@@ -294,7 +310,7 @@ Synthèse alignée sur le schéma Supabase (noms anglais en base).
 | `weekly_leaderboard` | Agrégation à partir des `study_sessions` (fenêtre ~7 jours) ; respect de `show_in_leaderboard` |
 | `monthly_leaderboard`, `yearly_leaderboard` | Souvent basées sur `daily_summaries` (fenêtres 30 / 365 jours) |
 | `session_overview` | Par utilisateur : nombre de sessions, temps total, mois en cours, moyenne par session |
-| `session_subject_totals` | Totaux par matière avec remontée vers la matière parente (`direct_seconds` vs sous-matières) ; exclut les matières supprimées |
+| `session_subject_totals` | Vue : temps total des sessions par utilisateur et par matière (`subject_id`, `subject_name`, `total_seconds`, `direct_seconds`, `subtag_seconds`). Jointure sur les matières actives (`deleted_at` nul). |
 
 Les classements matérialisés nécessitent un **REFRESH** périodique (job ou cron) selon la politique déployée sur le projet.
 
@@ -306,7 +322,7 @@ Les classements matérialisés nécessitent un **REFRESH** périodique (job ou c
 | `find_group_by_invite_code` | Recherche groupe par code |
 | `request_join_group` | Demande d’adhésion |
 | `increment_task_seconds` | Mise à jour du temps passé sur une tâche |
-| `create_group_with_creator` | Création groupe + créateur admin en une transaction (évite récursion RLS) |
+| `create_group_with_creator` | Création groupe + créateur admin en une transaction (`SECURITY DEFINER` — exécution cohérente côté serveur). L’app peut aussi créer un groupe par **`insert` REST sur `groups`** puis ligne `group_members` (`utils/queries.ts`) ; les politiques corrigées (§3.2) évitent la récursion RLS sur ces lectures/écritures. |
 | `regenerate_invite_code` | Régénération du code (admin) |
 
 ### 3.7 Triggers et automatisations
@@ -347,7 +363,7 @@ Le calcul est effectué côté serveur via des fonctions SQL `SECURITY DEFINER`.
 - Groupes publics (rejoindre librement) et privés (code + approbation admin)
 - Leaderboard par période : semaine, mois, année
 - Classement basé sur le temps total d'étude agrégé (vues / MV côté base, requêtées par l’app)
-- **Realtime** : dans `useGroups`, abonnement `postgres_changes` sur la table `group_members` (rafraîchissement de la liste des groupes lors des changements de membres). L’écran **Classement** (`leaderboard.tsx`) charge les données via `fetchLeaderboardByPeriod` à l’ouverture et au **pull-to-refresh** — pas d’abonnement Realtime sur le classement lui-même (voir **§2.5** pour l’absence de couche cache type React Query).
+- **Realtime** : dans `useGroups`, abonnement `postgres_changes` sur la table `group_members` (rafraîchissement de la liste des groupes lors des changements de membres). Sur **`user_study_presence`**, abonnement Realtime depuis **`group-live.tsx`** pour mettre à jour la liste des pairs « en étude » dans un groupe ; côté minuteur, **`useStudyPresenceSync`** (`hooks/useStudyPresenceSync.ts`) upsert l’état quand le timer tourne. L’écran **Classement** (`leaderboard.tsx`) charge les données via `fetchLeaderboardByPeriod` à l’ouverture et au **pull-to-refresh** — pas d’abonnement Realtime sur le classement lui-même (voir **§2.5** pour l’absence de couche cache type React Query).
 
 ---
 
@@ -415,7 +431,7 @@ Champs stockés en base : `onboarding_completed`, `academic_category`, `academic
 
 | Point | Statut | Action |
 |---|---|---|
-| RLS Supabase | ✅ Audit OK | WITH CHECK corrigé sur tous les INSERT |
+| RLS Supabase | ✅ OK | WITH CHECK sur les INSERT ; groupes sans cycle `groups` ↔ `group_members` (migration `20260417120000_…`) |
 | Deep links OAuth | ⚠️ À tester | Callback Apple/Google en build production |
 | expo-updates production | ✅ Configuré | Channel production actif |
 | Module Focus permissions | ⚠️ En attente | Approbation Apple Family Controls |
@@ -457,6 +473,8 @@ eas submit --platform ios --profile production
 | `/(tabs)/dashboard` | Stats | Tableau de bord (semaine/mois/an) |
 | `/(tabs)/groups` | Groupes | Création et adhésion ; entrée vers le classement (icône trophée) |
 | `/(tabs)/leaderboard` | Classement | Route présente, masquée de la barre d’onglets |
+| `/(tabs)/group-live` | Live groupe | Qui étudie maintenant (membres du groupe) ; masquée de la barre |
+| `/(tabs)/calendar-stats` | Calendrier stats | Temps par jour / période ; masquée ; entrée depuis l’onglet Stats |
 | `/(tabs)/profile` | Profil | XP, niveau, matières, réglages |
 | `/(tabs)/color-palette` | Palette | Écran outil / thème, masqué de la barre d’onglets |
 
@@ -480,11 +498,11 @@ Les parcours sont regroupés dans le groupe de routes `(auth)`. Tant que l'utili
 
 L'onglet Focus est l'écran principal de l'application.
 
-**Présentation UX** : grand minuteur (format type HH:MM:SS), sélecteur de matière hiérarchique (badges de couleur, création avec parent optionnel), sélecteur de tâche optionnel pour les tâches liées à une matière, boutons **démarrer** et **arrêter** (hook `useTimer`). Sur mobile, le **mode Focus** système peut limiter les apps distrayantes (iOS : choix des apps à bloquer ; Android : permissions) ; le temps peut être enregistré selon la politique produit (voir §5). En-tête : icône cloche (notifications / rappels) ; actions flottantes typiques : raccourci « + » matières, bouton d’arrêt visible pendant une session active.
+**Présentation UX** : grand minuteur (format type HH:MM:SS), sélecteur de matière (liste, badges de couleur, ajout / banque), sélecteur de tâche optionnel pour les tâches liées à une matière, boutons **démarrer** et **arrêter** (hook `useTimer`). Pendant une session, **`useStudyPresenceSync`** peut publier l’état « en étude » vers **`user_study_presence`** pour les vues live groupe (voir **§4.2**). Sur mobile, le **mode Focus** système peut limiter les apps distrayantes (iOS : choix des apps à bloquer ; Android : permissions) ; le temps peut être enregistré selon la politique produit (voir §5). En-tête : icône cloche (notifications / rappels) ; actions flottantes typiques : raccourci « + » matières, bouton d’arrêt visible pendant une session active.
 
 #### Déroulement d'une session
 
-1. Choisir une matière (arborescence / sélecteur) et optionnellement une tâche active
+1. Choisir une matière dans le sélecteur et optionnellement une tâche active
 2. Démarrer le minuteur
 3. **Pas de pause / reprise utilisateur** dans l’implémentation actuelle : le hook expose `start`, `stop` (persiste la session) et `reset` (remet le compteur sans enregistrer de session). Si le mode Focus est **requis** (`strictFocus` / build) et que le focus système est perdu, le flux peut bloquer ou interrompre le minuteur selon la logique du module natif et de l’écran Focus
 4. Arrêter : la session est enregistrée dans Supabase (`study_sessions` via `logSession` / flux associé)
@@ -539,7 +557,7 @@ Les objectifs ne sont pas un onglet séparé : ils sont édités depuis **Focus*
 
 | Mode | Description |
 |---|---|
-| Par matière | Minutes cibles par matière (parente), réparties sur la semaine |
+| Par matière | Minutes cibles par matière, réparties sur la semaine |
 | Par jour | Minutes par jour (0 = dimanche … 6 = samedi, aligné sur `Date.getDay()`), typiquement via curseurs |
 
 Les lignes sont persistées dans **`subject_weekly_goals`** (`user_id`, `subject_id`, `day_of_week`, `minutes`, contrainte d’unicité sur le triplet utilisateur / matière / jour). Elles alimentent l’histogramme **réel vs prévu** du dashboard (hook `useSubjectGoals` / agrégations dans `utils/queries.ts`).
@@ -560,7 +578,7 @@ Les lignes sont persistées dans **`subject_weekly_goals`** (`user_id`, `subject
 | Répartition | Barres de pourcentage du temps par matière |
 | Progression quotidienne | Histogramme réel vs prévu, filtrable par matière |
 
-Les données sont chargées via le hook `useDashboard` branché sur Supabase.
+Les données sont chargées via le hook `useDashboard` branché sur Supabase. Navigation vers **`/(tabs)/calendar-stats`** (calendrier du temps étudié) depuis l’écran Stats (`router.push("/calendar-stats")`).
 
 ### 9.6 Groupes, invitations et classement
 
@@ -569,12 +587,13 @@ Les données sont chargées via le hook `useDashboard` branché sur Supabase.
 - **Adhésion** : code d’invitation, mot de passe si requis, file d’attente si approbation admin.
 - **Badges** : public / privé, mot de passe, approbation requise.
 - **Leaderboard** : périodes semaine / mois / année ; rang, pseudo, temps total ; mise en avant du top 3 et de l’utilisateur courant ; chargement initial + **pull-to-refresh** (pas de subscription Realtime sur cet écran).
+- **Live groupe** : écran **`group-live`** (route `/(tabs)/group-live`), ouvert depuis la fiche groupe ; affiche les pairs dont la présence est à jour dans **`user_study_presence`** (Realtime).
 
 ### 9.7 Profil, matières et compte
 
 - **Identité** : nom affiché éditable, avatar (sélecteur d’image → bucket `avatars`).
-- **Statistiques personnelles** : temps du mois, streak, nombre de sessions, rang leaderboard, moyenne par session, ventilation par matière (parent / enfants).
-- **Matières** : liste hiérarchique, couleurs, ajout (recherche / création), rattachement, couleur personnalisée, suppression.
+- **Statistiques personnelles** : temps du mois, streak, nombre de sessions, rang leaderboard, moyenne par session, ventilation par matière.
+- **Matières** : liste des matières du profil, couleurs, ajout (recherche / création), rattachement catalogue, couleur personnalisée, suppression.
 - **Réglages** : langue FR / EN, thème clair / sombre, mode Focus (statut, permissions, iOS sélection d’apps), déconnexion, suppression de compte.
 
 ---
@@ -603,8 +622,9 @@ Les données sont chargées via le hook `useDashboard` branché sur Supabase.
 | `Button` | `primary`, `secondary`, `outline`, `ghost`, `destructive` ; tailles `xs`–`lg` ; forme pill ; `iconLeft` / `iconRight` ; état chargement |
 | `Input` | Icônes gauche / droite, label, erreur |
 | `Modal` | Titre, actions annuler / confirmer |
-| `SubjectPicker` | Hiérarchique, option parents seuls |
-| `Tabs` | Style pill |
+| `SubjectPicker` | Liste déroulante de matières, pastilles de couleur |
+| `SubjectBar` | Barre compacte de matières (sélection / pastilles) |
+| `Tabs` | Style pill ou underline |
 | Cartes | `Card`, `ListCard`, `ListItem` (selon usage dans le projet) |
 
 ### 10.4 Typographie
@@ -616,7 +636,7 @@ Les données sont chargées via le hook `useDashboard` branché sur Supabase.
 ### 10.5 Internationalisation
 
 - Langues : **fr**, **en** (`i18n/locales`).
-- Clés couvrant auth, onboarding, minuteur, tâches, groupes, classement, dashboard, profil, commun.
+- Clés couvrant auth, onboarding, minuteur, tâches, groupes, classement, dashboard, calendrier stats (`calendarStats.*`), profil, commun.
 
 ---
 
@@ -690,4 +710,4 @@ Clés du type `studyPlans.title`, `studyPlans.add`, `studyPlans.edit`, `studyPla
 
 ---
 
-*Tymii — Documentation Technique v1.2 — Avril 2026*
+*Tymii — Documentation Technique v1.4 — Avril 2026*

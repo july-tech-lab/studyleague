@@ -70,12 +70,13 @@ export function useSubjectGoals(userId: string | null) {
 
   const goalsBySubject = useCallback(
     (subjectIds: string[]): GoalsBySubject => {
+      const allowed = new Set(subjectIds);
       const result: GoalsBySubject = {};
       subjectIds.forEach((id) => {
         result[id] = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
       });
       goals.forEach((g) => {
-        if (!result[g.subject_id]) result[g.subject_id] = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+        if (!allowed.has(g.subject_id)) return;
         result[g.subject_id][g.day_of_week] = g.minutes;
       });
       return result;

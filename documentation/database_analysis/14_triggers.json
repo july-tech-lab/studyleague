@@ -1,0 +1,74 @@
+[
+  {
+    "trigger_name": "trg_update_group_member_count",
+    "table_name": "group_members",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "DELETE, UPDATE",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER trg_update_group_member_count AFTER INSERT OR DELETE OR UPDATE ON public.group_members FOR EACH ROW EXECUTE FUNCTION update_group_member_count()"
+  },
+  {
+    "trigger_name": "update_groups_timestamp",
+    "table_name": "groups",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "INSERT",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER update_groups_timestamp BEFORE UPDATE ON public.groups FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  },
+  {
+    "trigger_name": "update_profiles_timestamp",
+    "table_name": "profiles",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "INSERT",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER update_profiles_timestamp BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  },
+  {
+    "trigger_name": "on_session_completed",
+    "table_name": "study_sessions",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "DELETE",
+    "granularity": "FOR EACH STATEMENT",
+    "definition": "CREATE TRIGGER on_session_completed AFTER INSERT ON public.study_sessions FOR EACH ROW EXECUTE FUNCTION handle_session_completed()"
+  },
+  {
+    "trigger_name": "trg_subject_weekly_goals_updated",
+    "table_name": "subject_weekly_goals",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "INSERT",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER trg_subject_weekly_goals_updated BEFORE UPDATE ON public.subject_weekly_goals FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  },
+  {
+    "trigger_name": "update_subjects_timestamp",
+    "table_name": "subjects",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "INSERT",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER update_subjects_timestamp BEFORE UPDATE ON public.subjects FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  },
+  {
+    "trigger_name": "on_task_completed_xp",
+    "table_name": "tasks",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "UNKNOWN",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER on_task_completed_xp AFTER UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION handle_task_completed_xp()"
+  },
+  {
+    "trigger_name": "trg_tasks_updated",
+    "table_name": "tasks",
+    "status": "ENABLED",
+    "timing": "BEFORE",
+    "event": "INSERT",
+    "granularity": "FOR EACH ROW",
+    "definition": "CREATE TRIGGER trg_tasks_updated BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+  }
+]

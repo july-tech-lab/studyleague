@@ -194,6 +194,7 @@
     "errorTitle": "Erreur",
     "errorSave": "Impossible de sauvegarder.",
     "addSubjectPlaceholder": "Nom de la matière",
+    "addSubjectModalTitle": "Ajouter une matière",
     "tabSubjects": "Matières",
     "tabTasks": "Tâches",
     "tasksEmpty": "Aucune tâche active",
@@ -219,12 +220,23 @@
     "membersCount_one": "{{count}} membre",
     "membersCount_other": "{{count}} membres",
     "adminApprovalRequired": "Approbation admin requise",
+    "pendingBadge": "En attente d'approbation",
+    "pendingApprovalModal": {
+      "title": "Demande en attente",
+      "message": "Ta demande pour rejoindre « {{name}} » a bien été envoyée. Un administrateur du groupe doit l'accepter avant que tu n'y aies accès.",
+      "close": "Compris"
+    },
+    "cancelPending": {
+      "accessibility": "Annuler la demande d'adhésion",
+      "confirmTitle": "Annuler la demande ?",
+      "confirmMessage": "Tu pourras envoyer une nouvelle demande plus tard si le groupe le permet.",
+      "confirm": "Annuler la demande"
+    },
     "passwordRequired": "Mot de passe requis",
     "create": {
       "title": "Créer un groupe",
       "namePlaceholder": "Nom du groupe",
       "descriptionPlaceholder": "Description (optionnel)",
-      "inviteCodeInfo": "Le code d'invitation sera généré automatiquement.",
       "passwordPlaceholder": "Mot de passe du groupe (optionnel)",
       "visibility": "Visibilité",
       "public": "Public",
@@ -270,7 +282,8 @@
       "search": "Recherche impossible",
       "notFound": "Aucun groupe trouvé pour ce code",
       "delete": "Impossible de supprimer le groupe",
-      "leave": "Impossible de quitter le groupe"
+      "leave": "Impossible de quitter le groupe",
+      "cancelPending": "Impossible d'annuler la demande"
     },
     "success": {
       "requestSent": "Demande envoyée",
@@ -281,8 +294,18 @@
     "errorLoading": "Impossible de charger le classement.",
     "empty": "Aucune donnée pour cette période."
   },
+  "calendarStats": {
+    "title": "Statistiques",
+    "emptyDay": "Aucune session ce jour",
+    "emptyPeriod": "Aucune session sur cette période",
+    "totalDay": "Total du jour",
+    "thisWeek": "Cette semaine",
+    "breakdown": "Répartition",
+    "monthTotal": "{{month}} : {{time}}"
+  },
   "dashboard": {
     "title": "Tableau de Bord",
+    "calendarViewA11y": "Ouvrir la vue calendrier",
     "longestSession": "Plus longue session",
     "bestSubject": "Meilleure matière",
     "filterAll": "Toutes les matières",
@@ -331,12 +354,11 @@
       "dark": "Sombre"
     },
     "tabs": {
-      "subjects": "Matières",
+      "subjects": "Mes matières",
       "settings": "Réglages"
     },
     "displayName": {
-      "label": "Nom affiché",
-      "hint": "Visible sur ton profil et dans l’app.",
+      "label": "Nom affiché dans l'app",
       "placeholder": "Ton nom",
       "success": "Nom mis à jour.",
       "error": "Le nom doit faire au moins 3 caractères.",
@@ -378,7 +400,8 @@
       "available": "Matières disponibles",
       "moreAvailable": "+ de matières disponibles",
       "create": "Créer",
-      "searchPlaceholder": "Rechercher ou créer une matière",
+      "createSubjectPlaceholder": "Créer une matière",
+      "addSubjectSubmit": "Ajouter la matière",
       "searchResults": "Résultats de recherche",
       "noResults": "Aucun résultat trouvé",
       "createHint": "Appuie sur « Créer » pour créer une matière nommée « {{name}} »",
@@ -388,9 +411,11 @@
       "deleteMessage": "Elle disparaîtra de ta liste. Ton temps d'étude enregistré est conservé.",
       "deleteErrorTitle": "Impossible de retirer",
       "deleteError": "Réessaie plus tard.",
+      "deleteOwnedTitle": "Supprimer cette matière définitivement ?",
+      "deleteOwnedMessage": "Si tu n'as aucun temps d'étude enregistré pour cette matière, elle sera supprimée de la base de données. Sinon, elle sera seulement archivée.",
+      "deleteOwnedConfirm": "Supprimer définitivement",
       "customizeColor": "Personnaliser la couleur",
       "colorPickerTitle": "Choisir une couleur",
-      "colorPickerSubtitle": "Choisis une couleur pour {{name}}",
       "defaultColor": "Par défaut"
     },
     "account": {
@@ -420,20 +445,22 @@
       "name": "Nom de tâche",
       "subject": "Matière",
       "minutes": "Minutes",
-      "add": "Ajouter à la liste"
+      "add": "Enregistrer"
     },
     "view": {
       "active": "En cours",
       "done": "Terminées"
     },
-    "planBlock": "Ajouter une tâche",
+    "addTaskAction": "Ajouter une tâche",
+    "addTaskSubmit": "Ajouter la tâche",
+    "addTaskErrorName": "Indique un nom de tâche.",
     "progress": "{{current}} / {{target}} min",
     "resume": "Reprendre",
     "edit": "Modifier la tâche",
-    "editBlock": "Modifier la tâche",
     "delete": "Supprimer la tâche",
     "completeNow": "Marquer terminé",
     "emptyState": "Pas encore de tâches. Ajoutes-en pour planifier ton focus.",
+    "emptyStateDone": "Pas encore de tâches terminées…",
     "planningTabs": {
       "weeklyGoals": "Objectifs hebdo",
       "tasks": "Tâches"
@@ -488,7 +515,10 @@
     "geopolitics": "Geopolitique",
     "sport": "Sport",
     "calculus": "Calcul",
+    "algorithms": "Algorithmique",
+    "data_structures": "Structures de données",
     "marketing": "Marketing",
+    "productivity": "Méthodologie & productivité",
     "law": "Droit",
     "languages": "Langues",
     "design": "Design",
@@ -507,7 +537,7 @@
     "bySubject": "Par matière",
     "byDay": "Par jour",
     "saved": "Objectifs enregistrés.",
-    "noTime": "0min/sem",
+    "perWeekSuffix": "/semaine",
     "clear": "Effacer",
     "minutesPlaceholder": "minutes",
     "apply": "Appliquer",

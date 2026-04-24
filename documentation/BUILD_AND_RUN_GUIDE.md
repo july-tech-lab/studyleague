@@ -160,9 +160,10 @@ git ls-files | grep -E "\.env$"   # should print nothing
 
 ## 6. Development build (physical device)
 
+For **production** store binaries (Android + iOS in one go), use §7: `eas build --profile production --platform all`.
+
 ```bash
 eas build --profile development --platform android
-# or
 eas build --profile development --platform ios
 ```
 

@@ -3,6 +3,7 @@ import {
   createGroup,
   deleteGroup as deleteGroupQuery,
   fetchPublicGroups,
+  fetchPendingUserGroups,
   fetchUserGroups,
   findGroupByInviteCode,
   Group,
@@ -21,6 +22,7 @@ export interface UseGroupsOptions {
 
 export interface UseGroupsReturn {
   groups: Group[]; // User's approved groups
+  pendingGroups: Group[]; // Public join requests awaiting admin approval
   publicGroups: Group[]; // Public groups user is not a member of
   loading: boolean;
   error: Error | null;
@@ -50,6 +52,7 @@ export function useGroups({
   autoLoad = true,
 }: UseGroupsOptions): UseGroupsReturn {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [pendingGroups, setPendingGroups] = useState<Group[]>([]);
   const [publicGroups, setPublicGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -57,6 +60,7 @@ export function useGroups({
   const loadGroups = useCallback(async () => {
     if (!userId) {
       setGroups([]);
+      setPendingGroups([]);
       setPublicGroups([]);
       setLoading(false);
       return;
@@ -65,11 +69,13 @@ export function useGroups({
     setLoading(true);
     setError(null);
     try {
-      // Load user's groups
+      // Load user's groups (approved) and pending join requests
       const userGroups = await fetchUserGroups(userId);
+      const pending = await fetchPendingUserGroups(userId);
       setGroups(userGroups);
+      setPendingGroups(pending);
 
-      // Load public groups (excluding ones user is already in)
+      // Load public groups (excluding ones user is already an approved member of)
       const memberIds = userGroups.map((g) => g.id);
       const publicData = await fetchPublicGroups(memberIds);
       setPublicGroups(publicData);
@@ -78,6 +84,7 @@ export function useGroups({
       setError(error);
       console.error("Error loading groups", err);
       setGroups([]);
+      setPendingGroups([]);
       setPublicGroups([]);
     } finally {
       setLoading(false);
@@ -218,6 +225,7 @@ export function useGroups({
 
   return {
     groups,
+    pendingGroups,
     publicGroups,
     loading,
     error,

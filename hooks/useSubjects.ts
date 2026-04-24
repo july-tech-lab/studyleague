@@ -1,14 +1,14 @@
 import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import {
-    attachSubjectToUser,
-    buildSubjectTree,
-    createSubject,
-    fetchUserSubjects,
-    hideUserSubject,
-    sortSubjectsForDisplay,
-    Subject,
-    SubjectNode,
-    upsertUserSubject,
+  attachSubjectToUser,
+  buildSubjectTree,
+  createSubject,
+  fetchUserSubjects,
+  hideUserSubject,
+  sortSubjectsForDisplay,
+  Subject,
+  SubjectNode,
+  upsertUserSubject,
 } from "@/utils/queries";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,7 +22,6 @@ export interface UseSubjectsOptions {
 export interface UseSubjectsReturn {
   subjects: Subject[];
   subjectTree: SubjectNode[];
-  parentSubjects: Subject[];
   loading: boolean;
   error: Error | null;
   selectedSubjectId: string | null;
@@ -30,7 +29,10 @@ export interface UseSubjectsReturn {
   subjectNameById: Record<string, string>; // Quick lookup map — uses translated names when available
   getDisplayName: (subject: { name: string; bank_key?: string | null }) => string;
   setSelectedSubjectId: (id: string | null) => void;
-  createSubject: (name: string) => Promise<Subject>;
+  createSubject: (
+    name: string,
+    options?: { bankKey?: string; color?: string; icon?: string }
+  ) => Promise<Subject>;
   hideSubject: (subjectId: string) => Promise<void>;
   attachSubject: (subjectId: string) => Promise<void>;
   refetch: () => Promise<void>;
@@ -100,13 +102,16 @@ export function useSubjects({
   }, [loadSubjects, autoLoad]);
 
   const handleCreateSubject = useCallback(
-    async (name: string): Promise<Subject> => {
+    async (
+      name: string,
+      options?: { bankKey?: string; color?: string; icon?: string }
+    ): Promise<Subject> => {
       if (!userId) {
         throw new Error("User not authenticated");
       }
 
       try {
-        const created = await createSubject(userId, name);
+        const created = await createSubject(userId, name, options);
         // Make it visible for this user
         await upsertUserSubject(userId, created.id);
         
@@ -190,12 +195,9 @@ export function useSubjects({
     return map;
   }, [subjects, getDisplayName]);
 
-  const parentSubjects = useMemo(() => subjects, [subjects]);
-
   return {
     subjects,
     subjectTree,
-    parentSubjects,
     loading,
     error,
     selectedSubjectId,

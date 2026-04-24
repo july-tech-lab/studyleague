@@ -1,3 +1,4 @@
+import type { GroupMemberWithPresence } from "./queries/types";
 import { supabase } from "./supabase";
 
 // Shared query types
@@ -27,8 +28,7 @@ export interface Subject {
   icon: string | null;
   color: string | null;
   bank_key?: string | null;
-  parent_subject_id?: string | null;
-  owner_id: string | null; // null = Global, string = Custom
+  owner_id: string | null; // user's id for normal rows; null = legacy global (migrate off)
   // User-specific customization (from user_subjects)
   display_order?: number | null;
   custom_color?: string | null;
@@ -81,18 +81,19 @@ export interface SessionOverviewView {
   avg_seconds: number;
 }
 
-export interface SubjectTotalView {
+/** Raw row from `session_subject_totals` (columns subject_id / subject_name). */
+export interface SessionSubjectTotalsDbRow {
   user_id: string;
-  parent_id: string;
-  parent_name: string;
+  subject_id: string;
+  subject_name: string;
   total_seconds: number;
   direct_seconds: number;
   subtag_seconds: number;
 }
 
 export interface SubjectAggregate {
-  parentId: string;
-  parentName: string;
+  subjectId: string;
+  subjectName: string;
   totalSeconds: number;
   directSeconds: number;
   subtagSeconds: number;
@@ -126,21 +127,20 @@ export interface Task {
 }
 
 // SUBJECT QUERIES
-// Fetches/maintains the subject catalog (global + custom) and the user's
-// visibility list. Also includes helpers for CRUD and tree-building.
+// User-owned subject rows only (YPT-style). Suggested catalogue lives in the app;
+// onboarding inserts copies here. user_subjects controls visibility/order tint.
 export const fetchSubjects = async (userId?: string | null) => {
-  let query = supabase
+  if (!userId) {
+    return [] as Subject[];
+  }
+
+  const { data, error } = await supabase
     .from("subjects")
     .select("*")
+    .eq("owner_id", userId)
     .eq("is_active", true)
-    .is("deleted_at", null) // Filter out soft-deleted subjects
+    .is("deleted_at", null)
     .order("name", { ascending: true });
-
-  query = userId
-    ? query.or(`owner_id.is.null,owner_id.eq.${userId}`)
-    : query.is("owner_id", null);
-
-  const { data, error } = await query;
 
   if (error) throw error;
   return data as Subject[];
@@ -345,17 +345,17 @@ export const aggregateGoalsByDayAndSubject = (
 };
 
 /**
- * Planned minutes for a root subject on a calendar day (local timezone).
+ * Planned minutes for a subject on a calendar day (local timezone).
  * `day_of_week` in DB: 0 = Sunday … 6 = Saturday (same as Date#getDay()).
  */
 export const getGoalMinutesForSubjectOnLocalDate = (
   goals: SubjectWeeklyGoal[],
-  parentSubjectId: string,
+  subjectId: string,
   date: Date = new Date()
 ): number => {
   const dow = date.getDay();
   return goals
-    .filter((g) => g.subject_id === parentSubjectId && g.day_of_week === dow)
+    .filter((g) => g.subject_id === subjectId && g.day_of_week === dow)
     .reduce((sum, g) => sum + g.minutes, 0);
 };
 
@@ -394,52 +394,15 @@ export const upsertSubjectWeeklyGoals = async (
 };
 
 export const buildSubjectTree = (subjects: Subject[]): SubjectNode[] => {
-  const byId = new Map<string, SubjectNode>();
-  subjects.forEach((s) => {
-    byId.set(s.id, { ...s, children: [] });
-  });
-
-  const roots: SubjectNode[] = [];
-
-  byId.forEach((node) => {
-    const parentId = node.parent_subject_id;
-    if (parentId && byId.has(parentId)) {
-      byId.get(parentId)!.children.push(node);
-    } else {
-      roots.push(node);
-    }
-  });
-
-  // Sort roots by display_order (respecting user's custom order), then by name
+  const roots: SubjectNode[] = subjects.map((s) => ({ ...s, children: [] }));
   roots.sort((a, b) => {
     const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
     const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
     if (orderA !== orderB) {
       return orderA - orderB;
     }
-    // If display_order is the same (or both null), sort alphabetically
     return a.name.localeCompare(b.name);
   });
-
-  // Sort children by display_order as well
-  const sortChildren = (nodes: SubjectNode[]) => {
-    nodes.sort((a, b) => {
-      const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
-      const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-      return a.name.localeCompare(b.name);
-    });
-    nodes.forEach((node) => {
-      if (node.children.length > 0) {
-        sortChildren(node.children);
-      }
-    });
-  };
-
-  sortChildren(roots);
-
   return roots;
 };
 
@@ -465,7 +428,6 @@ export const createSubject = async (
       owner_id: userId,
       icon: options?.icon ?? "bookmark",
       color: options?.color ?? "#9C27B0",
-      parent_subject_id: null,
       ...(options?.bankKey ? { bank_key: options.bankKey } : {}),
     })
     .select()
@@ -485,7 +447,7 @@ export const createAndAttachSubject = async (
   return created;
 };
 
-/** Rename a user-owned custom subject (catalog subjects have `owner_id` null). */
+/** Rename a subject row owned by this user (`subjects.owner_id`). */
 export const updateOwnedSubjectName = async (
   subjectId: string,
   userId: string,
@@ -735,18 +697,16 @@ export const fetchSessionsInRange = async (
   return (data ?? []) as WeeklySessionRow[];
 };
 
-/** Sum session minutes on a given calendar day (YYYY-MM-DD) attributed to a root subject (rolls up children). */
-export const fetchSessionMinutesForDayAndParentSubject = async (
+/** Sum session minutes on a given calendar day (YYYY-MM-DD) for one subject. */
+export const fetchSessionMinutesForDayAndSubject = async (
   userId: string,
   dayIso: string,
-  parentSubjectId: string,
-  subjectIdToParentId: Record<string, string>
+  subjectId: string
 ): Promise<number> => {
   const rows = await fetchSessionsInRange(userId, dayIso, dayIso);
   let total = 0;
   for (const row of rows) {
-    const pid = subjectIdToParentId[row.subject_id] ?? row.subject_id;
-    if (pid === parentSubjectId) {
+    if (row.subject_id === subjectId) {
       total += Math.round((row.duration_seconds ?? 0) / 60);
     }
   }
@@ -953,7 +913,6 @@ export const fetchProfileOverview = async (
 ): Promise<ProfileOverview> => {
   const [
     userProfile,
-    allAvailable,
     userVisible,
     allUserSubjects,
     leaderboard,
@@ -961,7 +920,6 @@ export const fetchProfileOverview = async (
     subjectTotalsResponse,
   ] = await Promise.all([
     fetchUserProfile(userId),
-    fetchSubjects(userId),
     fetchUserSubjects(userId),
     fetchAllUserSubjects(userId), // Fetch ALL user_subjects (including hidden) for custom colors
     fetchLeaderboard(),
@@ -979,39 +937,10 @@ export const fetchProfileOverview = async (
   if (overviewResponse.error) throw overviewResponse.error;
   if (subjectTotalsResponse.error) throw subjectTotalsResponse.error;
 
-  const allList = allAvailable ?? [];
   const visibleList = userVisible ?? [];
 
-  // Create maps of custom_color and display_order by subject_id from ALL user_subjects (including hidden)
-  // This ensures subjects in subjectTotals (which may be hidden) get their custom colors and display_order
-  const customColorMap = new Map<string, string | null>();
-  const displayOrderMap = new Map<string, number | null>();
-  allUserSubjects.forEach((subject) => {
-    if (subject.custom_color !== undefined) {
-      customColorMap.set(subject.id, subject.custom_color);
-    }
-    if (subject.display_order !== undefined) {
-      displayOrderMap.set(subject.id, subject.display_order);
-    }
-  });
-
-  // Enrich allList with custom_color and display_order from user_subjects
-  const enrichedAllList = allList.map((subject) => ({
-    ...subject,
-    custom_color: customColorMap.get(subject.id) ?? null,
-    display_order: displayOrderMap.get(subject.id) ?? null,
-  }));
-
-  // Sort enrichedAllList by display_order (respecting user's custom order), then by name
-  enrichedAllList.sort((a, b) => {
-    const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
-    const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
-    if (orderA !== orderB) {
-      return orderA - orderB;
-    }
-    // If display_order is the same (or both null), sort alphabetically
-    return a.name.localeCompare(b.name);
-  });
+  // Full subject list for profile (visible + hidden): already includes joined row + user_subjects fields.
+  const enrichedAllList = sortSubjectsForDisplay([...(allUserSubjects ?? [])]);
 
   const sessionStats =
     overviewResponse.data ?? ({
@@ -1028,15 +957,15 @@ export const fetchProfileOverview = async (
     count: sessionStats.session_count ?? 0,
   };
 
-  const subjectTotals: SubjectAggregate[] = (subjectTotalsResponse.data ?? []).map(
-    (row) => ({
-      parentId: row.parent_id,
-      parentName: row.parent_name,
-      totalSeconds: row.total_seconds,
-      directSeconds: row.direct_seconds,
-      subtagSeconds: row.subtag_seconds,
-    })
-  );
+  const subjectTotals: SubjectAggregate[] = (
+    (subjectTotalsResponse.data ?? []) as SessionSubjectTotalsDbRow[]
+  ).map((row) => ({
+    subjectId: row.subject_id ?? "",
+    subjectName: row.subject_name ?? "",
+    totalSeconds: row.total_seconds,
+    directSeconds: row.direct_seconds,
+    subtagSeconds: row.subtag_seconds,
+  }));
 
   subjectTotals.sort((a, b) => b.totalSeconds - a.totalSeconds);
 
@@ -1092,6 +1021,31 @@ export const fetchUserGroups = async (userId: string): Promise<Group[]> => {
     )
     .eq("user_id", userId)
     .eq("status", "approved");
+
+  if (error) throw error;
+
+  const mapped = (data ?? [])
+    .map((row) => {
+      const groupsField = (row as { groups?: Group | Group[] | null }).groups;
+      if (Array.isArray(groupsField)) {
+        return groupsField[0] ?? null;
+      }
+      return groupsField ?? null;
+    })
+    .filter((group): group is Group => Boolean(group));
+
+  return mapped;
+};
+
+/** Groups the user has requested to join but admin has not approved yet (membership status pending). */
+export const fetchPendingUserGroups = async (userId: string): Promise<Group[]> => {
+  const { data, error } = await supabase
+    .from("group_members")
+    .select(
+      "group_id, status, groups:group_id(id, name, description, visibility, created_by, created_at, requires_admin_approval, invite_code, has_password, member_count)"
+    )
+    .eq("user_id", userId)
+    .eq("status", "pending");
 
   if (error) throw error;
 
@@ -1225,6 +1179,96 @@ export const findGroupByInviteCode = async (code: string): Promise<Group | null>
 
   return (Array.isArray(data) ? data[0] : data) as Group;
 };
+
+export const STUDY_PRESENCE_STALE_MS = 120_000;
+
+export async function markStudySessionActive(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("user_study_presence").upsert(
+    {
+      user_id: userId,
+      is_studying: true,
+      session_started_at: now,
+      updated_at: now,
+    },
+    { onConflict: "user_id" }
+  );
+  if (error) throw error;
+}
+
+export async function touchStudyPresence(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("user_study_presence")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("is_studying", true);
+  if (error) throw error;
+}
+
+export async function markStudySessionIdle(userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("user_study_presence").upsert(
+    {
+      user_id: userId,
+      is_studying: false,
+      session_started_at: null,
+      updated_at: now,
+    },
+    { onConflict: "user_id" }
+  );
+  if (error) throw error;
+}
+
+/** Approved members + profile + live timer row (if any). */
+export async function fetchGroupMembersWithPresence(
+  groupId: string
+): Promise<GroupMemberWithPresence[]> {
+  const { data: members, error: membersError } = await supabase
+    .from("group_members")
+    .select("user_id, role")
+    .eq("group_id", groupId)
+    .eq("status", "approved");
+
+  if (membersError) throw membersError;
+  const memberRows = members ?? [];
+  if (memberRows.length === 0) return [];
+
+  const ids = memberRows.map((m) => m.user_id as string);
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .in("id", ids);
+
+  if (profilesError) throw profilesError;
+
+  const { data: presenceRows, error: presenceError } = await supabase
+    .from("user_study_presence")
+    .select("user_id, is_studying, session_started_at, updated_at")
+    .in("user_id", ids);
+
+  if (presenceError) throw presenceError;
+
+  const profileById = new Map((profiles ?? []).map((p) => [p.id as string, p]));
+  const presenceById = new Map((presenceRows ?? []).map((p) => [p.user_id as string, p]));
+
+  return memberRows.map((m) => {
+    const uid = m.user_id as string;
+    const p = profileById.get(uid);
+    const pr = presenceById.get(uid);
+    return {
+      userId: uid,
+      username: (p?.username as string | null | undefined) ?? null,
+      avatarUrl: (p?.avatar_url as string | null | undefined) ?? null,
+      role: m.role as GroupRole,
+      isStudying: Boolean(pr?.is_studying),
+      studyingSince: (pr?.session_started_at as string | null | undefined) ?? null,
+      presenceUpdatedAt: (pr?.updated_at as string | null | undefined) ?? null,
+    };
+  });
+}
+
+export type { GroupMemberWithPresence };
 
 export const requestJoinGroup = async (
   groupId: string,

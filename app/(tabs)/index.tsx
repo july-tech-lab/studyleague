@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
+import {
+  SUBJECT_CATALOG,
+  type SubjectKey,
+} from "@/constants/subjectCatalog";
 import { useProfile } from '@/hooks/useProfile';
 import { useSubjectGoals } from "@/hooks/useSubjectGoals";
 import { useSubjects } from "@/hooks/useSubjects";
@@ -14,19 +18,20 @@ import { useAuth } from '@/utils/authContext';
 import { createSubjectColorMap, hexToRgba } from '@/utils/color';
 import {
   buildSubjectTree,
-  fetchSessionMinutesForDayAndParentSubject,
+  fetchSessionMinutesForDayAndSubject,
   getGoalMinutesForSubjectOnLocalDate,
   sortSubjectsForDisplay,
-} from '@/utils/queries';
+} from "@/utils/queries";
 import { useTheme } from '@/utils/themeContext';
 import { formatDateLabel, getTodayIso } from '@/utils/time';
 import { useFocusEffect } from "expo-router";
-import { Flame, Plus, Sparkles, Square } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ChevronDown, Flame, Plus, Sparkles, Square } from "lucide-react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   Platform,
   ScrollView,
   StyleSheet,
@@ -40,6 +45,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle as SvgCircle } from "react-native-svg";
+
+/** Case- and accent-insensitive match for subject name / bank_key search (e.g. "franc" → "Français"). */
+function foldAccents(s: string) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
 
 export default function TimerScreen() {
   const { user } = useAuth();
@@ -78,6 +88,7 @@ export default function TimerScreen() {
     selectedSubject,
     setSelectedSubjectId,
     createSubject: createSubjectHook,
+    attachSubject,
     loading: subjectsLoading,
     getDisplayName,
     refetch: refetchSubjects,
@@ -90,6 +101,7 @@ export default function TimerScreen() {
   // Use profile hook to get allSubjects with custom_color (same source as profile page)
   const {
     allSubjects: allSubjectsFlat,
+    hiddenSubjects,
     profile,
     refetch: refetchProfile,
   } = useProfile({
@@ -107,14 +119,6 @@ export default function TimerScreen() {
     }, [refetchWeeklyGoals])
   );
 
-  const subjectIdToParentId = React.useMemo(() => {
-    const map: Record<string, string> = {};
-    (allSubjectsFlat ?? []).forEach((s) => {
-      map[s.id] = s.parent_subject_id ?? s.id;
-    });
-    return map;
-  }, [allSubjectsFlat]);
-
   // Build tree from allSubjects for consistent color mapping
   const allSubjects = React.useMemo(
     () => buildSubjectTree(allSubjectsFlat),
@@ -127,8 +131,20 @@ export default function TimerScreen() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [listTab, setListTab] = useState<"subjects" | "tasks">("subjects");
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [bankListModalVisible, setBankListModalVisible] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
+  const [newSubjectCreateColor, setNewSubjectCreateColor] = useState(
+    () => safeTheme.subjectPalette?.[0] ?? safeTheme.primary
+  );
+  const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
   const [savingSubject, setSavingSubject] = useState(false);
+
+  useEffect(() => {
+    if (addModalVisible) {
+      setNewSubjectCreateColor(safeTheme.subjectPalette?.[0] ?? safeTheme.primary);
+      setAddSubjectError(null);
+    }
+  }, [addModalVisible, safeTheme.subjectPalette, safeTheme.primary]);
 
   // Memoize timer callbacks to prevent unnecessary re-renders
   const handleSessionComplete = useCallback(
@@ -137,20 +153,19 @@ export default function TimerScreen() {
       const minutes = Math.floor(sessionSeconds / 60);
 
       if (subjectForLog && user?.id) {
-        const parentSubjectId = subjectForLog.id;
+        const subjectIdForGoal = subjectForLog.id;
         const dayGoal = getGoalMinutesForSubjectOnLocalDate(
           weeklyGoals,
-          parentSubjectId,
+          subjectIdForGoal,
           new Date()
         );
 
         let message: string;
         if (dayGoal > 0) {
-          const doneToday = await fetchSessionMinutesForDayAndParentSubject(
+          const doneToday = await fetchSessionMinutesForDayAndSubject(
             user.id,
             getTodayIso(),
-            parentSubjectId,
-            subjectIdToParentId
+            subjectIdForGoal
           );
           message = t("timer.sessionFinishedWithDailyGoal", {
             minutes,
@@ -179,7 +194,6 @@ export default function TimerScreen() {
       getDisplayName,
       user?.id,
       weeklyGoals,
-      subjectIdToParentId,
     ]
   );
 
@@ -217,6 +231,74 @@ export default function TimerScreen() {
     () => sortSubjectsForDisplay(subjects),
     [subjects]
   );
+
+  const userAttachedSubjectIds = useMemo(() => {
+    const ids = new Set<string>();
+    subjects.forEach((s) => ids.add(s.id));
+    hiddenSubjects.forEach((s) => ids.add(s.id));
+    return ids;
+  }, [subjects, hiddenSubjects]);
+
+  const userBankKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const s of subjects) {
+      if (s.bank_key) keys.add(s.bank_key);
+    }
+    for (const s of hiddenSubjects) {
+      if (s.bank_key) keys.add(s.bank_key);
+    }
+    return keys;
+  }, [subjects, hiddenSubjects]);
+
+  const addableBankCatalogEntries = useMemo(() => {
+    const out: { key: SubjectKey; label: string; dotColor: string }[] = [];
+    for (const key of Object.keys(SUBJECT_CATALOG) as SubjectKey[]) {
+      const entry = SUBJECT_CATALOG[key];
+      if (!entry) continue;
+      const catalogRow = allSubjectsFlat.find((s) => s.bank_key === key);
+      if (catalogRow) {
+        if (userAttachedSubjectIds.has(catalogRow.id)) continue;
+      } else if (userBankKeys.has(key)) {
+        continue;
+      }
+      out.push({
+        key,
+        label: t(`subjectCatalog.${key}`),
+        dotColor: entry.defaultColor,
+      });
+    }
+    return out;
+  }, [allSubjectsFlat, t, userAttachedSubjectIds, userBankKeys]);
+
+  const addableBankCatalogSorted = useMemo(
+    () =>
+      [...addableBankCatalogEntries].sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+      ),
+    [addableBankCatalogEntries]
+  );
+
+  const customInputBankSuggestions = useMemo(() => {
+    const q = newSubjectName.trim();
+    if (!q) return [];
+    const qFold = foldAccents(q);
+    const matched = addableBankCatalogEntries.filter((item) => {
+      const labelFold = foldAccents(item.label);
+      const keyFold = foldAccents(item.key.replace(/_/g, " "));
+      return labelFold.includes(qFold) || keyFold.includes(qFold);
+    });
+    matched.sort((a, b) => {
+      const aLabel = foldAccents(a.label);
+      const bLabel = foldAccents(b.label);
+      const aKey = foldAccents(a.key.replace(/_/g, " "));
+      const bKey = foldAccents(b.key.replace(/_/g, " "));
+      const aStarts = aLabel.startsWith(qFold) || aKey.startsWith(qFold);
+      const bStarts = bLabel.startsWith(qFold) || bKey.startsWith(qFold);
+      if (aStarts !== bStarts) return aStarts ? -1 : 1;
+      return aLabel.length - bLabel.length;
+    });
+    return matched.slice(0, 12);
+  }, [addableBankCatalogEntries, newSubjectName]);
 
   // One row per matière (plus de regroupement parent / enfant)
   const subjectListData = React.useMemo(() => {
@@ -348,22 +430,63 @@ export default function TimerScreen() {
     }
   };
 
+  const handleAddPopularBankSubject = async (key: SubjectKey) => {
+    if (!user?.id) return;
+    const entry = SUBJECT_CATALOG[key];
+    if (!entry) return;
+    const catalogRow = allSubjectsFlat.find((s) => s.bank_key === key);
+    setSavingSubject(true);
+    setAddSubjectError(null);
+    setBankListModalVisible(false);
+    try {
+      if (catalogRow) {
+        await attachSubject(catalogRow.id);
+        setSelectedSubjectId(catalogRow.id);
+      } else {
+        const name = t(`subjectCatalog.${key}`);
+        const created = await createSubjectHook(name, {
+          bankKey: key,
+          color: entry.defaultColor,
+          icon: entry.icon,
+        });
+        setSelectedSubjectId(created.id);
+      }
+      await refetchProfile();
+      await refetchSubjects();
+      setNewSubjectName("");
+      setAddModalVisible(false);
+    } catch (err: any) {
+      console.error("Unable to add catalog subject", err);
+      setAddSubjectError(
+        err?.message ?? t("profile.subjects.addError", "Impossible d'ajouter la matière")
+      );
+    } finally {
+      setSavingSubject(false);
+    }
+  };
+
   const handleCreateSubject = async () => {
     const name = newSubjectName.trim();
     if (!name) {
-      Alert.alert(t("timer.errorTitle"), t("common.errors.unexpected"));
+      setAddSubjectError(t("common.errors.unexpected"));
       return;
     }
 
     setSavingSubject(true);
+    setAddSubjectError(null);
     try {
-      const created = await createSubjectHook(name);
+      const created = await createSubjectHook(name, {
+        color: newSubjectCreateColor,
+        icon: "bookmark",
+      });
       setSelectedSubjectId(created.id);
+      await refetchProfile();
+      await refetchSubjects();
       setNewSubjectName("");
       setAddModalVisible(false);
     } catch (error: any) {
       console.error("Unable to create subject", error);
-      Alert.alert(t("timer.errorTitle"), error.message ?? t("timer.errorSave"));
+      setAddSubjectError(error.message ?? t("timer.errorSave"));
     } finally {
       setSavingSubject(false);
     }
@@ -435,7 +558,7 @@ export default function TimerScreen() {
                     cy={118}
                     r={110}
                     stroke={hexToRgba(safeTheme.primary, 0.12)}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     fill="none"
                   />
                 </Svg>
@@ -447,7 +570,7 @@ export default function TimerScreen() {
                 cy={110}
                 r={94}
                 stroke={hexToRgba(safeTheme.textMuted, 0.1)}
-                strokeWidth={4}
+                strokeWidth={8}
                 fill="none"
               />
               <SvgCircle
@@ -455,7 +578,7 @@ export default function TimerScreen() {
                 cy={110}
                 r={94}
                 stroke={safeTheme.primary}
-                strokeWidth={9}
+                strokeWidth={15}
                 fill="none"
                 strokeLinecap="round"
                 strokeDasharray={
@@ -469,7 +592,26 @@ export default function TimerScreen() {
               />
             </Svg>
             <View style={styles.timerTextContainer}>
-              <View style={styles.timerTimeCenterWrap}>
+              <View style={styles.timerCenterColumn}>
+                <View style={styles.timerInsideSubjectRow}>
+                  {selectedSubjectColor ? (
+                    <View
+                      style={[
+                        styles.timerSubjectDotInside,
+                        { backgroundColor: selectedSubjectColor },
+                      ]}
+                    />
+                  ) : null}
+                  <Text
+                    variant="caption"
+                    colorName="textMuted"
+                    align="center"
+                    numberOfLines={2}
+                    style={styles.timerInsideSubjectLabel}
+                  >
+                    {selectedSubjectLabel}
+                  </Text>
+                </View>
                 <Text
                   style={styles.timerText}
                   align="center"
@@ -482,26 +624,6 @@ export default function TimerScreen() {
                 </Text>
               </View>
             </View>
-          </View>
-
-          <View style={styles.timerSubjectBelowRing}>
-            {selectedSubjectColor && (
-              <View
-                style={[
-                  styles.timerSubjectDot,
-                  { backgroundColor: selectedSubjectColor },
-                ]}
-              />
-            )}
-            <Text
-              variant="caption"
-              colorName="textMuted"
-              align="center"
-              numberOfLines={1}
-              style={styles.timerSubjectLabel}
-            >
-              {selectedSubjectLabel}
-            </Text>
           </View>
 
           <View style={styles.focusBadgeSlot}>
@@ -537,15 +659,11 @@ export default function TimerScreen() {
                 fullWidth
               />
             )}
-            {Platform.OS === "web" && (
-              <Text variant="micro" colorName="textMuted" style={styles.focusSimulatedText}>
-                {t("timer.focusSimulated")}
-              </Text>
-            )}
           </View>
         </View>
 
         <Tabs
+          variant="underline"
           options={[
             { value: "subjects", label: t("timer.tabSubjects") },
             { value: "tasks", label: t("timer.tabTasks") },
@@ -570,13 +688,12 @@ export default function TimerScreen() {
                     <ActivityIndicator size="large" color={safeTheme.primary} />
                   </View>
                 ) : (
-                  <View>
-                    {subjectListData.map((item, index) => {
+                  <View style={styles.listCardStack}>
+                    {subjectListData.map((item) => {
                       const sub = item.sub;
                       const subjectColor = item.subjectColor;
                       const isRowActive = selectedSubjectId === sub.id;
                       const disableRowInteraction = isRunning && !isRowActive;
-                      const isLast = index === subjectListData.length - 1;
 
                       return (
                         <TouchableOpacity
@@ -584,12 +701,9 @@ export default function TimerScreen() {
                           activeOpacity={0.85}
                           style={[
                             styles.listRow,
-                            !isLast && {
-                              borderBottomWidth: StyleSheet.hairlineWidth,
-                              borderBottomColor: safeTheme.divider,
-                            },
+                            styles.listRowCard,
                             isRowActive && {
-                              backgroundColor: hexToRgba(subjectColor, 0.06),
+                              backgroundColor: hexToRgba(subjectColor, 0.08),
                             },
                             disableRowInteraction && { opacity: 0.45 },
                           ]}
@@ -631,12 +745,11 @@ export default function TimerScreen() {
                   </Text>
                 </View>
               ) : (
-                <View>
+                <View style={styles.listCardStack}>
                   {tasks
                     .filter((t) => t.status !== "done" && t.subjectId)
-                    .map((task, index, arr) => {
+                    .map((task) => {
                       const isSelected = selectedTaskId === task.id;
-                      const isLast = index === arr.length - 1;
                       
                       // Get subject info
                       const taskSubject = task.subjectId
@@ -668,13 +781,10 @@ export default function TimerScreen() {
                           activeOpacity={0.85}
                           style={[
                             styles.listRow,
+                            styles.listRowCard,
                             styles.listRowTask,
-                            !isLast && {
-                              borderBottomWidth: StyleSheet.hairlineWidth,
-                              borderBottomColor: safeTheme.divider,
-                            },
                             isSelected && {
-                              backgroundColor: hexToRgba(taskSubjectColor, 0.06),
+                              backgroundColor: hexToRgba(taskSubjectColor, 0.08),
                             },
                           ]}
                           onPress={() => {
@@ -743,14 +853,18 @@ export default function TimerScreen() {
         visible={addModalVisible}
         onClose={() => {
           setNewSubjectName("");
+          setBankListModalVisible(false);
+          setAddSubjectError(null);
           setAddModalVisible(false);
         }}
-        title={t("common.addSubject")}
+        title={t("timer.addSubjectModalTitle", "Add subject")}
         actions={{
           cancel: {
             label: t("common.actions.cancel"),
             onPress: () => {
               setNewSubjectName("");
+              setBankListModalVisible(false);
+              setAddSubjectError(null);
               setAddModalVisible(false);
             },
             variant: "ghost",
@@ -760,21 +874,136 @@ export default function TimerScreen() {
             label: savingSubject
               ? t("common.status.saving")
               : t("common.actions.create"),
-            onPress: handleCreateSubject,
+            onPress: () => void handleCreateSubject(),
             variant: "primary",
-            disabled: savingSubject,
+            disabled: savingSubject || !newSubjectName.trim(),
             loading: savingSubject,
           },
         }}
       >
         <Input
           value={newSubjectName}
-          onChangeText={setNewSubjectName}
-          placeholder={t("timer.addSubjectPlaceholder")}
+          onChangeText={(text) => {
+            setNewSubjectName(text);
+            if (addSubjectError) setAddSubjectError(null);
+          }}
+          placeholder={t("profile.subjects.createSubjectPlaceholder", "Create a subject")}
           autoFocus
           editable={!savingSubject}
-          containerStyle={{ marginBottom: 12 }}
+          containerStyle={{ marginBottom: 0 }}
+          onSubmitEditing={() => void handleCreateSubject()}
+          returnKeyType="done"
+          blurOnSubmit
+          rightIcon={addableBankCatalogSorted.length > 0 ? ChevronDown : undefined}
+          onRightIconPress={
+            addableBankCatalogSorted.length > 0
+              ? () => setBankListModalVisible(true)
+              : undefined
+          }
         />
+        {customInputBankSuggestions.length > 0 ? (
+          <View
+            style={[
+              styles.bankSuggestDropdown,
+              {
+                borderColor: safeTheme.divider,
+                backgroundColor: safeTheme.surface,
+              },
+            ]}
+            accessibilityRole="list"
+            accessibilityLabel={t("profile.subjects.searchResults", "Search results")}
+          >
+            <ScrollView
+              style={styles.bankSuggestScroll}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+            >
+              {customInputBankSuggestions.map((item, idx) => (
+                <TouchableOpacity
+                  key={item.key}
+                  style={[
+                    styles.bankListRow,
+                    idx === customInputBankSuggestions.length - 1 && styles.bankListRowLast,
+                  ]}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setNewSubjectName("");
+                    void handleAddPopularBankSubject(item.key);
+                  }}
+                  disabled={savingSubject}
+                >
+                  <View style={[styles.bankListDot, { backgroundColor: item.dotColor }]} />
+                  <Text variant="body" style={{ flex: 1, color: safeTheme.text }}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+        <View style={styles.addSubjectColorWrap}>
+          {(safeTheme.subjectPalette?.length
+            ? safeTheme.subjectPalette
+            : [safeTheme.primary]
+          ).map((hex) => {
+            const selected = newSubjectCreateColor === hex;
+            return (
+              <TouchableOpacity
+                key={hex}
+                style={[
+                  styles.addSubjectColorChip,
+                  selected && styles.addSubjectColorChipSelected,
+                ]}
+                onPress={() => setNewSubjectCreateColor(hex)}
+                disabled={savingSubject}
+                accessibilityState={{ selected }}
+              >
+                <View style={[styles.addSubjectColorDot, { backgroundColor: hex }]} />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {addSubjectError ? (
+          <Text variant="caption" style={{ color: safeTheme.danger, marginTop: 8 }}>
+            {addSubjectError}
+          </Text>
+        ) : null}
+      </Modal>
+
+      <Modal
+        visible={bankListModalVisible}
+        onClose={() => setBankListModalVisible(false)}
+        title={t("profile.subjects.available", "Available subjects")}
+        padding={20}
+        actions={{
+          cancel: {
+            label: t("common.actions.cancel"),
+            onPress: () => setBankListModalVisible(false),
+            variant: "outline",
+            disabled: savingSubject,
+          },
+        }}
+      >
+        <ScrollView style={styles.bankListScroll} keyboardShouldPersistTaps="handled">
+          {addableBankCatalogSorted.map((item) => (
+            <TouchableOpacity
+              key={item.key}
+              style={styles.bankListRow}
+              onPress={() => void handleAddPopularBankSubject(item.key)}
+              disabled={savingSubject}
+            >
+              <View style={[styles.bankListDot, { backgroundColor: item.dotColor }]} />
+              <Text variant="body" style={{ flex: 1, color: safeTheme.text }}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        {savingSubject ? (
+          <View style={{ marginTop: 12, alignItems: "center" }}>
+            <ActivityIndicator size="small" color={safeTheme.primary} />
+          </View>
+        ) : null}
       </Modal>
 
     </TabScreen>
@@ -820,6 +1049,72 @@ function createStyles(theme: typeof Colors.light) {
       flexGrow: 1,
       paddingBottom: 8,
     },
+    addSubjectColorWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      marginTop: 12,
+    },
+    addSubjectColorChip: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.surfaceElevated,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    addSubjectColorChipSelected: {
+      backgroundColor: theme.primaryTint,
+      borderWidth: 1.5,
+      borderColor: theme.primaryDark,
+    },
+    addSubjectColorDot: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+    },
+    bankListScroll: {
+      maxHeight: 320,
+    },
+    bankSuggestDropdown: {
+      marginTop: 8,
+      borderRadius: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      overflow: "hidden",
+      ...Platform.select({
+        ios: {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+        },
+        android: { elevation: 3 },
+        default: {},
+      }),
+    },
+    bankSuggestScroll: {
+      maxHeight: 220,
+    },
+    bankListRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 4,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.divider ?? theme.border,
+    },
+    bankListRowLast: {
+      borderBottomWidth: 0,
+    },
+    bankListDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+    },
+    listCardStack: {
+      gap: 8,
+    },
     listRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -827,6 +1122,12 @@ function createStyles(theme: typeof Colors.light) {
       paddingVertical: 9,
       paddingLeft: 12,
       paddingRight: 12,
+    },
+    listRowCard: {
+      backgroundColor: theme.surfaceElevated,
+      borderRadius: 14,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
     },
     listRowTask: {
       alignItems: "flex-start",
@@ -871,6 +1172,32 @@ function createStyles(theme: typeof Colors.light) {
       top: 8,
       width: 220,
       height: 220,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    timerCenterColumn: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      paddingHorizontal: 14,
+      gap: 4,
+    },
+    timerInsideSubjectRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      maxWidth: "100%",
+    },
+    timerSubjectDotInside: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      flexShrink: 0,
+    },
+    timerInsideSubjectLabel: {
+      flexShrink: 1,
+      textAlign: "center",
     },
     timerTimeCenterWrap: {
       ...StyleSheet.absoluteFillObject,
@@ -887,10 +1214,6 @@ function createStyles(theme: typeof Colors.light) {
       paddingHorizontal: 24,
       maxWidth: "100%",
       alignSelf: "stretch",
-    },
-    focusSimulatedText: {
-      marginTop: 6,
-      textAlign: "center",
     },
     timerContainer: { 
       alignItems: "center",
@@ -919,22 +1242,26 @@ function createStyles(theme: typeof Colors.light) {
       flexShrink: 1,
     },
     buttonMessagesArea: {
-      minHeight: 22,
+      minHeight: 0,
       alignItems: "center",
       justifyContent: "center",
+      marginBottom: 4,
+    },
+    buttonMessagesAreaWithHint: {
+      minHeight: 20,
       marginBottom: 6,
     },
     focusBadgeSlot: {
-      marginTop: 4,
+      marginTop: 0,
       alignItems: "center",
       width: "100%",
     },
-    // SUBJECT / TASK LIST (flat rows)
+    // SUBJECT / TASK LIST (pill cards)
     subjectColorDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      marginRight: 10,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      marginRight: 12,
       flexShrink: 0,
     },
     taskContent: {

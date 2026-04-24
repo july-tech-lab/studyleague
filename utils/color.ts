@@ -96,7 +96,7 @@ export const getReadableTextColor = (hex: string | null | undefined): string => 
  * Creates a mapping of subject IDs to colors based on their position in the subject tree.
  * Priority order:
  * 1. custom_color (user-specific override from user_subjects)
- * 2. color (global subject color from subjects table)
+ * 2. color (default on the subject row in `subjects`)
  * 3. palette color (cycled based on index)
  * 4. defaultColor (fallback)
  * 
@@ -119,7 +119,7 @@ export function createSubjectColorMap(
   const map: Record<string, string> = {};
   
   subjectTree.forEach((parent, index) => {
-    // Priority: custom_color (user override) > color (global) > palette > default
+    // Priority: custom_color (user_subjects) > subjects.color > palette > default
     const color = parent.custom_color ?? parent.color ?? (palette.length > 0 
       ? palette[index % palette.length] 
       : defaultColor);
@@ -140,7 +140,7 @@ export function createSubjectColorMap(
  * Creates a mapping of subject IDs to colors from a flat array of subjects.
  * Priority order:
  * 1. custom_color (user-specific override from user_subjects)
- * 2. color (global subject color from subjects table)
+ * 2. color (default on the subject row in `subjects`)
  * 3. palette color (cycled based on index)
  * 4. defaultColor (fallback)
  * 
@@ -167,7 +167,7 @@ export function createSubjectColorMapFromFlat(
   const map: Record<string, string> = {};
   
   subjects.forEach((subject, index) => {
-    // Priority: custom_color (user override) > color (global) > palette > default
+    // Priority: custom_color (user_subjects) > subjects.color > palette > default
     map[subject.id] = subject.custom_color ?? subject.color ?? (
       palette.length > 0 
         ? palette[index % palette.length] 

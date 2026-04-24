@@ -42,7 +42,6 @@ create table public.subjects (
   color text,
 
   owner_id uuid references public.profiles(id) on delete cascade,
-  parent_subject_id uuid references public.subjects(id) on delete set null,
 
   created_at timestamptz default now(),
   is_active boolean default true
@@ -233,7 +232,6 @@ create view public.weekly_leaderboard as
 -- 8. INDEXES
 -- ============================================================
 create index on subjects(owner_id);
-create index on subjects(parent_subject_id);
 create index on study_sessions(user_id);
 create index on study_sessions(subject_id);
 create index on study_sessions(ended_at);
