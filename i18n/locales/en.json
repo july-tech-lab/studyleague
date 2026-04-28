@@ -290,6 +290,46 @@
       "approvalNeeded": "Group admin approval is required."
     }
   },
+  "friends": {
+    "tab": "Friends",
+    "activity": "Activity",
+    "manageLink": "My friends",
+    "backToActivity": "Activity",
+    "friendsListTitle": "My friends",
+    "addFriend": "Add a friend",
+    "add": "Add",
+    "searchPlaceholder": "Search by username (3+ chars)",
+    "pendingReceived": "Friend requests",
+    "sectionAwaitingValidation": "Awaiting your response",
+    "sectionYourPendingRequests": "Your pending requests",
+    "awaitingTheirResponse": "Awaiting their response",
+    "cancelRequest": "Cancel request",
+    "pendingSent": "Pending",
+    "pendingSentSection": "Sent requests",
+    "accept": "Accept",
+    "decline": "Decline",
+    "remove": "Remove",
+    "removeConfirmTitle": "Remove this friend?",
+    "removeConfirmMessage": "You and {{name}} will no longer see each other's activity.",
+    "emptyActivity": "Add friends to see their study activity.",
+    "emptyFriends": "You have no friends yet.",
+    "requestSent": "Request sent",
+    "noResults": "No users found",
+    "studied": "studied",
+    "notSignedIn": "Sign in to manage friends.",
+    "loadError": "Could not load friends or activity.",
+    "ago": {
+      "justNow": "just now",
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}} h ago",
+      "yesterday": "yesterday",
+      "daysAgo": "{{count}} days ago"
+    },
+    "errors": {
+      "duplicateRequest": "A request already exists between you.",
+      "sendFailed": "Could not send friend request."
+    }
+  },
   "leaderboard": {
     "errorLoading": "Unable to load leaderboard.",
     "empty": "No data for this period."

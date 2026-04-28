@@ -7,14 +7,15 @@ import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import { useDashboard } from "@/hooks/useDashboard";
-import { createSubjectColorMap } from "@/utils/color";
 import { useAuth } from "@/utils/authContext";
+import { createSubjectColorMap } from "@/utils/color";
 import { useTheme } from "@/utils/themeContext";
 import {
+  isCurrentPeriod as checkIsCurrentPeriod,
   formatDurationCompact,
   formatStatMinutes,
-  isCurrentPeriod as checkIsCurrentPeriod,
 } from "@/utils/time";
+import { useRouter } from "expo-router";
 import {
   CalendarDays,
   ChevronLeft,
@@ -24,10 +25,9 @@ import {
   Timer,
   TrendingUp,
 } from "lucide-react-native";
-import { useRouter } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 
 const dayNumToKey: Record<number, string> = {
   1: "mon",
@@ -163,21 +163,20 @@ export default function DashboardScreen() {
       title={t("dashboard.title")}
       gap={8}
       rightAction={
-        <Pressable
+        <TouchableOpacity
           onPress={() => router.push("/calendar-stats")}
           hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel={t("dashboard.calendarViewA11y")}
+          style={styles.headerIconButton}
         >
           <CalendarDays size={22} color={theme.primary} />
-        </Pressable>
+        </TouchableOpacity>
       }
     >
 
         {/* TABS */}
         <Tabs
-          variant="iconPills"
-          style={styles.periodTabs}
           options={periodOptions.map((option) => ({
             value: option,
             label: t(`common.period.${option}`),
@@ -293,43 +292,6 @@ export default function DashboardScreen() {
                       color={dotColor}
                       name={s.name}
                       value={formatDurationCompact(s.seconds)}
-                      fillPercent={s.percent}
-                    />
-                  );
-                })}
-              </View>
-            ) : (
-              <Text variant="body" colorName="textMuted" style={styles.emptyStateText}>
-                {t("dashboard.noSessionsForPeriod")}
-              </Text>
-            )}
-          </Card>
-        )}
-
-        {/* Répartition (%) — jour & semaine uniquement */}
-        {(period === "day" || period === "week") && (
-          <Card variant="border" style={styles.distributionCard}>
-            <View style={styles.distributionHeader}>
-              <Target size={18} color={iconColor} />
-              <View style={styles.goalVsActualHeaderTitleRow}>
-                <Text variant="subtitle" style={[styles.dashboardSectionTitle, styles.distributionTitle]}>
-                  {t("dashboard.distribution")}
-                </Text>
-                <Text variant="micro" colorName="textMuted">
-                  {formatNavLabel()}
-                </Text>
-              </View>
-            </View>
-            {distributionBySubject.length > 0 ? (
-              <View style={[styles.distributionBars, styles.goalVsActualBars]}>
-                {distributionBySubject.map((s, i) => {
-                  const dotColor = subjectColorById[s.subjectId] ?? subjectPalette[i % subjectPalette.length];
-                  return (
-                    <SubjectBar
-                      key={s.subjectId}
-                      color={dotColor}
-                      name={s.name}
-                      value={`${s.percent}%`}
                       fillPercent={s.percent}
                     />
                   );

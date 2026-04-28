@@ -10,6 +10,7 @@ Single reference for local development, cleaning a stuck environment, EAS builds
 | **Build for device/testers** | `eas build --profile development --platform android` |
 | **Build for App Store / Play Store** | `eas build --profile production --platform all` |
 | **Submit to stores** | `eas submit --platform android --latest` (or `ios`) |
+| **OTA update (JS/assets, iOS + Android)** | `eas update --channel production --message "Fix bug timer"` |
 | **Check env vars** | `eas env:list` |
 | **Lint + types (before release)** | `npm run lint` and `npx tsc --noEmit` |
 
@@ -234,15 +235,31 @@ eas build --profile production --platform android
 
 ### Publish an update (no new binary)
 
+`eas update` publishes **one** JavaScript bundle for every app on that **channel** (iOS and Android). You do **not** pass `--platform ios`; both store binaries receive the same update if they were built with that channel.
+
 Target the **channel** that matches the installed app (`eas.json` → `build.*.channel`):
 
 ```bash
-eas update --channel production --message "Describe the change"
+eas update --channel production --message "Fix bug timer"
 eas update --channel preview --message "Internal test"
 eas update --channel development --message "Dev client"
 ```
 
-**Notes:** Steps 1–2 (CLI + login) are one-time. The first **channel** build is what enables updates on devices. If you need help choosing platform commands or profiles, use the same `eas.json` entries as for normal builds.
+### iOS (App Store, TestFlight, dev client)
+
+For **iOS users in production**, the flow is the same as Android:
+
+1. They must have installed an iOS build from EAS whose profile sets `channel: "production"` (see `eas.json` → `build.production.channel`).
+2. Run **`eas update --channel production --message "…"`** after committing and pushing the JS/asset changes you want shipped. Example: `eas update --channel production --message "Fix bug timer"`.
+3. The app picks up the OTA bundle on next cold start or according to `expo-updates` behavior (no new App Store binary).
+
+**TestFlight / internal iOS builds:** use `--channel preview` if those builds were produced with the `preview` profile (or whatever channel matches that binary).
+
+**When OTA is not enough on iOS:** if you change native code, plugins, or anything that requires a new binary, run `eas build --profile production --platform ios` (or `all`) and submit again. If you bump **`expo.version`** in `app.json`, this project uses `runtimeVersion.policy: appVersion`, so **existing installs stay on the old runtime** until users update from the store; new OTAs target the new version only after a new build ships.
+
+**Verify:** `eas update:list` (Expo dashboard also lists update groups and channels).
+
+**Notes:** Steps 1–2 (CLI + login) in the one-time subsection above are only needed once per machine. The first **channel** build is what enables updates on devices. Apple’s usual rules apply: OTA must not turn the app into something materially different from what was reviewed.
 
 ---
 
@@ -281,8 +298,9 @@ eas submit --platform android --latest
 eas env:list
 eas build:list
 
-# OTA (after a channel build is installed)
-eas update --channel production --message "Your message"
+# OTA (after a channel build is installed; iOS + Android on that channel)
+eas update --channel production --message "Fix bug timer"
+eas update:list
 ```
 
 ---

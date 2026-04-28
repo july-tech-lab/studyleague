@@ -2,19 +2,18 @@ import { TabScreen } from "@/components/layout/TabScreen";
 import { Text } from "@/components/Themed";
 import { Card } from "@/components/ui/Card";
 import { SubjectBar } from "@/components/ui/SubjectBar";
-import { Tabs } from "@/components/ui/Tabs";
 import Colors from "@/constants/Colors";
 import { INTER } from "@/constants/typography";
 import { useTheme } from "@/utils/themeContext";
 import {
-  isCurrentPeriod as checkIsCurrentPeriod,
-  formatStatMinutes,
+    isCurrentPeriod as checkIsCurrentPeriod,
+    formatStatMinutes,
 } from "@/utils/time";
 import { useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 
 type SubjectSlice = { name: string; minutes: number; color: string };
 type DaySessions = { totalMinutes: number; subjects: SubjectSlice[] };
@@ -191,10 +190,6 @@ function DayDetailCombined({
   );
 }
 
-type Period = "day" | "week" | "month" | "year";
-
-const periodOptions: Period[] = ["day", "week", "month", "year"];
-
 function sumMonthMinutesMock(year: number, month: number): number {
   let total = 0;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -212,7 +207,6 @@ export default function CalendarStatsScreen() {
   const thresholds = useMemo(() => heatThresholds(theme), [theme]);
 
   const today = useMemo(() => new Date(), []);
-  const [period, setPeriod] = useState<Period>("month");
   const [focusDate, setFocusDate] = useState(() => new Date());
 
   const locale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
@@ -224,55 +218,27 @@ export default function CalendarStatsScreen() {
 
   const monthTotal = useMemo(() => sumMonthMinutesMock(viewYear, viewMonth), [viewYear, viewMonth]);
 
-  const formatNavLabel = () => {
-    if (period === "day") {
-      return focusDate.toLocaleDateString(locale, {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    }
-    if (period === "week") {
-      const d = new Date(focusDate);
-      const day = d.getDay();
-      const diff = day === 0 ? -6 : 1 - day;
-      const monday = new Date(d);
-      monday.setDate(d.getDate() + diff);
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      return `${monday.toLocaleDateString(locale, { month: "short", day: "numeric" })} – ${sunday.toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" })}`;
-    }
-    if (period === "month") {
-      return focusDate.toLocaleDateString(locale, {
-        month: "long",
-        year: "numeric",
-      });
-    }
-    return focusDate.getFullYear().toString();
-  };
+  const formatNavLabel = () =>
+    focusDate.toLocaleDateString(locale, {
+      month: "long",
+      year: "numeric",
+    });
 
   const goPrev = () => {
     const d = new Date(focusDate);
-    if (period === "day") d.setDate(d.getDate() - 1);
-    else if (period === "week") d.setDate(d.getDate() - 7);
-    else if (period === "month") d.setMonth(d.getMonth() - 1);
-    else d.setFullYear(d.getFullYear() - 1);
+    d.setMonth(d.getMonth() - 1);
     setFocusDate(d);
   };
 
   const goNext = () => {
     const d = new Date(focusDate);
-    if (period === "day") d.setDate(d.getDate() + 1);
-    else if (period === "week") d.setDate(d.getDate() + 7);
-    else if (period === "month") d.setMonth(d.getMonth() + 1);
-    else d.setFullYear(d.getFullYear() + 1);
+    d.setMonth(d.getMonth() + 1);
     setFocusDate(d);
   };
 
   const isCurrentPeriod = useMemo(
-    () => checkIsCurrentPeriod(period, focusDate),
-    [period, focusDate]
+    () => checkIsCurrentPeriod("month", focusDate),
+    [focusDate]
   );
 
   const selKey = dateKey(focusDate.getFullYear(), focusDate.getMonth(), focusDate.getDate());
@@ -338,22 +304,11 @@ export default function CalendarStatsScreen() {
       title={t("calendarStats.title")}
       gap={8}
       leftAction={
-        <Pressable onPress={handleBack} style={styles.backButton} accessibilityRole="button">
-          <ChevronLeft size={24} color={theme.textMuted} />
-        </Pressable>
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <ChevronLeft size={24} color={theme.text} />
+        </TouchableOpacity>
       }
     >
-      <Tabs
-        variant="iconPills"
-        style={styles.periodTabs}
-        options={periodOptions.map((option) => ({
-          value: option,
-          label: t(`common.period.${option}`),
-        }))}
-        value={period}
-        onChange={setPeriod}
-      />
-
       <View style={styles.dateNav}>
         <Pressable style={styles.dateNavButton} onPress={goPrev} hitSlop={12}>
           <ChevronLeft size={22} color={theme.textMuted} />
@@ -371,7 +326,6 @@ export default function CalendarStatsScreen() {
         </Pressable>
       </View>
 
-      {period === "month" ? (
       <Card variant="border" style={styles.sectionCard}>
         <View style={styles.weekHeader}>
           {calendarWeekdayLabels.map((d) => (
@@ -467,45 +421,7 @@ export default function CalendarStatsScreen() {
           </Text>
         </View>
       </Card>
-      ) : null}
 
-      {period === "year" ? (
-        <Card variant="border" style={styles.sectionCard}>
-          <View style={styles.weekSummaryHeader}>
-            <Text variant="subtitle" colorName="text">
-              {String(focusDate.getFullYear())}
-            </Text>
-            <Text variant="caption" colorName="primary" style={styles.weekTotalStrong}>
-              {formatStatMinutes(yearMonthBars.yearTotal)}
-            </Text>
-          </View>
-          <View style={[styles.weekChartRow, styles.yearBarRow]}>
-            {yearMonthBars.rows.map((row) => {
-              const pct = row.minutes / yearMonthBars.maxMin;
-              return (
-                <View key={row.key} style={styles.weekChartCol}>
-                  <View style={styles.weekChartTrack}>
-                    <View
-                      style={[
-                        styles.weekChartFill,
-                        {
-                          height: `${Math.max(pct * 100, row.minutes > 0 ? 12 : 0)}%`,
-                          backgroundColor: row.minutes > 0 ? theme.primaryLight : theme.surfaceElevated,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text variant="micro" colorName="textMuted" style={styles.yearMonthLabel}>
-                    {row.label}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        </Card>
-      ) : null}
-
-      {period === "day" || period === "week" || period === "month" ? (
       <Card variant="border" style={styles.sectionCard}>
         <View style={styles.goalVsActualHeaderTitleRow}>
           <Text
@@ -524,9 +440,7 @@ export default function CalendarStatsScreen() {
         </View>
         <DayDetailCombined sessions={selSession} t={t} />
       </Card>
-      ) : null}
 
-      {period === "day" || period === "week" || period === "month" ? (
       <Card variant="border" style={styles.sectionCard}>
         <View style={styles.weekSummaryHeader}>
           <Text variant="subtitle" colorName="text">
@@ -573,15 +487,56 @@ export default function CalendarStatsScreen() {
           })}
         </View>
       </Card>
-      ) : null}
+
+      <Card variant="border" style={styles.sectionCard}>
+        <View style={styles.weekSummaryHeader}>
+          <Text variant="subtitle" colorName="text">
+            {String(focusDate.getFullYear())}
+          </Text>
+          <Text variant="caption" colorName="primary" style={styles.weekTotalStrong}>
+            {formatStatMinutes(yearMonthBars.yearTotal)}
+          </Text>
+        </View>
+        <View style={[styles.weekChartRow, styles.yearBarRow]}>
+          {yearMonthBars.rows.map((row) => {
+            const pct = row.minutes / yearMonthBars.maxMin;
+            const isCalendarMonth = row.key === viewMonth;
+            return (
+              <View key={row.key} style={styles.weekChartCol}>
+                <View style={styles.weekChartTrack}>
+                  <View
+                    style={[
+                      styles.weekChartFill,
+                      {
+                        height: `${Math.max(pct * 100, row.minutes > 0 ? 12 : 0)}%`,
+                        backgroundColor:
+                          row.minutes > 0
+                            ? isCalendarMonth
+                              ? theme.primary
+                              : theme.primaryLight
+                            : theme.surfaceElevated,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text
+                  variant="micro"
+                  colorName={isCalendarMonth ? "primary" : "textMuted"}
+                  style={[styles.yearMonthLabel, isCalendarMonth && styles.yearMonthLabelActive]}
+                >
+                  {row.label}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </Card>
     </TabScreen>
   );
 }
-
 const createStyles = (theme: typeof Colors.light) =>
   StyleSheet.create({
     backButton: { padding: 4, marginLeft: -4 },
-    periodTabs: { marginBottom: 6 },
     sectionCard: { marginBottom: 8, padding: 12 },
     weekTotalStrong: { fontFamily: INTER.bold },
     dateNav: {
@@ -609,6 +564,7 @@ const createStyles = (theme: typeof Colors.light) =>
     },
     yearBarRow: { height: 112, gap: 2 },
     yearMonthLabel: { marginTop: 4, textAlign: "center", fontSize: 10 },
+    yearMonthLabelActive: { fontFamily: INTER.bold },
     weekHeader: {
       flexDirection: "row",
       marginBottom: 4,
@@ -697,4 +653,5 @@ const createStyles = (theme: typeof Colors.light) =>
       minHeight: 0,
     },
   });
+
 

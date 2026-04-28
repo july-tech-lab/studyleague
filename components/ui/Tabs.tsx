@@ -177,7 +177,7 @@ const createStyles = (theme: typeof Colors.light) =>
       alignSelf: "stretch",
       marginBottom: 8,
       padding: 3,
-      backgroundColor: theme.border,
+      backgroundColor: theme.primaryTint,
       borderRadius: 10,
       gap: 3,
     },
@@ -190,6 +190,8 @@ const createStyles = (theme: typeof Colors.light) =>
       paddingHorizontal: 8,
       borderRadius: 8,
       backgroundColor: "transparent",
+      borderWidth: StyleSheet.hairlineWidth * 2,
+      borderColor: "transparent",
     },
     segmentedButtonActive: {
       backgroundColor: theme.surface,

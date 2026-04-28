@@ -638,8 +638,8 @@ export default function ProfileScreen() {
                 <Button
                   iconLeft={Save}
                   iconOnly
-                  variant="primary"
-                  size="sm"
+                  variant="soft"
+                  size="xs"
                   onPress={handleSaveDisplayName}
                   disabled={savingDisplayName || !displayNameInput.trim()}
                   loading={savingDisplayName}
@@ -743,8 +743,8 @@ export default function ProfileScreen() {
                   <Button
                     iconLeft={Pencil}
                     iconOnly
-                    variant="primary"
-                    size="sm"
+                    variant="soft"
+                    size="xs"
                     onPress={openAcademicPathEditor}
                     accessibilityLabel={t("profile.academicPath.change")}
                   />

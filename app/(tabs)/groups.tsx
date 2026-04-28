@@ -1,3 +1,4 @@
+import { FriendsTab } from "@/components/friends/FriendsTab";
 import { TabScreen } from "@/components/layout/TabScreen";
 import { Text } from "@/components/Themed";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   View,
@@ -68,6 +70,7 @@ export default function GroupsScreen() {
   const [editGroupPassword, setEditGroupPassword] = useState("");
   const [editShowGroupPassword, setEditShowGroupPassword] = useState(false);
   const [groupTab, setGroupTab] = useState<"my" | "public">("my");
+  const [screenSection, setScreenSection] = useState<"groups" | "friends">("groups");
 
   const [editPasswordChanged, setEditPasswordChanged] = useState(false);
   const [removingGroupId, setRemovingGroupId] = useState<string | null>(null);
@@ -436,6 +439,7 @@ export default function GroupsScreen() {
   return (
     <TabScreen
       title={t("groups.title", "Groupes")}
+      scroll={false}
       rightAction={
         <View style={styles.headerActions}>
           <Button
@@ -447,86 +451,109 @@ export default function GroupsScreen() {
             accessibilityLabel={t("tabs.leaderboard")}
             style={styles.headerIconButton}
           />
-          <Button
-            iconLeft={Plus}
-            iconOnly
-            variant="primary"
-            size="lg"
-            onPress={() => setModalVisible(true)}
-            accessibilityLabel={t("groups.create.title", "Create group")}
-            style={styles.headerIconButton}
-          />
+          {screenSection === "groups" ? (
+            <Button
+              iconLeft={Plus}
+              iconOnly
+              variant="primary"
+              size="lg"
+              onPress={() => setModalVisible(true)}
+              accessibilityLabel={t("groups.create.title", "Create group")}
+              style={styles.headerIconButton}
+            />
+          ) : null}
         </View>
       }
     >
-        <View style={{ gap: 12 }}>
-          <View style={styles.searchRow}>
-            <Input
-              placeholder={t("groups.searchPlaceholder", "Search...")}
-              value={searchCode}
-              onChangeText={setSearchCode}
-              leftIcon={Search}
-              containerStyle={{ flex: 1 }}
-              onSubmitEditing={handleSearchGroupByCode}
-            />
-            <Button
-              iconLeft={Search}
-              iconOnly
-              variant="primary"
-              size="md"
-              onPress={handleSearchGroupByCode}
-              disabled={searchingCode || !searchCode.trim()}
-              loading={searchingCode}
-              accessibilityLabel={t("common.actions.search")}
-            />
-          </View>
+      <View style={{ flex: 1, gap: 12 }}>
+        <Tabs
+          variant="underline"
+          options={[
+            { value: "groups", label: t("groups.myGroups") },
+            { value: "friends", label: t("friends.tab") },
+          ]}
+          value={screenSection}
+          onChange={(v) => setScreenSection(v as "groups" | "friends")}
+        />
 
-          <Tabs
-            variant="iconPills"
-            options={[
-              {
-                value: "my",
-                label: `${t("groups.myGroups")} (${myGroupsCombined.length})`,
-                icon: Users,
-              },
-              {
-                value: "public",
-                label: `${t("groups.publicGroups")} (${publicGroups.length})`,
-                icon: Globe,
-              },
-            ]}
-            value={groupTab}
-            onChange={(v) => setGroupTab(v as "my" | "public")}
-          />
+        {screenSection === "groups" ? (
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1, gap: 12 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.searchRow}>
+              <Input
+                placeholder={t("groups.searchPlaceholder", "Search...")}
+                value={searchCode}
+                onChangeText={setSearchCode}
+                leftIcon={Search}
+                containerStyle={{ flex: 1 }}
+                onSubmitEditing={handleSearchGroupByCode}
+              />
+              <Button
+                iconLeft={Search}
+                iconOnly
+                variant="primary"
+                size="md"
+                onPress={handleSearchGroupByCode}
+                disabled={searchingCode || !searchCode.trim()}
+                loading={searchingCode}
+                accessibilityLabel={t("common.actions.search")}
+              />
+            </View>
 
-          {groupTab === "my" ? (
-            myGroupsCombined.length === 0 ? (
-              <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
-                {t("groups.noGroupsYet")}
-              </Text>
-            ) : (
-              <View style={styles.groupCardsContainer}>
-                {myGroupsCombined.map((g) => (
-                  <View key={g.id}>{renderGroupCard(g, { variant: "my" })}</View>
-                ))}
-              </View>
-            )
-          ) : (
-            <>
-              {publicGroups.length === 0 ? (
+            <Tabs
+              variant="iconPills"
+              options={[
+                {
+                  value: "my",
+                  label: `${t("groups.myGroups")} (${myGroupsCombined.length})`,
+                  icon: Users,
+                },
+                {
+                  value: "public",
+                  label: `${t("groups.publicGroups")} (${publicGroups.length})`,
+                  icon: Globe,
+                },
+              ]}
+              value={groupTab}
+              onChange={(v) => setGroupTab(v as "my" | "public")}
+            />
+
+            {groupTab === "my" ? (
+              myGroupsCombined.length === 0 ? (
                 <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
-                  {t("groups.noPublicGroups", "Aucun groupe public disponible")}
+                  {t("groups.noGroupsYet")}
                 </Text>
               ) : (
                 <View style={styles.groupCardsContainer}>
-                  {filteredPublicGroups.map((g) => (
-                    <View key={g.id}>{renderGroupCard(g, { variant: "public" })}</View>
+                  {myGroupsCombined.map((g) => (
+                    <View key={g.id}>{renderGroupCard(g, { variant: "my" })}</View>
                   ))}
                 </View>
-              )}
-            </>
-          )}
-        </View>
+              )
+            ) : (
+              <>
+                {publicGroups.length === 0 ? (
+                  <Text variant="body" align="center" colorName="textMuted" style={styles.emptyText}>
+                    {t("groups.noPublicGroups", "Aucun groupe public disponible")}
+                  </Text>
+                ) : (
+                  <View style={styles.groupCardsContainer}>
+                    {filteredPublicGroups.map((g) => (
+                      <View key={g.id}>{renderGroupCard(g, { variant: "public" })}</View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
+          </ScrollView>
+        ) : (
+          <FriendsTab userId={user?.id ?? null} />
+        )}
+      </View>
 
       <Modal
         visible={modalVisible}

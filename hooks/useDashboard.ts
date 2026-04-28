@@ -2,19 +2,19 @@ import { getSubjectDisplayName } from "@/constants/subjectCatalog";
 import { useProfile } from "@/hooks/useProfile";
 import { useSubjectGoals } from "@/hooks/useSubjectGoals";
 import {
-  aggregateGoalsByDay,
-  aggregateGoalsByDayAndSubject,
-  aggregateGoalsBySubject,
-  fetchSessionsInRange,
-  getGoalMinutesForSubjectOnLocalDate,
-  sumWeeklyGoalMinutes,
+    aggregateGoalsByDay,
+    aggregateGoalsByDayAndSubject,
+    aggregateGoalsBySubject,
+    fetchSessionsInRange,
+    getGoalMinutesForSubjectOnLocalDate,
+    sumWeeklyGoalMinutes,
 } from "@/utils/queries";
 import {
-  getDayRangeForDate,
-  getDaysInMonth,
-  getMonthRangeForDate,
-  getWeekRangeForDate,
-  getYearRangeForDate,
+    getDayRangeForDate,
+    getDaysInMonth,
+    getMonthRangeForDate,
+    getWeekRangeForDate,
+    getYearRangeForDate,
 } from "@/utils/time";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";

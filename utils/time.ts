@@ -22,81 +22,47 @@ export const formatTime = (totalSeconds: number): { hours: string; mins: string;
 };
 
 /**
- * Formats seconds into a human-readable duration string.
- * Returns format like "2h 30m" or "45m" (omits hours if zero).
- * 
- * @param seconds - Total number of seconds
- * @returns Formatted string like "2h 30m" or "45m" or "--" if invalid
- * 
- * @example
- * formatDuration(9000) // "2h 30m"
- * formatDuration(2700) // "45m"
- * formatDuration(0) // "--"
+ * Canonical compact duration when you already have **whole minutes** (same convention app-wide):
+ * glued hours/minutes — e.g. `"2h30"`, `"16h05"`, `"1h"`, `"45m"`, `"0m"`.
  */
-export const formatDuration = (seconds: number | null | undefined): string => {
-  if (!seconds || seconds <= 0) return "--";
-  const mins = Math.round(seconds / 60);
+export const formatDurationFromMinutes = (minutes: number): string => {
+  const mins = Math.max(0, Math.floor(Number.isFinite(minutes) ? minutes : 0));
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  if (h > 0) return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
+  return `${m}m`;
 };
 
 /**
- * Formats total seconds as compact duration for stats (e.g. "48h", "2h 30m", "45m").
- * Omits "0m" when whole hours.
+ * Seconds → compact labels ({@link formatDurationFromMinutes} after rounding to nearest minute).
+ * @returns `"--"` when there is no positive duration.
  */
 export const formatDurationCompact = (seconds: number | null | undefined): string => {
   if (!seconds || seconds <= 0) return "--";
   const mins = Math.round(seconds / 60);
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  return `${m}m`;
+  return formatDurationFromMinutes(mins);
 };
 
-/**
- * Formats minutes into a human-readable duration string.
- * Returns format like "2h30" or "45m" (omits "0m" when whole hours).
- * 
- * @param minutes - Total number of minutes
- * @returns Formatted string like "2h30", "1h", "45m"
- * 
- * @example
- * formatDurationFromMinutes(150) // "2h30"
- * formatDurationFromMinutes(60) // "1h"
- * formatDurationFromMinutes(45) // "45m"
- */
-export const formatDurationFromMinutes = (minutes: number): string => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h > 0) return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
-  return `${m}m`;
-};
+/** @deprecated Prefer `formatDurationCompact` — same output. */
+export const formatDuration = formatDurationCompact;
 
 /**
- * Formats minutes into a compact goals-style string.
- * Returns format like "1h30", "2h", "30m", or "--" if zero.
- *
- * @param minutes - Total number of minutes
- * @returns Formatted string like "1h30", "2h", "30m", or "--"
+ * Same as {@link formatDurationFromMinutes}, but `null` / non-positive values show `"--"` (empty UI).
  */
 export const formatMinutesCompact = (minutes: number | null | undefined): string => {
   if (minutes == null || minutes <= 0) return "--";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h > 0) return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
-  return `${m}m`;
+  return formatDurationFromMinutes(minutes);
 };
 
 /** Period selector used by dashboard / calendar stats. */
 export type StatsPeriod = "day" | "week" | "month" | "year";
 
 /**
- * Compact minutes for stats cards (e.g. goals). Zero shows as "0m", not "--".
+ * Goal / stats totals where zero minutes must read `"0m"`, never `"--"`.
  */
 export function formatStatMinutes(minutes: number): string {
   if (minutes <= 0) return "0m";
-  return formatMinutesCompact(minutes);
+  return formatDurationFromMinutes(minutes);
 }
 
 /**

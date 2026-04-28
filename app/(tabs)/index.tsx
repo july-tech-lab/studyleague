@@ -138,12 +138,16 @@ export default function TimerScreen() {
   );
   const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
   const [savingSubject, setSavingSubject] = useState(false);
+  const addSubjectModalWasVisible = React.useRef(false);
 
+  // Reset name/errors/color only when the modal opens — not on every theme
+  // palette reference change while open (that was clearing the user's color choice).
   useEffect(() => {
-    if (addModalVisible) {
+    if (addModalVisible && !addSubjectModalWasVisible.current) {
       setNewSubjectCreateColor(safeTheme.subjectPalette?.[0] ?? safeTheme.primary);
       setAddSubjectError(null);
     }
+    addSubjectModalWasVisible.current = addModalVisible;
   }, [addModalVisible, safeTheme.subjectPalette, safeTheme.primary]);
 
   // Memoize timer callbacks to prevent unnecessary re-renders
@@ -638,7 +642,6 @@ export default function TimerScreen() {
             {/* Button always in same place (Start or Stop) */}
             {isRunning ? (
               <Button
-                iconLeft={Square}
                 title={t("timer.stop")}
                 variant="secondary"
                 onPress={handleStop}
@@ -891,7 +894,7 @@ export default function TimerScreen() {
           autoFocus
           editable={!savingSubject}
           containerStyle={{ marginBottom: 0 }}
-          onSubmitEditing={() => void handleCreateSubject()}
+          onSubmitEditing={() => Keyboard.dismiss()}
           returnKeyType="done"
           blurOnSubmit
           rightIcon={addableBankCatalogSorted.length > 0 ? ChevronDown : undefined}
@@ -901,6 +904,28 @@ export default function TimerScreen() {
               : undefined
           }
         />
+        <View style={styles.addSubjectColorWrap}>
+          {(safeTheme.subjectPalette?.length
+            ? safeTheme.subjectPalette
+            : [safeTheme.primary]
+          ).map((hex) => {
+            const selected = newSubjectCreateColor === hex;
+            return (
+              <TouchableOpacity
+                key={hex}
+                style={[
+                  styles.addSubjectColorChip,
+                  selected && styles.addSubjectColorChipSelected,
+                ]}
+                onPress={() => setNewSubjectCreateColor(hex)}
+                disabled={savingSubject}
+                accessibilityState={{ selected }}
+              >
+                <View style={[styles.addSubjectColorDot, { backgroundColor: hex }]} />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         {customInputBankSuggestions.length > 0 ? (
           <View
             style={[
@@ -941,28 +966,6 @@ export default function TimerScreen() {
             </ScrollView>
           </View>
         ) : null}
-        <View style={styles.addSubjectColorWrap}>
-          {(safeTheme.subjectPalette?.length
-            ? safeTheme.subjectPalette
-            : [safeTheme.primary]
-          ).map((hex) => {
-            const selected = newSubjectCreateColor === hex;
-            return (
-              <TouchableOpacity
-                key={hex}
-                style={[
-                  styles.addSubjectColorChip,
-                  selected && styles.addSubjectColorChipSelected,
-                ]}
-                onPress={() => setNewSubjectCreateColor(hex)}
-                disabled={savingSubject}
-                accessibilityState={{ selected }}
-              >
-                <View style={[styles.addSubjectColorDot, { backgroundColor: hex }]} />
-              </TouchableOpacity>
-            );
-          })}
-        </View>
         {addSubjectError ? (
           <Text variant="caption" style={{ color: safeTheme.danger, marginTop: 8 }}>
             {addSubjectError}

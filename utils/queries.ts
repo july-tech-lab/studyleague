@@ -1,3 +1,4 @@
+import { getTodayIso } from "@/utils/time";
 import type { GroupMemberWithPresence } from "./queries/types";
 import { supabase } from "./supabase";
 
@@ -735,8 +736,114 @@ export const fetchLongestSessionSeconds = async (
 // Profile record, daily summaries, leaderboard, and an orchestrated overview
 // that gathers profile + subjects + sessions + leaderboard in one call.
 //---------------------------------------------------------------
+
+/** Calendar shift for YYYY-MM-DD (local) — matches leaderboard MV window logic. */
+function shiftCalendarDaysFromIso(iso: string, deltaDays: number): string {
+  const parts = iso.split("-").map((p) => parseInt(p, 10));
+  if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return iso;
+  const [y, m, d] = parts;
+  const dt = new Date(y, m - 1, d + deltaDays);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
+/** Live seconds for the same windows as materialized leaderboards (week: sessions; month/year: daily_summaries). */
+async function fetchLiveLeaderboardSecondsForUser(
+  period: LeaderboardPeriod,
+  userId: string
+): Promise<number> {
+  const todayIso = getTodayIso();
+  if (period === "week") {
+    const fromIso = shiftCalendarDaysFromIso(todayIso, -7);
+    const rows = await fetchSessionsInRange(userId, fromIso, todayIso);
+    return rows.reduce((acc, r) => acc + (r.duration_seconds ?? 0), 0);
+  }
+  const daysBack = period === "month" ? 30 : 365;
+  const fromIso = shiftCalendarDaysFromIso(todayIso, -daysBack);
+  const { data, error } = await supabase
+    .from("daily_summaries")
+    .select("total_seconds")
+    .eq("user_id", userId)
+    .gte("date", fromIso)
+    .lte("date", todayIso);
+  if (error) throw error;
+  let sum = 0;
+  for (const row of data ?? []) {
+    sum += (row as { total_seconds?: number | null }).total_seconds ?? 0;
+  }
+  return sum;
+}
+
+/**
+ * Materialized leaderboard views can lag until `refresh_leaderboards()` runs.
+ * If the viewer opted in but is missing from the snapshot, merge using live aggregates.
+ */
+async function mergeMissingViewerIntoLeaderboard(
+  period: LeaderboardPeriod,
+  entries: LeaderboardEntry[],
+  currentUserId: string | null | undefined
+): Promise<LeaderboardEntry[]> {
+  if (!currentUserId || entries.some((e) => e.userId === currentUserId)) {
+    return entries;
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("username, avatar_url, level, show_in_leaderboard")
+    .eq("id", currentUserId)
+    .maybeSingle();
+
+  if (error || !profile || profile.show_in_leaderboard === false) {
+    return entries;
+  }
+
+  try {
+    const totalSeconds = await fetchLiveLeaderboardSecondsForUser(period, currentUserId);
+    const selfEntry: LeaderboardEntry = {
+      userId: currentUserId,
+      username: profile.username ?? "Utilisateur",
+      avatarUrl: profile.avatar_url ?? "",
+      level: profile.level ?? 1,
+      totalSeconds,
+    };
+    return [...entries, selfEntry].sort((a, b) => b.totalSeconds - a.totalSeconds);
+  } catch {
+    return entries;
+  }
+}
+
+/** MV rows can carry stale `username` from before the last `refresh_leaderboards()`. RLS allows
+ *  reading only your own private profile, so we patch the current user's row from live `profiles`.
+ */
+async function applyLiveProfileToCurrentUserEntry(
+  entries: LeaderboardEntry[],
+  currentUserId: string | null | undefined
+): Promise<LeaderboardEntry[]> {
+  if (!currentUserId) return entries;
+  const idx = entries.findIndex((e) => e.userId === currentUserId);
+  if (idx < 0) return entries;
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("username, avatar_url, level")
+    .eq("id", currentUserId)
+    .maybeSingle();
+
+  if (error || !profile) return entries;
+
+  const next = [...entries];
+  next[idx] = {
+    ...next[idx],
+    username: profile.username ?? next[idx].username,
+    avatarUrl: profile.avatar_url ?? next[idx].avatarUrl,
+    level: profile.level ?? next[idx].level,
+  };
+  return next;
+}
+
 export const fetchLeaderboardByPeriod = async (
-  period: LeaderboardPeriod
+  period: LeaderboardPeriod,
+  currentUserId?: string | null
 ): Promise<LeaderboardEntry[]> => {
   const tableByPeriod: Record<LeaderboardPeriod, string> = {
     week: "weekly_leaderboard",
@@ -757,17 +864,20 @@ export const fetchLeaderboardByPeriod = async (
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
+  const entries = (data ?? []).map((row: any) => ({
     userId: row.user_id,
     username: row.username ?? "Utilisateur",
     avatarUrl: row.avatar_url ?? "",
     level: row.level ?? 1,
     totalSeconds: row[totalColumn] ?? 0,
   }));
+
+  const merged = await mergeMissingViewerIntoLeaderboard(period, entries, currentUserId);
+  return applyLiveProfileToCurrentUserEntry(merged, currentUserId);
 };
 
-export const fetchLeaderboard = async () => {
-  return fetchLeaderboardByPeriod("week");
+export const fetchLeaderboard = async (currentUserId?: string | null) => {
+  return fetchLeaderboardByPeriod("week", currentUserId);
 };
 
 export const fetchUserProfile = async (userId: string) => {
@@ -824,6 +934,14 @@ export const updateUserProfile = async (
     .single();
 
   if (error) throw error;
+
+  if (updates.username !== undefined || updates.avatar_url !== undefined) {
+    const { error: refreshError } = await supabase.rpc("refresh_leaderboards");
+    if (refreshError) {
+      console.warn("refresh_leaderboards after profile update:", refreshError.message);
+    }
+  }
+
   return data as Profile;
 };
 
@@ -922,7 +1040,7 @@ export const fetchProfileOverview = async (
     fetchUserProfile(userId),
     fetchUserSubjects(userId),
     fetchAllUserSubjects(userId), // Fetch ALL user_subjects (including hidden) for custom colors
-    fetchLeaderboard(),
+    fetchLeaderboardByPeriod("week", userId),
     supabase
       .from("session_overview")
       .select("*")
@@ -1292,6 +1410,136 @@ export const regenerateInviteCode = async (groupId: string): Promise<string> => 
   const result = Array.isArray(data) ? data[0] : data;
   return result?.invite_code ?? "";
 };
+
+export type FriendStatus = "pending" | "accepted";
+
+export interface UserFriendRow {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: FriendStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FriendProfileBrief {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
+
+export interface FriendshipWithOther extends UserFriendRow {
+  other_user: FriendProfileBrief;
+}
+
+export interface FriendActivityItem {
+  session_id: string;
+  friend_id: string;
+  friend_username: string;
+  friend_avatar_url: string | null;
+  subject_name: string;
+  subject_color: string | null;
+  subject_icon: string | null;
+  duration_seconds: number;
+  started_at: string;
+  ended_at: string;
+}
+
+export async function fetchFriendshipsWithProfiles(
+  userId: string
+): Promise<FriendshipWithOther[]> {
+  const { data: rows, error } = await supabase
+    .from("user_friends")
+    .select("*")
+    .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+  if (error) throw error;
+  const list = (rows ?? []) as UserFriendRow[];
+  if (list.length === 0) return [];
+
+  const otherIds = list.map((r) =>
+    r.requester_id === userId ? r.addressee_id : r.requester_id
+  );
+
+  const { data: profiles, error: pErr } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .in("id", otherIds);
+
+  if (pErr) throw pErr;
+  const byId = new Map(
+    (profiles ?? []).map((p) => [p.id as string, p as FriendProfileBrief])
+  );
+
+  const out: FriendshipWithOther[] = [];
+  for (const r of list) {
+    const oid = r.requester_id === userId ? r.addressee_id : r.requester_id;
+    const ou = byId.get(oid);
+    if (ou) {
+      out.push({ ...r, other_user: ou });
+    }
+  }
+  return out;
+}
+
+export async function fetchFriendsActivity(
+  limit = 30,
+  offset = 0
+): Promise<FriendActivityItem[]> {
+  const { data, error } = await supabase.rpc("get_friends_activity", {
+    p_limit: limit,
+    p_offset: offset,
+  });
+
+  if (error) throw error;
+  return (data ?? []) as FriendActivityItem[];
+}
+
+export async function sendFriendRequest(
+  requesterId: string,
+  addresseeId: string
+): Promise<void> {
+  const { error } = await supabase.from("user_friends").insert({
+    requester_id: requesterId,
+    addressee_id: addresseeId,
+    status: "pending",
+  });
+  if (error) throw error;
+}
+
+export async function acceptFriendRequest(friendshipId: string): Promise<void> {
+  const { error } = await supabase
+    .from("user_friends")
+    .update({ status: "accepted" })
+    .eq("id", friendshipId);
+  if (error) throw error;
+}
+
+export async function deleteFriendship(friendshipId: string): Promise<void> {
+  const { error } = await supabase.from("user_friends").delete().eq("id", friendshipId);
+  if (error) throw error;
+}
+
+/**
+ * Find users by username (substring, case-insensitive) for sending a friend request.
+ * Uses RPC so private profiles are discoverable by pseudo (RLS would otherwise hide them).
+ */
+export async function searchPublicProfilesByUsername(
+  _currentUserId: string,
+  rawQuery: string,
+  limit = 20
+): Promise<FriendProfileBrief[]> {
+  const q = rawQuery.trim();
+  if (q.length < 3) return [];
+
+  const { data, error } = await supabase.rpc("search_profiles_for_friend_invite", {
+    p_query: q,
+    p_limit: limit,
+  });
+
+  if (error) throw error;
+  return (data ?? []) as FriendProfileBrief[];
+}
 
 //---------------------------------------------------------------
 // AUTH QUERIES

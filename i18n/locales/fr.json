@@ -186,8 +186,8 @@
   },
   "timer": {
     "inProgress": "En cours",
-    "startButton": "Démarrer",
-    "stop": "Arrêter",
+    "startButton": "C'est parti !",
+    "stop": "Stop",
     "sessionFinishedTitle": "Session terminée !",
     "sessionFinishedMessage": "Bravo ! {{minutes}} minutes de {{subject}} enregistrées.",
     "sessionFinishedWithDailyGoal": "Bravo ! {{minutes}} minutes de {{subject}} enregistrées. Objectif du jour pour cette matière : {{doneToday}} / {{dayGoal}} min.",
@@ -288,6 +288,46 @@
     "success": {
       "requestSent": "Demande envoyée",
       "approvalNeeded": "Une approbation de l'admin du groupe est nécessaire."
+    }
+  },
+  "friends": {
+    "tab": "Amis",
+    "activity": "Activité",
+    "manageLink": "Mes amis",
+    "backToActivity": "Activité",
+    "friendsListTitle": "Mes amis",
+    "addFriend": "Ajouter un ami",
+    "add": "Ajouter",
+    "searchPlaceholder": "Rechercher par pseudo (3+ car.)",
+    "pendingReceived": "Demandes reçues",
+    "sectionAwaitingValidation": "En attente de validation",
+    "sectionYourPendingRequests": "Tes demandes en attente",
+    "awaitingTheirResponse": "En attente de réponse",
+    "cancelRequest": "Annuler",
+    "pendingSent": "En attente",
+    "pendingSentSection": "Demandes envoyées",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "remove": "Retirer",
+    "removeConfirmTitle": "Retirer cet ami ?",
+    "removeConfirmMessage": "{{name}} ne verra plus ton activité et tu ne verras plus la sienne.",
+    "emptyActivity": "Ajoute des amis pour voir leur activité.",
+    "emptyFriends": "Tu n'as pas encore d'amis.",
+    "requestSent": "Demande envoyée",
+    "noResults": "Aucun utilisateur trouvé",
+    "studied": "a étudié",
+    "notSignedIn": "Connecte-toi pour voir tes amis.",
+    "loadError": "Impossible de charger les amis ou l'activité.",
+    "ago": {
+      "justNow": "à l'instant",
+      "minutes": "il y a {{count}} min",
+      "hours": "il y a {{count}} h",
+      "yesterday": "hier",
+      "daysAgo": "il y a {{count}} jours"
+    },
+    "errors": {
+      "duplicateRequest": "Une demande existe déjà entre vous.",
+      "sendFailed": "Impossible d'envoyer la demande."
     }
   },
   "leaderboard": {
